@@ -16,9 +16,16 @@ pagerSize = 6
 [markup.highlight]
 noClasses = false
 
-[markup.goldmark]
-[markup.goldmark.renderer]
-unsafe = true
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.extensions]
+      [markup.goldmark.extensions.passthrough]
+        enable = true
+        [markup.goldmark.extensions.passthrough.delimiters]
+          block = [['\[', '\]'], ['$$', '$$']]
+          inline = [['\(', '\)'], ['$', '$']]
+
 
 [params]
 author = "Mike Harmon"
@@ -26,7 +33,6 @@ author = "Mike Harmon"
 description = "Mike Harmon's personal website"
 keywords = "blog,data,ai"
 info = ["AI/ML Engineer & Data Scientist", "PhD in Computational Applied Math"]
-#, "Brazilian Jiu Jitsu World Champion"]
 # avatarURL = "images/me.jpg"
 #gravatar = "mdh266@gmail.com"
 dateFormat = "January 2, 2006"
