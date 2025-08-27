@@ -5,12 +5,15 @@ date = "2025-08-01"
 description = "Fine Tuning BERT With HuggingFace"
 tags = [
     "LLMs",
-    "Hugging Face"
+    "Hugging Face",
+    "NLP"
 ]
-series = ["LLMs"]
+series = ["NLP"]
 aliases = ["migrate-from-jekyl"]
 +++
 
+## Contents
+-----
 
 
 __[1. Introduction](#first-bullet)__
@@ -255,7 +258,7 @@ One thing I will call out is that the tokenizer here is not a word level tokeniz
 
 I can see that the model I have downloaded is a BERT model by looking at its type:
 
-```
+```python
 type(model)
 ```
 
@@ -266,7 +269,7 @@ transformers.models.bert.modeling_bert.BertForSequenceClassification
 ```
 
 and
-```
+```python
 print(model)
 ```
 
@@ -344,9 +347,8 @@ data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
 This will be used later on during training since it's just adding 0's at the beginning or at end of the tokenized vector (`token_ids`) within each batch. I can see the schema of the datasets by looking at the columns:
 
-```
+```python
 tokenized_datasets["test"].features
-
 ```
 
 ```
@@ -382,7 +384,7 @@ tokenized_datasets = tokenized_datasets.with_format("torch")
 
 Lastly, I can confirm the schema,
 
-```
+```python
 print(tokenized_datasets["test"].features)
 ```
 
@@ -393,7 +395,7 @@ print(tokenized_datasets["test"].features)
 'attention_mask': List(Value('int8'))}
 ```
 and the size of the datasets
-```
+```python
 print(tokenized_datasets.num_rows)
 ```
 
