@@ -12,8 +12,11 @@ pagerSize = 6
 # Enable Disqus comments
 # shortname = "yourdiscussshortname"
 
+
 [markup]
   [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
     [markup.goldmark.extensions]
       [markup.goldmark.extensions.passthrough]
         enable = true

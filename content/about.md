@@ -19,8 +19,9 @@ In another life, I was a competitive athlete and coach in Brazilian Jiu Jitsu fo
 
 ---------
 
-# Accomplishments
+## Accomplishments
 ---------
+
 <h4>Data Science, Machine Learning & AI (2016 - Present)</h4>
 <ul class="fa-ul mb-0">
 <li>
