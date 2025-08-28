@@ -1,6 +1,6 @@
 +++
 authors = ["Mike Harmon"]
-title = "GreenBuildings3: Build & Deploy Models With MLflow & Docker"
+title = "Green Buildings 3: Build & Deploy Models With MLflow & Docker"
 date = "2020-04-23"
 tags = [
     "Scikit-Learn",
