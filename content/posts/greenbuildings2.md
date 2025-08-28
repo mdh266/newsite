@@ -1,6 +1,6 @@
 +++
 authors = ["Mike Harmon"]
-title = "GreenBuildings 2: Imputing Missing Values With Scikit-Learn"
+title = "Green Buildings 2: Imputing Missing Values With Scikit-Learn"
 date = "2020-02-16"
 tags = [
     "Scikit-Learn",

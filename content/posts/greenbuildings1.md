@@ -1,6 +1,6 @@
 +++
 authors = ["Mike Harmon"]
-title = "GreenBuildings 1: Exploratory Analysis & Outlier Removal"
+title = "Green Buildings 1: Exploratory Analysis & Outlier Removal"
 date = "2018-05-12"
 tags = [
     "Scikit-Learn",
