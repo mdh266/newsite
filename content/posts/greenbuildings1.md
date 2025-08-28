@@ -4,15 +4,14 @@ title = "GreenBuildings 1: Exploratory Analysis & Outlier Removal"
 date = "2018-05-12"
 tags = [
     "Scikit-Learn",
-    "Exploratory Data Analysis",
-    "Outlier Removal",
-    "Isolation Forests",
+    "K-Nearest Neighbors",
+    "Big Query",
+    "Missing Value Imputation",
     "Google Cloud"
 ]
 series = ["Scikit-Learn"]
 aliases = ["migrate-from-jekyl"]
 +++# 
-------
 
 ## Content
 -----------

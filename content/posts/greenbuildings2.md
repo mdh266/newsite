@@ -11,9 +11,9 @@ tags = [
 ]
 series = ["Scikit-Learn"]
 aliases = ["migrate-from-jekyl"]
-+++# 
++++
 
-Content
+## Contents
 -------
 
 __[1. Introduction](#first-bullet)__
