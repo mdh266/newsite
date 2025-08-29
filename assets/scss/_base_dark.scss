@@ -1,0 +1,92 @@
+@mixin base_dark {
+  color: $fg-color-dark;
+  background-color: $bg-color-dark;
+
+  a {
+    color: $link-color-dark;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: $alt-fg-color-dark;
+
+    &:hover .heading-link {
+      visibility: visible;
+    }
+
+    .heading-link {
+      color: $link-color-dark;
+      font-weight: inherit;
+      text-decoration: none;
+      font-size: 80%;
+      visibility: hidden;
+    }
+
+    .title-link {
+      color: inherit;
+      font-weight: inherit;
+      text-decoration: none;
+    }
+  }
+
+  pre code {
+    background-color: inherit;
+    color: inherit;
+  }
+
+  code {
+    background-color: $lighter-alt-bg-color-dark;
+    color: $fg-color-dark;
+  }
+
+  blockquote {
+    border-left: 2px solid $alt-bg-color-dark;
+  }
+
+  th,
+  td {
+    padding: 1.6rem;
+  }
+
+  table {
+
+    margin: 25px 0;
+
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+
+table thead tr {
+    background-color: $bg-color-dark;
+    color: #ffffff;
+    border: 1px solid #dddddd;
+    text-align: left;
+}
+
+table th,
+table td {
+    padding: 12px 15px;
+    border: 1px solid #dddddd;
+    background-color: $bg-color-dark;
+}
+
+table tbody tr {
+    border: 1px solid #dddddd;
+    background-color: $bg-color-dark;
+}
+}
+
+body.colorscheme-dark {
+  @include base_dark();
+}
+
+body.colorscheme-auto {
+  @media (prefers-color-scheme: dark) {
+    @include base_dark();
+  }
+}

@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Text Classification 4: Deep Learning With Tensorflow &amp; Optuna · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+1. Introduction
+2. Vectorizing Text
+3. Handling Imbalance In The Data
+4. Building A Convolutional Neural Network With Keras
+5. Hyperparameter Tuning with Optuna
+6. Next Steps
+
+  Introduction 
+  
+    
+    Link to heading
+  
+
+
+In this post I want to extend on the last model in my blog series on text classification where I used a SVM to predict the topic of papers in arxiv based on their abstract. For reference the topics were &ldquo;Machine Learning&rdquo;, &ldquo;Computer Vision&rdquo;, &ldquo;Artifical Intelligence&rdquo; and &ldquo;Robotics&rdquo; and there was imbalance in the classes.">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Text Classification 4: Deep Learning With Tensorflow & Optuna">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. Vectorizing Text
+3. Handling Imbalance In The Data
+4. Building A Convolutional Neural Network With Keras
+5. Hyperparameter Tuning with Optuna
+6. Next Steps
+Introduction Link to heading In this post I want to extend on the last model in my blog series on text classification where I used a SVM to predict the topic of papers in arxiv based on their abstract. For reference the topics were “Machine Learning”, “Computer Vision”, “Artifical Intelligence” and “Robotics” and there was imbalance in the classes.">
+
+<meta property="og:url" content="http://localhost:1313/posts/nlp4/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Text Classification 4: Deep Learning With Tensorflow & Optuna">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. Vectorizing Text
+3. Handling Imbalance In The Data
+4. Building A Convolutional Neural Network With Keras
+5. Hyperparameter Tuning with Optuna
+6. Next Steps
+Introduction Link to heading In this post I want to extend on the last model in my blog series on text classification where I used a SVM to predict the topic of papers in arxiv based on their abstract. For reference the topics were “Machine Learning”, “Computer Vision”, “Artifical Intelligence” and “Robotics” and there was imbalance in the classes.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2022-11-22T00:00:00+00:00">
+    <meta property="article:modified_time" content="2022-11-22T00:00:00+00:00">
+    <meta property="article:tag" content="Keras">
+    <meta property="article:tag" content="TensorFlow">
+    <meta property="article:tag" content="Convolutional Neural Network">
+    <meta property="article:tag" content="Optuna">
+    <meta property="article:tag" content="NLP">
+      <meta property="og:see_also" content="http://localhost:1313/posts/bert/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/jfk2/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/jfk1/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/nlp3/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/nlp1/">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/nlp4/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/nlp4/">
+              Text Classification 4: Deep Learning With Tensorflow &amp; Optuna
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2022-11-22T00:00:00Z">
+                November 22, 2022
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              21-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/keras/">Keras</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/tensorflow/">TensorFlow</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/convolutional-neural-network/">Convolutional Neural Network</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/optuna/">Optuna</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/nlp/">NLP</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#first-bullet" >1. Introduction</a></strong></p>
+<p><strong><a href="#second-bullet" >2. Vectorizing Text</a></strong></p>
+<p><strong><a href="#third-bullet" >3. Handling Imbalance In The Data</a></strong></p>
+<p><strong><a href="#fourth-bullet" >4. Building A Convolutional Neural Network With Keras</a></strong></p>
+<p><strong><a href="#fifth-bullet" >5. Hyperparameter Tuning with Optuna</a></strong></p>
+<p><strong><a href="#sixth-bullet" >6. Next Steps</a></strong></p>
+<h2 id="introduction">
+  Introduction <a class="anchor" id="first-bullet"></a>
+  <a class="heading-link" href="#introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this post I want to extend on the last <a href="http://michael-harmon.com/blog/NLP2.html"  class="external-link" target="_blank" rel="noopener">model</a> in my blog series on text classification where I used a SVM to predict the topic of papers in arxiv based on their abstract. For reference the topics were &ldquo;Machine Learning&rdquo;, &ldquo;Computer Vision&rdquo;, &ldquo;Artifical Intelligence&rdquo; and &ldquo;Robotics&rdquo; and there was imbalance in the classes.</p>
+<p>This time I will use a <a href="https://en.wikipedia.org/wiki/Convolutional_neural_network"  class="external-link" target="_blank" rel="noopener">Convolutional Neural Network (CNN)</a> model with <a href="https://www.tensorflow.org/"  class="external-link" target="_blank" rel="noopener">Tensorflow</a> and <a href="https://keras.io/"  class="external-link" target="_blank" rel="noopener">Keras</a> to predict the topic of each paper&rsquo;s abstract and use <a href="https://optuna.org/"  class="external-link" target="_blank" rel="noopener">Optuna</a> to optimize the hyperparamters of the model. Keras is a high level library that makes building complex deep learning models relatively easy and since it can use <a href="https://www.tensorflow.org/"  class="external-link" target="_blank" rel="noopener">Tensorflow</a> as a backend, it is a production ready framework. Optuna is powerful automatic hyperparameter tuning library that uses a <em>define-by-run</em> design that makes it elegant and easy to use. I have just started using this library and have been particularly impressed with the design which is extremely intuitve. While CNN&rsquo;s are no longer the state-of-the-art algorithms for text classification, they still perform quite well and I wanted to explore how they would work on this problem. I should note that, the point of this isn&rsquo;t to build the most high performing model, but rather to show how these tools fit together to build an end-to-end deep learning model.</p>
+<p>Before we get started building the model let&rsquo;s quickly go over text vectorization as the process I use in this post is different from prior posts which used the <a href="https://en.wikipedia.org/wiki/Bag-of-words_model"  class="external-link" target="_blank" rel="noopener">bag-of-words model</a>.</p>
+<h2 id="vectorizing-text">
+  Vectorizing Text <a class="anchor" id="second-bullet"></a>
+  <a class="heading-link" href="#vectorizing-text">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Machine learning models make use of numerical data in the form of vectors that represent the values of their features. The model is really just an approximation to a function that maps the input vectors to the output (which can be a scalar or vector). In order to build machine learning models that use text data we need to convert the text to numerical vectors. To do this we use a <a href="https://en.wikipedia.org/wiki/Vector_space_model"  class="external-link" target="_blank" rel="noopener">Vector Space Model</a> which repesents words as vectors in the space.</p>
+<p>In my <a href="http://michael-harmon.com/blog/NLP1.html"  class="external-link" target="_blank" rel="noopener">first post</a> in this series I went over a vector space model called  <a href="https://en.wikipedia.org/wiki/Bag-of-words_model"  class="external-link" target="_blank" rel="noopener">Bag of Words</a> along with <a href="https://en.wikipedia.org/wiki/Tf%E2%80%93idf"  class="external-link" target="_blank" rel="noopener">Term Frequency-Inverse Document Frequency (TF-IDF)</a>. While these are a classic representations for text, one of their pifulls is that is often produces sparse high dimensional representations. This combination can be particularly challenging for machine learning models to work with. Another shortcoming of the bag-of-words model is that it does not take into account the order of the words or the semantic relationships between words. We&rsquo;ll address these issues later using <a href="https://en.wikipedia.org/wiki/Word_embedding"  class="external-link" target="_blank" rel="noopener">Word Embeddings</a>, but first we need to discuss how to vectorize text using the TensorFlow <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/TextVectorization"  class="external-link" target="_blank" rel="noopener">TextVectorization</a> class.</p>
+<p>First let&rsquo;s grab our data from <a href="https://cloud.google.com/storage"  class="external-link" target="_blank" rel="noopener">Google Cloud Storage</a> where is stored as json objects using <a href="https://pandas.pydata.org/"  class="external-link" target="_blank" rel="noopener">Pandas</a>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> google.oauth2 <span style="color:#f92672">import</span> service_account
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> google.cloud <span style="color:#f92672">import</span> storage
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas <span style="color:#66d9ef">as</span> pd
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> matplotlib.pyplot <span style="color:#66d9ef">as</span> plt
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span>matplotlib inline
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>train_df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>read_json(<span style="color:#e6db74">&#34;gs://harmon-arxiv/train_abstracts.json&#34;</span>,
+</span></span><span style="display:flex;"><span>                        storage_options<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;token&#34;</span>: <span style="color:#e6db74">&#34;credentials.json&#34;</span>})
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>test_df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>read_json(<span style="color:#e6db74">&#34;gs://harmon-arxiv/test_abstracts.json&#34;</span>,
+</span></span><span style="display:flex;"><span>                        storage_options<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;token&#34;</span>: <span style="color:#e6db74">&#34;credentials.json&#34;</span>})
+</span></span></code></pre></div><p>Let&rsquo;s convert the category to numerical values 1, 2, 3, 4 which represent the different abstract topics using the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html"  class="external-link" target="_blank" rel="noopener">LabelEncoder</a> function:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.preprocessing <span style="color:#f92672">import</span> LabelEncoder
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>labeler  <span style="color:#f92672">=</span> LabelEncoder()
+</span></span><span style="display:flex;"><span>train_df <span style="color:#f92672">=</span> train_df<span style="color:#f92672">.</span>assign(target<span style="color:#f92672">=</span>labeler<span style="color:#f92672">.</span>fit_transform(train_df[<span style="color:#e6db74">&#34;category&#34;</span>]))
+</span></span><span style="display:flex;"><span>test_df  <span style="color:#f92672">=</span> test_df<span style="color:#f92672">.</span>assign(target<span style="color:#f92672">=</span>labeler<span style="color:#f92672">.</span>fit_transform(test_df[<span style="color:#e6db74">&#34;category&#34;</span>]))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>train_df<span style="color:#f92672">.</span>head()
+</span></span></code></pre></div><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>category</th>
+      <th>text</th>
+      <th>target</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>ai</td>
+      <td>Because of their occasional need to return to ...</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>ai</td>
+      <td>Market price systems constitute a well-underst...</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>ai</td>
+      <td>We describe an extensive study of search in GS...</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>ai</td>
+      <td>As real logic programmers normally use cut (!)...</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>ai</td>
+      <td>To support the goal of allowing users to recor...</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>Now we need to convert these documents to vectors in a vector space. We use the <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/TextVectorization"  class="external-link" target="_blank" rel="noopener">TextVectorization</a> class to automatically convert documents to vectors. This class creates a dictionary of words where each word is associated with  an integer index in the dictionary. Words in the sentences are represented by their index value in the vector. The order of the words in the sentence dictate which entry of the vector they are in. For example the first word in the sentence has it index value in entry 0 in the vector, the second word has its index value in entry 1 in the vector and so on.</p>
+<p>We cap the number of words in our dictionary (or vocabulary) at an integer called <code>max_tokens</code>. We also set the length of sentences to be capped at <code>sequence_length</code> tokens long. That means if our abstract contains less than <code>sequence_length</code> words then we pad the rest of the vectors entries with 0&rsquo;s to give it a length of <code>sequence_length</code>. If the abstract contains more than <code>sequence_length</code> words it will be cut short.</p>
+<p>Let&rsquo;s first set <code>sequence_length</code> by looking at the number of tokens in each document by their category in a histogram:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> seaborn <span style="color:#66d9ef">as</span> sns
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>train_df <span style="color:#f92672">=</span> train_df<span style="color:#f92672">.</span>assign(num_tokens<span style="color:#f92672">=</span>train_df<span style="color:#f92672">.</span>text<span style="color:#f92672">.</span>str<span style="color:#f92672">.</span>split()<span style="color:#f92672">.</span>apply(len))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>histplot(data<span style="color:#f92672">=</span>train_df, x<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;num_tokens&#34;</span>, hue<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;category&#34;</span>)
+</span></span></code></pre></div><pre><code>&lt;AxesSubplot:xlabel='num_tokens', ylabel='Count'&gt;
+</code></pre>
+<p><img src="/nlp4_files/nlp4_7_1.png" alt="png"></p>
+<p>We can see that most documents are between 50 and 300 words long and the max being close to 400. So let&rsquo;s set our max sequence length to be 300.</p>
+<p>Now, we&rsquo;ll import Tensorflow as well as the <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/TextVectorization"  class="external-link" target="_blank" rel="noopener">TextVectorization</a> class. Note the version of TensorFlow I am using is</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> tensorflow <span style="color:#66d9ef">as</span> tf
+</span></span><span style="display:flex;"><span>tf<span style="color:#f92672">.</span>__version__
+</span></span></code></pre></div><pre><code>'2.8.0'
+</code></pre>
+<p>Depending on your verion of Tensorflow, <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/TextVectorization"  class="external-link" target="_blank" rel="noopener">TextVectorization</a> (along with other functions I use) may no longer be experimental and the path may be different.</p>
+<p>We create a <code>TextVectorization</code> layer that has a max sequence length of 300 and cap the vocabulary to be 20,000. Words that are not in this vocabulary will be set to a default &ldquo;unknown&rdquo; token.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> tensorflow.keras.layers.experimental.preprocessing <span style="color:#f92672">import</span> TextVectorization
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>max_features <span style="color:#f92672">=</span> <span style="color:#ae81ff">20000</span>
+</span></span><span style="display:flex;"><span>sequence_length <span style="color:#f92672">=</span> <span style="color:#ae81ff">300</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>vectorize_layer <span style="color:#f92672">=</span> TextVectorization(
+</span></span><span style="display:flex;"><span>    standardize<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;lower_and_strip_punctuation&#34;</span>,
+</span></span><span style="display:flex;"><span>    max_tokens<span style="color:#f92672">=</span>max_features,
+</span></span><span style="display:flex;"><span>    output_mode<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;int&#34;</span>,
+</span></span><span style="display:flex;"><span>    pad_to_max_tokens<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>,
+</span></span><span style="display:flex;"><span>    output_sequence_length<span style="color:#f92672">=</span>sequence_length,
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>Now we train the layer on the entire training dataset,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>vectorize_layer<span style="color:#f92672">.</span>adapt(train_df[<span style="color:#e6db74">&#34;text&#34;</span>]<span style="color:#f92672">.</span>to_numpy())
+</span></span></code></pre></div><pre><code>2022-11-18 07:16:37.494074: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+</code></pre>
+<p>Let&rsquo;s look at an example of a text,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>test <span style="color:#f92672">=</span> train_df[<span style="color:#e6db74">&#34;text&#34;</span>][<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>test
+</span></span></code></pre></div><pre><code>'Because of their occasional need to return to shallow points in a search\ntree, existing backtracking methods can sometimes erase meaningful progress\ntoward solving a search problem. In this paper, we present a method by which\nbacktrack points can be moved deeper in the search space, thereby avoiding this\ndifficulty. The technique developed is a variant of dependency-directed\nbacktracking that uses only polynomial space while still providing useful\ncontrol information and retaining the completeness guarantees provided by\nearlier approaches.'
+</code></pre>
+<p>Now let&rsquo;s look at the vector representation,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>vectorize_layer<span style="color:#f92672">.</span>call(test)
+</span></span></code></pre></div><pre><code>&lt;tf.Tensor: shape=(300,), dtype=int64, numpy=
+array([ 348,    3,   80, 9056,  408,    6, 2380,    6, 2802,  244,    7,
+          4,  106,  345,  124, 2220,   39,   22, 2119, 9690, 1526, 1510,
+       2481,  316,    4,  106,   33,    7,   12,   24,    9,   65,    4,
+         29,   18,   20, 5380,  244,   22,   19, 6762, 2778,    7,    2,
+        106,   98, 1666, 2529,   12, 1307,    2,  147,  241,    8,    4,
+       1115,    3, 9833, 2220,   11,  303,   95,  568,   98,  123,  619,
+        993,  396,  205,   53,    5, 3918,    2, 2471,  809,  538,   18,
+       1609,  127,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+          0,    0,    0])&gt;
+</code></pre>
+<p>Note that our vectors are of max sequence length (300), not the vocabulary length (20,000). Since the above sentence did not have 300 words in it, we pad the vector with 0&rsquo;s to make sure the vectors are all of the same length.</p>
+<p>The i-th entry in the above vector corresponds to the i-th word in sequence of words in the text. The value of the entry in the vector is the index for that word in our vocabulary.</p>
+<p>The first entry is 348 which means that the word &ldquo;Because&rdquo; is the 348th entry in our 20,000 vocabulary list. The second entry is 3, which means the word &ldquo;of&rdquo; is the 3rd entry in our vocabulary list.</p>
+<p>Let&rsquo;s try a word that most likely isnt on our vocabulary to see what the default token&rsquo;s entry is in our vocabulary list</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>vectorize_layer<span style="color:#f92672">.</span>call(<span style="color:#e6db74">&#34;onomatopoeia triglycerides&#34;</span>)
+</span></span></code></pre></div><pre><code>&lt;tf.Tensor: shape=(300,), dtype=int64, numpy=
+array([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])&gt;
+</code></pre>
+<p>We can see that the word &ldquo;onomatopeoia&rdquo; and &ldquo;triglycerides&rdquo; are both represented by a 1 which means the unknown token in our vocabulary is 1. Let&rsquo;s get the dictionary of words which we&rsquo;ll need later by using the <code>.get_vocabulary</code> method.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>voc <span style="color:#f92672">=</span> vectorize_layer<span style="color:#f92672">.</span>get_vocabulary()
+</span></span><span style="display:flex;"><span>word_index <span style="color:#f92672">=</span> dict(zip(voc, range(len(voc))))
+</span></span></code></pre></div><h2 id="handling-imbalance-in-the-data">
+  Handling Imbalance In The Data <a class="anchor" id="third-bullet"></a>
+  <a class="heading-link" href="#handling-imbalance-in-the-data">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>I found the most natural way to deal with imbalanced data in Keras was using weights, similar to the way I did in the <a href="http://michael-harmon.com/blog/NLP1.html"  class="external-link" target="_blank" rel="noopener">first blog post</a> in this series. In other frameworks like <a href="https://scikit-learn.org/stable/"  class="external-link" target="_blank" rel="noopener">Scikit-Learn</a> the weights for each class are determined automatically, however, with Kera&rsquo;s I found I neeeded to set them explicitly.</p>
+<p>Luckily we can use Scikit-Learn&rsquo;s <a href="https://scikit-learn.org/stable/modules/generated/sklearn.utils.class_weight.compute_class_weight.html"  class="external-link" target="_blank" rel="noopener">compute_class_weight</a> function to get estimates for the weights,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.utils <span style="color:#f92672">import</span> class_weight 
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>class_weights <span style="color:#f92672">=</span> class_weight<span style="color:#f92672">.</span>compute_class_weight(
+</span></span><span style="display:flex;"><span>                                   <span style="color:#e6db74">&#39;balanced&#39;</span>,
+</span></span><span style="display:flex;"><span>                                    classes<span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>unique(train_df[<span style="color:#e6db74">&#34;target&#34;</span>]), 
+</span></span><span style="display:flex;"><span>                                    y<span style="color:#f92672">=</span>train_df[<span style="color:#e6db74">&#34;target&#34;</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;class_weights: </span><span style="color:#e6db74">{</span>class_weights<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><pre><code>class_weights: [0.79084967 0.79084967 0.79084967 4.84      ]
+</code></pre>
+<p>Then we can convert that into a dictionary for each class and its corresponding weight:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>weights_dict <span style="color:#f92672">=</span> dict(zip(range(<span style="color:#ae81ff">4</span>), class_weights))
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;weights_dict: </span><span style="color:#e6db74">{</span>weights_dict<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><pre><code>weights_dict: {0: 0.7908496732026143, 1: 0.7908496732026143, 2: 0.7908496732026143, 3: 4.84}
+</code></pre>
+<p>We&rsquo;re cheating a little here because were using the entire dataset for calculating the dataset, but we wont be using cross validation so it&rsquo;s not so bad.</p>
+<p>Let&rsquo;s take a look at the data again, but this time look at distribution of the target variable with respect to the index in the dataframe:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>train_df<span style="color:#f92672">.</span>reset_index()<span style="color:#f92672">.</span>plot(<span style="color:#e6db74">&#39;index&#39;</span>, <span style="color:#e6db74">&#39;target&#39;</span>, kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;scatter&#39;</span>)
+</span></span></code></pre></div><pre><code>&lt;AxesSubplot:xlabel='index', ylabel='target'&gt;
+</code></pre>
+<p><img src="/nlp4_files/nlp4_29_1.png" alt="png"></p>
+<p>The dataset is ordered by the target variable which can be a problem for deep learning models. Deep learning models use <a href="https://machinelearningmastery.com/gentle-introduction-mini-batch-gradient-descent-configure-batch-size/"  class="external-link" target="_blank" rel="noopener">mini-batch gradient descent</a> which use small batches of the original dataset to train on instead of the entire dataset. If the data is ordered according to the target variable, depending on the size of the bathces, each batch most likely will only have data from one class making the model unable to discern differences between classes.</p>
+<p>To avoid this situation we want to shuffle the dataset first so that the model will get a sufficient representation of  each class in each batch during training.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.utils <span style="color:#f92672">import</span> shuffle
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>train_df <span style="color:#f92672">=</span> shuffle(train_df, random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">33</span>)
+</span></span><span style="display:flex;"><span>test_df <span style="color:#f92672">=</span> shuffle(test_df, random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">33</span>)
+</span></span></code></pre></div><p>Now the data looks much more evenly distributed across the index of the dataframe!</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>(train_df<span style="color:#f92672">.</span>reset_index(drop<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>               <span style="color:#f92672">.</span>reset_index()
+</span></span><span style="display:flex;"><span>               <span style="color:#f92672">.</span>plot(<span style="color:#e6db74">&#39;index&#39;</span>, <span style="color:#e6db74">&#39;target&#39;</span>, kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;scatter&#39;</span>))
+</span></span></code></pre></div><pre><code>&lt;AxesSubplot:xlabel='index', ylabel='target'&gt;
+</code></pre>
+<p><img src="/nlp4_files/nlp4_33_1.png" alt="png"></p>
+<p>Notice that I didnt have to worry about this in prior blog post&rsquo;s models since Scikit-Learn by default uses statified sampling to create folds in <a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html"  class="external-link" target="_blank" rel="noopener">GridSearchCV</a>. Those prior models also train on all the date in each fold in cross-validation.</p>
+<p>Lastly before we get started with building a model we one-hot encode the target classes using the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.label_binarize.html"  class="external-link" target="_blank" rel="noopener">label_binarize</a> function:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.preprocessing <span style="color:#f92672">import</span> label_binarize
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># classes = [0,1,2,3]</span>
+</span></span><span style="display:flex;"><span>classes   <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>sort(train_df[<span style="color:#e6db74">&#34;target&#34;</span>]<span style="color:#f92672">.</span>unique())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># relabel the test set</span>
+</span></span><span style="display:flex;"><span>y_train <span style="color:#f92672">=</span> label_binarize(train_df[<span style="color:#e6db74">&#34;target&#34;</span>],
+</span></span><span style="display:flex;"><span>                         classes<span style="color:#f92672">=</span>classes)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>y_test <span style="color:#f92672">=</span> label_binarize(test_df[<span style="color:#e6db74">&#34;target&#34;</span>], 
+</span></span><span style="display:flex;"><span>                       classes<span style="color:#f92672">=</span>classes)
+</span></span></code></pre></div><p>We can see that the results are a 4-dimensional vector,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>y_train[<span style="color:#ae81ff">0</span>]
+</span></span></code></pre></div><pre><code>array([1, 0, 0, 0])
+</code></pre>
+<p>Now we can move onto building a convolutional neural network using Keras!</p>
+<h2 id="building-a-convolutional-neural-network-with-keras">
+  Building A Convolutional Neural Network With Keras <a class="anchor" id="fourth-bullet"></a>
+  <a class="heading-link" href="#building-a-convolutional-neural-network-with-keras">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>We will use a <a href="https://en.wikipedia.org/wiki/Convolutional_neural_network"  class="external-link" target="_blank" rel="noopener">Convolution Neural Network</a> with the architecture shown below,</p>
+<figure>
+<img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/Basic-architecture-of-CNN.png?raw=1" alt="Trulli" style="width:75%">
+<figcaption align = "center">
+    From https://www.researchgate.net/figure/Basic-architecture-of-CNN_fig3_335086346
+</figcaption>
+</figure>
+<p>This is a pretty classic architecture for text classification that uses two <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/Conv1D"  class="external-link" target="_blank" rel="noopener">1D Convolutional Layer</a> with an <a href="https://en.wikipedia.org/wiki/Rectifier_%28neural_networks%29"  class="external-link" target="_blank" rel="noopener">ReLU activation function</a> and <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/MaxPool1D"  class="external-link" target="_blank" rel="noopener">1D MaxPooling Layer</a>. This is followed by a <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/Dense"  class="external-link" target="_blank" rel="noopener">Dense layer</a>, <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/Dropout"  class="external-link" target="_blank" rel="noopener">Dropout layer</a> and a <a href="https://en.wikipedia.org/wiki/Softmax_function"  class="external-link" target="_blank" rel="noopener">softmax layer</a> for predicting one of the four classes. The one thing that the above diagram does show is that input layer is using an <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/Embedding"  class="external-link" target="_blank" rel="noopener">Embedding layer</a>.</p>
+<p><a href="https://en.wikipedia.org/wiki/Word_embedding"  class="external-link" target="_blank" rel="noopener">Word Emeddings</a> (or embeddings) allows us to represent words in a dense low-dimensional vector space instead of a high-dimensional sparse vector space as with the bag-of-words model. In addition to reducing dimensionality they also allow us to learn semantic relationship between words such as man is to woman as king is to queen.</p>
+<p>A more detailed look at the convolutional/max pooling block is shown below,</p>
+<figure>
+<img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/1d-convolutional.jpg?raw=1" alt="Trulli" style="width:75%">
+<figcaption align = "center">
+    From https://www.researchgate.net/figure/a-Simple-scheme-of-a-one-dimension-1D-convolutional-operation-b-Full_fig2_334609713
+</figcaption>
+</figure>
+<p>A convolutional layer is made up filters (or kernels) that have weights which must be learned. The kernel size is the number of weights in each filter and are shown in pink. We take the sum-product of the weights and entries in the input vector and apply an <a href="https://machinelearningmastery.com/rectified-linear-activation-function-for-deep-learning-neural-networks/"  class="external-link" target="_blank" rel="noopener">ReLU function</a> to form new entries in a the output layer. We slide this filter over all windows of size <a href="https://stats.stackexchange.com/questions/296679/what-does-kernel-size-mean"  class="external-link" target="_blank" rel="noopener">kernel_size</a> in the input layer to fill out entries in the output layer (yellow square).</p>
+<p>In this sliding mechanism we skip entries in the input space bewteen the ending of the application of the filter and start of the next application of the filter. The number of entries that we skip is called the <a href="https://machinelearningmastery.com/padding-and-stride-for-convolutional-neural-networks/"  class="external-link" target="_blank" rel="noopener">stride size</a>. This process is called a convolution and results in an output dimensions that is smaller than the input dimensions. We can supress this reduction in dimension by <a href="https://machinelearningmastery.com/padding-and-stride-for-convolutional-neural-networks/"  class="external-link" target="_blank" rel="noopener">padding</a> the input vector with 0&rsquo;s so that the output is the same size as the input size. Allowing the output space to be reduced in dimension is called &ldquo;valid&rdquo; padding and supressing this is called &ldquo;same&rdquo; padding.</p>
+<p>The <a href="https://machinelearningmastery.com/pooling-layers-for-convolutional-neural-networks/"  class="external-link" target="_blank" rel="noopener">max pooling layer</a> looks at the values in a window of the convolutions output layer and finds the maximum value and makes that the value in the output cell. Another depiction of the process is shown below,</p>
+<figure>
+<img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/1D-max-pooling-operation.png?raw=1" alt="Trulli" style="width:75%">
+<figcaption align = "center">
+    From https://www.researchgate.net/figure/1D-max-pooling-operation_fig4_324177888
+</figcaption>
+</figure>
+<p>The window size is again called the <code>pool_size</code> (in the above its labeled as <code>pooling_size</code>). MaxPooling also has the concept of <code>stride</code> and <code>padding</code> that a convolutional layer has. The point of MaxPooling is to make the repesentation more invariant to transformations, a concept that is more intuitive for me when applying CNNs to computer vision.</p>
+<p>The last technique for CNNs we will discuss is <a href="https://machinelearningmastery.com/dropout-for-regularizing-deep-neural-networks/"  class="external-link" target="_blank" rel="noopener">drop out</a>. Drop out is a form of regularization that randomly sets the weights of specific neurons in a layer to zero during training time. This is shown below,</p>
+<figure>
+<img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/dropout.jpg?raw=1" alt="Trulli" style="width:75%">
+<figcaption align = "center">
+    From https://wenkangwei.github.io/2020/11/13/DL-DropOut/
+</figcaption>
+</figure>
+<p>Drop out prevents overfittings by making the network not overly dependent on any one neuron in the hidden layers. Usually drop out is not performed on in the input layer, and is reserved for the deepest layers as those are the most likely to have overfitting.</p>
+<p>Now that we have gone over the basics of the CNN architecture let&rsquo;s get building a model!</p>
+<p>We can import the necessary modules and see if we are using a GPU for training:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> tensorflow <span style="color:#66d9ef">as</span> tf
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> tensorflow.keras.layers <span style="color:#f92672">import</span> Dense, Input, Embedding
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> tensorflow.keras.models <span style="color:#f92672">import</span> Sequential
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> tensorflow.keras <span style="color:#f92672">import</span> layers, losses
+</span></span></code></pre></div><p>Let&rsquo;s set the logging to only log errors and also test to make sure we have a working GPU.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>tf<span style="color:#f92672">.</span>compat<span style="color:#f92672">.</span>v1<span style="color:#f92672">.</span>logging<span style="color:#f92672">.</span>set_verbosity(<span style="color:#e6db74">&#39;ERROR&#39;</span>)
+</span></span><span style="display:flex;"><span>tf<span style="color:#f92672">.</span>config<span style="color:#f92672">.</span>list_physical_devices(<span style="color:#e6db74">&#39;GPU&#39;</span>)
+</span></span></code></pre></div><pre><code>[PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+</code></pre>
+<p>Since we dont have too much data relative to amount usually needed for deep learning usually we would use <a href="https://en.wikipedia.org/wiki/Transfer_learning"  class="external-link" target="_blank" rel="noopener">transfer learning</a> by using a pre-trained embedding, however, I found this actually performed worse which could be due to the technical nature of the words we are using.</p>
+<p>One option to fix this would be to adapt a pre-trained embedding layer to the specifics of our data. In order to do that people generally let the model train with a fixed embedding matrix for a few iterations before setting the embedding layer to be traininable. The reason for this is because the first few iterations of gradient descent have large gradients that would completely change the values of the embedding layer and inject a ton of noise into the model. However, after a few iterations of gradient descent the gradients won&rsquo;t be so dramatic and we can unfreeze the embedding layer to allow the coefficents to be fine tuned to the specifics of the model.</p>
+<p>For this problem, I found this didnt work well either and instead we&rsquo;ll simplicity just train the embedding as part of the model building process.</p>
+<p>Next we define a function that returns a compiled Keras model. The function takes as inputs all the hyperparameters that we want to optimize our model for. Setting up a function to do this will simplify the procedure to optimize the hyperparameters of the model. Note that the function below has default values so that we can call the function without any parameters being passed.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">build_model</span>(
+</span></span><span style="display:flex;"><span>    embedding_dim: int<span style="color:#f92672">=</span><span style="color:#ae81ff">128</span>,
+</span></span><span style="display:flex;"><span>    filters: int<span style="color:#f92672">=</span><span style="color:#ae81ff">8</span>,
+</span></span><span style="display:flex;"><span>    kernel_size: int<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>,
+</span></span><span style="display:flex;"><span>    stride_size: int<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>,
+</span></span><span style="display:flex;"><span>    conv_padding: str<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;valid&#34;</span>,
+</span></span><span style="display:flex;"><span>    pool_padding: str<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;same&#34;</span>,
+</span></span><span style="display:flex;"><span>    dropout: float<span style="color:#f92672">=</span><span style="color:#ae81ff">0.2</span>
+</span></span><span style="display:flex;"><span>) <span style="color:#f92672">-&gt;</span> Sequential:
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    model <span style="color:#f92672">=</span> Sequential([
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e"># Embedding Layer</span>
+</span></span><span style="display:flex;"><span>                tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>Input(shape<span style="color:#f92672">=</span>(<span style="color:#ae81ff">1</span>,), 
+</span></span><span style="display:flex;"><span>                               dtype<span style="color:#f92672">=</span>tf<span style="color:#f92672">.</span>string, 
+</span></span><span style="display:flex;"><span>                               name<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;text&#39;</span>),
+</span></span><span style="display:flex;"><span>                vectorize_layer,
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e"># embedding_layer,</span>
+</span></span><span style="display:flex;"><span>                layers<span style="color:#f92672">.</span>Embedding(max_features, embedding_dim),
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e"># Convolutional Layers</span>
+</span></span><span style="display:flex;"><span>                layers<span style="color:#f92672">.</span>Conv1D(filters, 
+</span></span><span style="display:flex;"><span>                              kernel_size, 
+</span></span><span style="display:flex;"><span>                              padding<span style="color:#f92672">=</span>conv_padding, 
+</span></span><span style="display:flex;"><span>                              activation<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;relu&#34;</span>, 
+</span></span><span style="display:flex;"><span>                              strides<span style="color:#f92672">=</span>stride_size),
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>                layers<span style="color:#f92672">.</span>MaxPooling1D(padding<span style="color:#f92672">=</span>pool_padding),
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>                layers<span style="color:#f92672">.</span>Conv1D(filters, 
+</span></span><span style="display:flex;"><span>                              kernel_size, 
+</span></span><span style="display:flex;"><span>                              padding<span style="color:#f92672">=</span>conv_padding, 
+</span></span><span style="display:flex;"><span>                              activation<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;relu&#34;</span>, 
+</span></span><span style="display:flex;"><span>                              strides<span style="color:#f92672">=</span>stride_size),
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>                layers<span style="color:#f92672">.</span>GlobalMaxPool1D(),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e"># Add a vanilla hidden layer:</span>
+</span></span><span style="display:flex;"><span>                layers<span style="color:#f92672">.</span>Dense(filters, activation<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;relu&#34;</span>),
+</span></span><span style="display:flex;"><span>                layers<span style="color:#f92672">.</span>Dropout(dropout),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e"># softmax layer</span>
+</span></span><span style="display:flex;"><span>                layers<span style="color:#f92672">.</span>Dense(<span style="color:#ae81ff">4</span>, activation<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;softmax&#34;</span>)
+</span></span><span style="display:flex;"><span>    ])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># sceduler</span>
+</span></span><span style="display:flex;"><span>    lr_schedule <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>optimizers<span style="color:#f92672">.</span>schedules<span style="color:#f92672">.</span>ExponentialDecay(
+</span></span><span style="display:flex;"><span>                            initial_learning_rate<span style="color:#f92672">=</span><span style="color:#ae81ff">1e-2</span>,
+</span></span><span style="display:flex;"><span>                            decay_steps<span style="color:#f92672">=</span><span style="color:#ae81ff">1000</span>,
+</span></span><span style="display:flex;"><span>                            decay_rate<span style="color:#f92672">=</span><span style="color:#ae81ff">0.2</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    model<span style="color:#f92672">.</span>compile(loss<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;categorical_crossentropy&#34;</span>, 
+</span></span><span style="display:flex;"><span>                  optimizer<span style="color:#f92672">=</span>tf<span style="color:#f92672">.</span>optimizers<span style="color:#f92672">.</span>Adam(learning_rate<span style="color:#f92672">=</span>lr_schedule), 
+</span></span><span style="display:flex;"><span>                  metrics<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#34;accuracy&#34;</span>, tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>metrics<span style="color:#f92672">.</span>AUC(name<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;prc&#39;</span>, curve<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;PR&#39;</span>)])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> model
+</span></span></code></pre></div><p>We can now create a default model and see the number of unknowns in each layer as well as the total number of unknowns using the summary method,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>model <span style="color:#f92672">=</span> build_model()
+</span></span><span style="display:flex;"><span>model<span style="color:#f92672">.</span>summary()
+</span></span></code></pre></div><pre><code>Model: &quot;sequential_3&quot;
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ text_vectorization (TextVec  (None, 300)              0         
+ torization)                                                     
+                                                                 
+ embedding_3 (Embedding)     (None, 300, 128)          2560000   
+                                                                 
+ conv1d_6 (Conv1D)           (None, 99, 8)             5128      
+                                                                 
+ max_pooling1d_3 (MaxPooling  (None, 50, 8)            0         
+ 1D)                                                             
+                                                                 
+ conv1d_7 (Conv1D)           (None, 16, 8)             328       
+                                                                 
+ global_max_pooling1d_3 (Glo  (None, 8)                0         
+ balMaxPooling1D)                                                
+                                                                 
+ dense_6 (Dense)             (None, 8)                 72        
+                                                                 
+ dropout_3 (Dropout)         (None, 8)                 0         
+                                                                 
+ dense_7 (Dense)             (None, 4)                 36        
+                                                                 
+=================================================================
+Total params: 2,565,564
+Trainable params: 2,565,564
+Non-trainable params: 0
+_________________________________________________________________
+</code></pre>
+<p>The number of coefficents in this model is dominated by the word embedding. For this configuration the model has over 2 million coefficents which makes it quite complex!</p>
+<p>Next let&rsquo;s turn to how we optimize the hyperparameters of our model using Optuna.</p>
+<h2 id="hyperparameter-tuning-with-optuna">
+  Hyperparameter Tuning with Optuna <a class="anchor" id="fourth-bullet"></a>
+  <a class="heading-link" href="#hyperparameter-tuning-with-optuna">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Optuna is powerful hyperparameter tuning library that uses a define-by-run design that makes it elegant and easy to use. I have just started using this powerful library and have been particularly impressed with the design and felt it was extremely intuitve. The three things to take into account for a optimization run in Optuna are <em>Trial</em>, <em>Study</em>, <em>Parameter</em>. These are defined as,</p>
+<ul>
+<li>
+<p><strong>Trial</strong>: A single call of the objective function</p>
+</li>
+<li>
+<p><strong>Study</strong>: An optimization session, which is a set of trials</p>
+</li>
+<li>
+<p><strong>Parameter</strong>: A variable whose value is to be optimized, such as <code>dropout</code> rate in the <code>build_model</code> function.</p>
+</li>
+</ul>
+<p>The first thing we do is to define an <strong>objective function</strong>; this is the function we want to maximize (or minimize). This is a function of a trial which is a process of evaluating an objective function and provides interfaces to get the <strong>parameter</strong> suggestions.</p>
+<p>Notice that each hyperparameter of the model is defined as a parameter in the <code>build_model</code> function and is given a suggested value for each trial. The model is then fit to the dataset and returns the area under the curve (AUC) of the precision-recall curve (PR curve) on the validation data set. After running a predfined number of trials in the study, the model with the best AUC-PR on the validation data set is chosen as the final model.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> optuna
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">objective</span>(trial):
+</span></span><span style="display:flex;"><span>    tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>backend<span style="color:#f92672">.</span>clear_session()
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    model <span style="color:#f92672">=</span> build_model(embedding_dim<span style="color:#f92672">=</span>trial<span style="color:#f92672">.</span>suggest_categorical(<span style="color:#e6db74">&#34;embedding_dim&#34;</span>, [<span style="color:#ae81ff">16</span>, <span style="color:#ae81ff">32</span>, <span style="color:#ae81ff">64</span>, <span style="color:#ae81ff">128</span>]),
+</span></span><span style="display:flex;"><span>                        conv_padding<span style="color:#f92672">=</span>trial<span style="color:#f92672">.</span>suggest_categorical(<span style="color:#e6db74">&#34;conv_padding&#34;</span>, [<span style="color:#e6db74">&#34;valid&#34;</span>, <span style="color:#e6db74">&#34;same&#34;</span>]),
+</span></span><span style="display:flex;"><span>                        pool_padding<span style="color:#f92672">=</span>trial<span style="color:#f92672">.</span>suggest_categorical(<span style="color:#e6db74">&#34;pool_padding&#34;</span>, [<span style="color:#e6db74">&#34;valid&#34;</span>, <span style="color:#e6db74">&#34;same&#34;</span>]),
+</span></span><span style="display:flex;"><span>                        kernel_size<span style="color:#f92672">=</span>trial<span style="color:#f92672">.</span>suggest_categorical(<span style="color:#e6db74">&#34;kernel_size&#34;</span>, [<span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">16</span>, <span style="color:#ae81ff">24</span>]),
+</span></span><span style="display:flex;"><span>                        stride_size<span style="color:#f92672">=</span>trial<span style="color:#f92672">.</span>suggest_categorical(<span style="color:#e6db74">&#34;stride_size&#34;</span>, [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">5</span>]),
+</span></span><span style="display:flex;"><span>                        dropout<span style="color:#f92672">=</span>trial<span style="color:#f92672">.</span>suggest_float(<span style="color:#e6db74">&#34;dropout&#34;</span>, <span style="color:#ae81ff">0.2</span>, <span style="color:#ae81ff">0.5</span>))
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    early_stopping_cb <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>callbacks<span style="color:#f92672">.</span>EarlyStopping(patience<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>, 
+</span></span><span style="display:flex;"><span>                                                         restore_best_weights<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    history <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>fit(train_df[<span style="color:#e6db74">&#34;text&#34;</span>], 
+</span></span><span style="display:flex;"><span>                        y_train, 
+</span></span><span style="display:flex;"><span>                        epochs<span style="color:#f92672">=</span><span style="color:#ae81ff">20</span>, 
+</span></span><span style="display:flex;"><span>                        batch_size<span style="color:#f92672">=</span>trial<span style="color:#f92672">.</span>suggest_categorical(<span style="color:#e6db74">&#34;batch_size&#34;</span>, [<span style="color:#ae81ff">32</span>, <span style="color:#ae81ff">64</span>, <span style="color:#ae81ff">128</span>]),
+</span></span><span style="display:flex;"><span>                        class_weight<span style="color:#f92672">=</span>weights_dict, 
+</span></span><span style="display:flex;"><span>                        validation_split<span style="color:#f92672">=</span><span style="color:#ae81ff">0.2</span>,
+</span></span><span style="display:flex;"><span>                        callbacks<span style="color:#f92672">=</span>[early_stopping_cb],
+</span></span><span style="display:flex;"><span>                        verbose<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    scores <span style="color:#f92672">=</span> history<span style="color:#f92672">.</span>history[<span style="color:#e6db74">&#34;val_prc&#34;</span>]
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># get the last epochs scores</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> max(scores)
+</span></span></code></pre></div><p>Before we start our Optuna study we create a backend storage to keep the results of every trial. We can use it to reload the the results of each study if necessary, which i FO In this set up I will use a local <a href="https://www.sqlite.org/index.html"  class="external-link" target="_blank" rel="noopener">sqlite</a> database.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>optuna_storage <span style="color:#f92672">=</span> optuna<span style="color:#f92672">.</span>storages<span style="color:#f92672">.</span>RDBStorage(
+</span></span><span style="display:flex;"><span>    url<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;sqlite:///tunning.db&#34;</span>,
+</span></span><span style="display:flex;"><span>    engine_kwargs<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;connect_args&#34;</span>: {<span style="color:#e6db74">&#34;timeout&#34;</span>: <span style="color:#ae81ff">10</span>}},
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>Now we can create a the study with its name and to <code>maximize</code> the objective function. We also set the storage to be the sqlite database created above.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>study <span style="color:#f92672">=</span> optuna<span style="color:#f92672">.</span>create_study(study_name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;study_one&#34;</span>, 
+</span></span><span style="display:flex;"><span>                            direction<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;maximize&#34;</span>, 
+</span></span><span style="display:flex;"><span>                            storage<span style="color:#f92672">=</span>optuna_storage)
+</span></span></code></pre></div><p>Well just create a small study of 30 trials to show the effectiveness of Optuna and fead the study the objective function through the <code>optimize</code> method.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>optuna<span style="color:#f92672">.</span>logging<span style="color:#f92672">.</span>set_verbosity(optuna<span style="color:#f92672">.</span>logging<span style="color:#f92672">.</span>WARNING)
+</span></span><span style="display:flex;"><span>study<span style="color:#f92672">.</span>optimize(objective, 
+</span></span><span style="display:flex;"><span>               n_trials<span style="color:#f92672">=</span><span style="color:#ae81ff">30</span>,
+</span></span><span style="display:flex;"><span>               timeout<span style="color:#f92672">=</span><span style="color:#ae81ff">600</span>)
+</span></span></code></pre></div><p>We can see the results of each trial in the study as a Pandas dataframe,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>study<span style="color:#f92672">.</span>trials_dataframe()<span style="color:#f92672">.</span>sort_values(<span style="color:#e6db74">&#34;value&#34;</span>, ascending<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)<span style="color:#f92672">.</span>head(<span style="color:#ae81ff">3</span>)
+</span></span></code></pre></div><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>number</th>
+      <th>value</th>
+      <th>datetime_start</th>
+      <th>datetime_complete</th>
+      <th>duration</th>
+      <th>params_batch_size</th>
+      <th>params_conv_padding</th>
+      <th>params_dropout</th>
+      <th>params_embedding_dim</th>
+      <th>params_kernel_size</th>
+      <th>params_pool_padding</th>
+      <th>params_stride_size</th>
+      <th>state</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>2</th>
+      <td>2</td>
+      <td>0.922710</td>
+      <td>2022-11-18 07:21:35.263205</td>
+      <td>2022-11-18 07:22:36.247542</td>
+      <td>0 days 00:01:00.984337</td>
+      <td>64</td>
+      <td>same</td>
+      <td>0.232188</td>
+      <td>128</td>
+      <td>24</td>
+      <td>same</td>
+      <td>2</td>
+      <td>COMPLETE</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>4</td>
+      <td>0.888039</td>
+      <td>2022-11-18 07:24:29.862892</td>
+      <td>2022-11-18 07:25:35.354486</td>
+      <td>0 days 00:01:05.491594</td>
+      <td>64</td>
+      <td>valid</td>
+      <td>0.332368</td>
+      <td>64</td>
+      <td>8</td>
+      <td>same</td>
+      <td>5</td>
+      <td>COMPLETE</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3</td>
+      <td>0.880042</td>
+      <td>2022-11-18 07:22:36.253876</td>
+      <td>2022-11-18 07:24:29.853067</td>
+      <td>0 days 00:01:53.599191</td>
+      <td>32</td>
+      <td>same</td>
+      <td>0.252965</td>
+      <td>128</td>
+      <td>16</td>
+      <td>valid</td>
+      <td>5</td>
+      <td>COMPLETE</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>The best trial got AUC-PR OF 0.922 which is pretty good.</p>
+<p>We can reload the results of the study by passing the name of the study and the backend storage.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>study <span style="color:#f92672">=</span> optuna<span style="color:#f92672">.</span>load_study(study_name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;study_one&#34;</span>, storage<span style="color:#f92672">=</span>optuna_storage)
+</span></span></code></pre></div><p>Then we can get the accuracy of the best model on the validation set</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>study<span style="color:#f92672">.</span>best_value
+</span></span></code></pre></div><pre><code>0.9227098226547241
+</code></pre>
+<p>We can get the parameters of the model,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>best_params <span style="color:#f92672">=</span> study<span style="color:#f92672">.</span>best_params<span style="color:#f92672">.</span>copy()
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>best_params
+</span></span></code></pre></div><pre><code>{'batch_size': 64,
+ 'conv_padding': 'same',
+ 'dropout': 0.232187759007721,
+ 'embedding_dim': 128,
+ 'kernel_size': 24,
+ 'pool_padding': 'same',
+ 'stride_size': 2}
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>batch_size <span style="color:#f92672">=</span> best_params<span style="color:#f92672">.</span>pop(<span style="color:#e6db74">&#34;batch_size&#34;</span>)
+</span></span></code></pre></div><p>And then use these values to fit the best model on the training set again,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>model <span style="color:#f92672">=</span> build_model(<span style="color:#f92672">**</span>best_params)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>early_stopping_cb <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>callbacks<span style="color:#f92672">.</span>EarlyStopping(patience<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>, 
+</span></span><span style="display:flex;"><span>                                                     restore_best_weights<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>history <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>fit(train_df[<span style="color:#e6db74">&#34;text&#34;</span>], 
+</span></span><span style="display:flex;"><span>                    y_train, 
+</span></span><span style="display:flex;"><span>                    epochs<span style="color:#f92672">=</span><span style="color:#ae81ff">20</span>, 
+</span></span><span style="display:flex;"><span>                    batch_size<span style="color:#f92672">=</span>batch_size,
+</span></span><span style="display:flex;"><span>                    class_weight<span style="color:#f92672">=</span>weights_dict, 
+</span></span><span style="display:flex;"><span>                    validation_split<span style="color:#f92672">=</span><span style="color:#ae81ff">0.2</span>,
+</span></span><span style="display:flex;"><span>                    callbacks<span style="color:#f92672">=</span>[early_stopping_cb],
+</span></span><span style="display:flex;"><span>                    verbose<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span></code></pre></div><pre><code>2022-11-18 07:42:06.175271: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+2022-11-18 07:42:14.882599: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+</code></pre>
+<p>We can now plot the learning curves to see how our model is performing,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>history_df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>DataFrame(history<span style="color:#f92672">.</span>history)
+</span></span><span style="display:flex;"><span>history_df<span style="color:#f92672">.</span>plot(figsize<span style="color:#f92672">=</span>(<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">5</span>))
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>grid(<span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>title(<span style="color:#e6db74">&#34;Learning Curves&#34;</span>)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>show()
+</span></span></code></pre></div><p><img src="/nlp4_files/nlp4_72_0.png" alt="png"></p>
+<p>The validation loss shows that the model quickly starts overtraining after 3 or 4 epochs. This is probably due to the fact we have a complex model with comparatively little data.</p>
+<p>Let&rsquo;s see how well the model performs on test set.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sores <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>evaluate(test_df[<span style="color:#e6db74">&#34;text&#34;</span>], y_test)
+</span></span></code></pre></div><pre><code>2022-11-18 07:38:10.019040: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+
+
+50/50 [==============================] - 3s 48ms/step - loss: 1.4780 - accuracy: 0.8413 - prc: 0.8382
+</code></pre>
+<p>We can see the test set accuracy is around 84% and the AUC for the recision recall is about 83%, not too bad.</p>
+<p>The ROC curves look pretty decent, but the PR curves dont look quite so good as the prior model, especially for the minority class. Most likely because this model is too complex for the size of the data, as well the overlap and imbalance of the classes.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>y_pred <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>predict(test_df[<span style="color:#e6db74">&#34;text&#34;</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> utils.Plot_ROC_PR_Curve <span style="color:#f92672">import</span> plot_roc_pr
+</span></span><span style="display:flex;"><span>plot_roc_pr(y_pred, y_test)
+</span></span></code></pre></div><p><img src="/nlp4_files/nlp4_77_0.png" alt="png"></p>
+<p>Finally, we can save the model for deploying the model at a later time.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>model<span style="color:#f92672">.</span>save(<span style="color:#e6db74">&#34;cnn_model&#34;</span>)
+</span></span></code></pre></div><pre><code>2022-11-18 07:38:23.931305: W tensorflow/python/util/util.cc:368] Sets are not currently considered sequences, but this may change in the future, so consider avoiding using them.
+</code></pre>
+<h2 id="next-steps">
+  Next Steps <a class="anchor" id="sixth-bullet"></a>
+  <a class="heading-link" href="#next-steps">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>In this post we covered how to build a Convolutional Neural Network in Keras. We optimized the model hyperparameters using the Optuna library and persisted saved model. In a follow up post we will deploy this model to production Google Cloud.</p>
+<p>Hope you enjoyed reading this!</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+      <h3 id="see-also-in-nlp">
+        See also in NLP
+        <a class="heading-link" href="#see-also-in-nlp">
+          <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+          <span class="sr-only">Link to heading</span>
+        </a>
+      </h3>
+      <nav>
+        <ul>
+        
+        
+          
+            <li>
+              <a href="/posts/bert/">Text Classification 5: Fine Tuning BERT With HuggingFace</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/jfk2/">Creating An AI-Based JFK Speech Writer: Part 2</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/jfk1/">Creating An AI-Based JFK Speech Writer: Part 1</a>
+            </li>
+          
+        
+          
+        
+          
+            <li>
+              <a href="/posts/nlp3/">Text Classification 3: A Machine Learning Powered Web App</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/nlp1/">Text Classification 1: Imbalanced Data</a>
+            </li>
+          
+        
+        </ul>
+      </nav>
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>

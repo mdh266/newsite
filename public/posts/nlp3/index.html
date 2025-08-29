@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Text Classification 3: A Machine Learning Powered Web App · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+1. Introduction
+2. Converting A Model To A Rest API With FastAPI
+3. Building A Web App With FastAPI &amp; Bootstrap
+4. Deploying The App With Docker &amp; Google Cloud Run
+5. Conclusions
+
+
+  Introduction 
+  
+    
+    Link to heading
+  
+
+
+In the last blogpost we covered building a text classification using Scikit-learn and using the Natural Language Toolkit (NLTK). We used a weighted Support Vector Machine to handle the imbalance of the classes in the datset. Once we trained our model we then serialized the Scikit-learn pipeline using Joblib.">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Text Classification 3: A Machine Learning Powered Web App">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. Converting A Model To A Rest API With FastAPI
+3. Building A Web App With FastAPI &amp; Bootstrap
+4. Deploying The App With Docker &amp; Google Cloud Run
+5. Conclusions
+Introduction Link to heading In the last blogpost we covered building a text classification using Scikit-learn and using the Natural Language Toolkit (NLTK). We used a weighted Support Vector Machine to handle the imbalance of the classes in the datset. Once we trained our model we then serialized the Scikit-learn pipeline using Joblib.">
+
+<meta property="og:url" content="http://localhost:1313/posts/nlp3/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Text Classification 3: A Machine Learning Powered Web App">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. Converting A Model To A Rest API With FastAPI
+3. Building A Web App With FastAPI &amp; Bootstrap
+4. Deploying The App With Docker &amp; Google Cloud Run
+5. Conclusions
+Introduction Link to heading In the last blogpost we covered building a text classification using Scikit-learn and using the Natural Language Toolkit (NLTK). We used a weighted Support Vector Machine to handle the imbalance of the classes in the datset. Once we trained our model we then serialized the Scikit-learn pipeline using Joblib.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-10-31T00:00:00+00:00">
+    <meta property="article:modified_time" content="2020-10-31T00:00:00+00:00">
+    <meta property="article:tag" content="FastAPI">
+    <meta property="article:tag" content="Bootstrap">
+    <meta property="article:tag" content="Docker">
+    <meta property="article:tag" content="Google Cloud">
+    <meta property="article:tag" content="NLP">
+      <meta property="og:see_also" content="http://localhost:1313/posts/bert/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/jfk2/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/jfk1/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/nlp4/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/nlp1/">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/nlp3/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/nlp3/">
+              Text Classification 3: A Machine Learning Powered Web App
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2020-10-31T00:00:00Z">
+                October 31, 2020
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              11-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/fastapi/">FastAPI</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/bootstrap/">Bootstrap</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/docker/">Docker</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/google-cloud/">Google Cloud</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/nlp/">NLP</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#first-bullet" >1. Introduction</a></strong></p>
+<p><strong><a href="#second-bullet" >2. Converting A Model To A Rest API With FastAPI</a></strong></p>
+<p><strong><a href="#third-bullet" >3. Building A Web App With FastAPI &amp; Bootstrap</a></strong></p>
+<p><strong><a href="#fourth-bullet" >4. Deploying The App With Docker &amp; Google Cloud Run</a></strong></p>
+<p><strong><a href="#fifth-bullet" >5. Conclusions</a></strong></p>
+<hr>
+<h2 id="introduction">
+  Introduction <a class="anchor" id="first-bullet"></a>
+  <a class="heading-link" href="#introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In the last <a href="http://michael-harmon.com/blog/NLP2.html"  class="external-link" target="_blank" rel="noopener">blogpost</a> we covered building a text classification using <a href="http://scikit-learn.org/">Scikit-learn</a> and using the <a href="https://www.nltk.org/"  class="external-link" target="_blank" rel="noopener">Natural Language Toolkit (NLTK)</a>. We used a weighted Support Vector Machine to handle the imbalance of the classes in the datset. Once we trained our model we then serialized the Scikit-learn pipeline using <a href="https://joblib.readthedocs.io/en/latest/"  class="external-link" target="_blank" rel="noopener">Joblib</a>.</p>
+<p>In this post we&rsquo;ll build out a serverless web app using a few technologies. The advantage of using a serverless framework for me is cost effectiveness: I don&rsquo;t pay much at all unless people use my web app a ton and I don&rsquo;t expect people to visit this app very often. However, due to the serverless framework I will have issues with latency, which I can live with. I&rsquo;ll first go over how to convert my text classification model from the <a href="http://michael-harmon.com/blog/NLP2.html"  class="external-link" target="_blank" rel="noopener">last post</a> into a Rest API using <a href="https://fastapi.tiangolo.com/"  class="external-link" target="_blank" rel="noopener">FastAPI</a> and <a href="https://joblib.readthedocs.io/en/latest/"  class="external-link" target="_blank" rel="noopener">Joblib</a>. Using our model in this way will allow us to send our paper abstracts as <a href="https://en.wikipedia.org/wiki/JSON"  class="external-link" target="_blank" rel="noopener">json</a> through an HTTP request and get back the predicted topic label for the paper abstract. After this I&rsquo;ll build out a web application usign <a href="https://fastapi.tiangolo.com/"  class="external-link" target="_blank" rel="noopener">FastAPI</a> and <a href="https://getbootstrap.com/"  class="external-link" target="_blank" rel="noopener">Bootstrap</a>. Using Bootstrap allows us to have a beautiful responsive website without having to write HTML or JavaScript. Finally, I&rsquo;ll go over deploying both the model API and Web app using <a href="https://www.docker.com/"  class="external-link" target="_blank" rel="noopener">Docker</a> and <a href="https://cloud.google.com/run"  class="external-link" target="_blank" rel="noopener">Google Cloud Run</a> to build out a serverless web application!</p>
+<p>The reason we serve the model as a rest API seperate from the web app is that it gives us the ability test the model API independently. It also allows us to redploy a different model without having to redploy our web app!</p>
+<p>Let&rsquo;s get into to the first step of converting our model as a Rest API.</p>
+<h2 id="converting-a-model-to-a-rest-api-with-fastapi">
+  Converting A Model To A Rest API With FastAPI <a class="anchor" id="second-bullet"></a>
+  <a class="heading-link" href="#converting-a-model-to-a-rest-api-with-fastapi">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>The overall structure of my code for a model Rest API, called, <code>modelapi</code> has the structure:</p>
+<pre><code>- modelapi/
+  - model/
+      - weighted_svm.joblib
+  - modeleapi/
+      - install_nltk.py
+      - Relabeler.py
+      - Tokenizer.py
+  - main.py
+  - requirements.txt
+  - setup.py
+  - setup.cfg
+  - Dockerfile      
+</code></pre>
+<p>Let&rsquo;s first discuss the boilerplate structure first. The <code>model</code> directory contains the persisted model while the <code>modelapi</code> directory contains some helper functions as well as the <a href="https://github.com/mdh266/DocumentClassificationNLP/blob/master/modelapi/modelapi/Tokenizer.py"  class="external-link" target="_blank" rel="noopener">StemTokenizer</a> class from the last <a href="http://michael-harmon.com/blog/NLP2.html"  class="external-link" target="_blank" rel="noopener">post</a>. We need the StemTokenizer class accessible in the script that loads the persisted <a href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html"  class="external-link" target="_blank" rel="noopener">Scikit-Learn Pipeline</a> for predictions since it uses this class in one of its stages.</p>
+<p>We also have a labeler function the <code>modelapi</code> directory which maps our prediction from the target variables 0-3 to the text &ldquo;Artificial Intelligent&rdquo;, &ldquo;Machine Learning&rdquo;, etc. This function looks like:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">relabel</span>(predicted : int) <span style="color:#f92672">-&gt;</span> str:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    labels <span style="color:#f92672">=</span> {<span style="color:#ae81ff">0</span>: <span style="color:#e6db74">&#34;Artifical Intelligence&#34;</span>,
+</span></span><span style="display:flex;"><span>              <span style="color:#ae81ff">1</span>: <span style="color:#e6db74">&#34;Computer Vision&#34;</span>,
+</span></span><span style="display:flex;"><span>              <span style="color:#ae81ff">2</span>: <span style="color:#e6db74">&#34;Machine Learning&#34;</span>,
+</span></span><span style="display:flex;"><span>              <span style="color:#ae81ff">3</span>: <span style="color:#e6db74">&#34;Robotics&#34;</span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> labels[predicted]
+</span></span></code></pre></div><p>We keep this function in a file called <a href="https://github.com/mdh266/DocumentClassificationNLP/blob/master/modelapi/modelapi/Relabeler.py"  class="external-link" target="_blank" rel="noopener">Relabeler.py</a>. Lastly there is a script in <code>modelapi</code> called <a href="https://github.com/mdh266/DocumentClassificationNLP/blob/master/modelapi/modelapi/install_nltk.py"  class="external-link" target="_blank" rel="noopener">istall_nltk.py</a> that contains the following:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> nltk
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;__main__&#34;</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> package <span style="color:#f92672">in</span> [<span style="color:#e6db74">&#39;stopwords&#39;</span>,<span style="color:#e6db74">&#39;punkt&#39;</span>,<span style="color:#e6db74">&#39;wordnet&#39;</span>]:
+</span></span><span style="display:flex;"><span>        nltk<span style="color:#f92672">.</span>download(package,download_dir<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;/usr/local/share/nltk_data&#39;</span>)
+</span></span></code></pre></div><p>This script is purely for the downloading the data needed by the <a href="https://www.nltk.org/#"  class="external-link" target="_blank" rel="noopener">NLTK</a> for stop word removal and stemming. This script will be important during the build of the Docker image since we need to download the NLTK data into the container.</p>
+<p>Next we have the <a href="https://github.com/mdh266/DocumentClassificationNLP/blob/master/modelapi/requirements.txt"  class="external-link" target="_blank" rel="noopener">requirements.txt</a> file that has the the Python library dependencies for this project. The last thing we remark about are the files <code>setup.py</code> and <code>setup.cfg</code> which are used to create a Python package called &ldquo;modelapi&rdquo; so that we can import the Tokenizer as</p>
+<pre><code>from modelapi.Tokenizer import StemTokenizer
+</code></pre>
+<p>These two setup files were created using <a href="https://github.com/cookiecutter/cookiecutter"  class="external-link" target="_blank" rel="noopener">Cookiecutter</a> library.</p>
+<p>Let&rsquo;s get to the meat of the Rest API which is contained in the <a href="https://github.com/mdh266/DocumentClassificationNLP/blob/master/modelapi/main.py"  class="external-link" target="_blank" rel="noopener">main.py</a> script:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>app <span style="color:#f92672">=</span> FastAPI()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">InputDoc</span>(BaseModel):
+</span></span><span style="display:flex;"><span>  text  : str
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LabeledDoc</span>(InputDoc):
+</span></span><span style="display:flex;"><span>  label : str
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@app.post</span>(<span style="color:#e6db74">&#39;/predict&#39;</span>, response_model<span style="color:#f92672">=</span>LabeledDoc, status_code<span style="color:#f92672">=</span><span style="color:#ae81ff">200</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">predict</span>(doc : InputDoc):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Help from https://testdriven.io/blog/fastapi-machine-learning/
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    text   <span style="color:#f92672">=</span> doc<span style="color:#f92672">.</span>text
+</span></span><span style="display:flex;"><span>    model  <span style="color:#f92672">=</span> joblib<span style="color:#f92672">.</span>load(<span style="color:#e6db74">&#34;models/weighted_svm.joblib&#34;</span>)
+</span></span><span style="display:flex;"><span>    result <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>predict([text])
+</span></span><span style="display:flex;"><span>    label  <span style="color:#f92672">=</span> relabel(result[<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> {<span style="color:#e6db74">&#34;text&#34;</span>: text, <span style="color:#e6db74">&#34;label&#34;</span>:label}
+</span></span></code></pre></div><p>Let&rsquo;s talk through what&rsquo;s going on in this script. The <a href="https://fastapi.tiangolo.com/"  class="external-link" target="_blank" rel="noopener">FastAPI</a> is similar to the <a href="https://flask.palletsprojects.com/en/1.1.x/"  class="external-link" target="_blank" rel="noopener">Flask</a> which is a micro-framework for building web applications. FastAPI has a number of advantages over Flask: It is incredible fast, allows for async communication and makes strong use of <a href="https://docs.python.org/3/library/typing.html"  class="external-link" target="_blank" rel="noopener">typing</a> for type hints and function annotators. The later is something that I find particularly cool as FastAPI uses this to create <a href="https://fastapi.tiangolo.com/tutorial/first-steps/"  class="external-link" target="_blank" rel="noopener">automatic documentation</a> for the API using <a href="https://github.com/swagger-api/swagger-ui"  class="external-link" target="_blank" rel="noopener">Swagger UI</a>.</p>
+<p>The first line creates the app object:</p>
+<pre><code>app = FastAPI()
+</code></pre>
+<p>Next is the class <code>InputDoc</code> which an extension of <a href="https://fastapi.tiangolo.com/tutorial/body/"  class="external-link" target="_blank" rel="noopener">BaseModel</a> class that allows us to define the input variable of our predict function to have the form:</p>
+<pre><code>{'text':'This abstract will be about Artificial Intelligence and ...'}
+</code></pre>
+<p><code>InputDoc</code> will be a dictionary that contains a key called &rsquo;text&rsquo; that has a value of type <code>str</code>. The string-value of the dictionary will be our input abstract. The return value of our <code>predict</code> function will be of type <code>LabeledDoc</code>. The class <code>LabeledDoc</code> extends <code>InputDoc</code> to add another key to the dictionary called <code>label</code> and associated value of type <code>str</code>. The string value for <code>label</code> will be the label for the topic of the abstract. The returned data of the predict function will be,</p>
+<pre><code>{'text':'This abstract will be about Artificial Intelligence and ...',
+ 'label': 'Artifical Intelligence'}
+</code></pre>
+<p>Inside the predict function we can see we get the <code>text</code> from the input <code>InputDoc</code> called <code>doc</code>.  We then load the model with joblib and use it to predict the target value from the text. We then convert the target variable to be a string using the <a href="https://github.com/mdh266/DocumentClassificationNLP/blob/master/modelapi/modelapi/Relabeler.py"  class="external-link" target="_blank" rel="noopener">relabel function</a>. Finally, we return the text and label as a dictionary like the above.</p>
+<p>We can start up the rest API with the command from the <code>modelapi</code> dictionary with the commmand:</p>
+<pre><code>python main.py
+</code></pre>
+<p>This is possible since we added this code to the bottom of the script:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;__main__&#34;</span>:
+</span></span><span style="display:flex;"><span>    uvicorn<span style="color:#f92672">.</span>run(app, host<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;0.0.0.0&#34;</span>, port<span style="color:#f92672">=</span><span style="color:#ae81ff">8000</span>)
+</span></span></code></pre></div><p>This uses the <a href="https://www.uvicorn.org/"  class="external-link" target="_blank" rel="noopener">uvicorn</a> library to run the rest API locally on port 8000; I should note using uvicorn this way is more for debugging. For production we use the command:</p>
+<pre><code>uvicorn --workers 2  --host 0.0.0.0 --port 8000 main:app
+</code></pre>
+<p>The last command is exactly what we use in the <a href="https://github.com/mdh266/DocumentClassificationNLP/blob/master/modelapi/Dockerfile"  class="external-link" target="_blank" rel="noopener">Dockerfile</a> to deploy this API (except we use port 8080 as will be discussed later). We can then get predictions from this API using the <a href="https://requests.readthedocs.io/en/master/"  class="external-link" target="_blank" rel="noopener">requests</a> library like the following:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> requests
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>data <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;{&#34;text&#34;:&#34;This abstract will be about Artificial Intelligence and ...&#34;}&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>result <span style="color:#f92672">=</span> requests<span style="color:#f92672">.</span>post(url<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;http://0.0.0.0:8000/predict&#34;</span>,                         
+</span></span><span style="display:flex;"><span>                       data  <span style="color:#f92672">=</span> data,
+</span></span><span style="display:flex;"><span>                       headers <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#39;Content-Type&#39;</span>:<span style="color:#e6db74">&#39;application/json&#39;</span>})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>result<span style="color:#f92672">.</span>json()
+</span></span></code></pre></div><pre><code>{'text': 'This abstract will be about Artificial Intelligence and ...',
+ 'label': 'Artifical Intelligence'}
+</code></pre>
+<p>The fact we had to use the <code>/predict</code> extension the of the web addres comes from FastAPI&rsquo;s <a href="https://realpython.com/primer-on-python-decorators/"  class="external-link" target="_blank" rel="noopener">decorator</a>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#a6e22e">@app.post</span>(<span style="color:#e6db74">&#39;/predict&#39;</span>, response_model<span style="color:#f92672">=</span>LabeledDoc, status_code<span style="color:#f92672">=</span><span style="color:#ae81ff">200</span>)
+</span></span></code></pre></div><p>that is above the predict function. The decorator also tells us that the functions return type is of the type <code>LabeledDoc</code>.</p>
+<p>One amazing part of FastAPI is the autodocumentation generation. We can see this in action by going to the address http://0.0.0.0:8000/docs:</p>
+<img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/fastapi1.png?raw=1" alt="drawing" />
+<p>We can see more info about the input type and output type of the rest api. This is all thanks to the power of using <a href="https://fastapi.tiangolo.com/python-types/"  class="external-link" target="_blank" rel="noopener">typing</a>! Clicking on the POST button creates a drop down with even more information:</p>
+<img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/fastapi2.png?raw=1" alt="drawing" />
+<p>This type of information on the input and ouput is super helpful for developers! In the we next section we can see how to use this rest API through a web app.</p>
+<h2 id="building-a-web-app-with-fastapi--bootstrap">
+  Building A Web App With FastAPI + Bootstrap <a class="anchor" id="third-bullet"></a>
+  <a class="heading-link" href="#building-a-web-app-with-fastapi--bootstrap">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>The web app directory has the structure:</p>
+<pre><code>- webapp/
+    - Dockerfile
+    - requirements.txt
+    - app/
+        - static/
+        - templates/
+        - main.py
+</code></pre>
+<p>We discuss the <code>Dockerfile</code> in the next section. The <code>requirements.txt</code> file contains all the Python library dependencies needed for the web app. We then have a subdirectory called <code>app</code> which contains a sub-directories <code>static</code> and <code>templates</code>. These last two directories contain the HTML, CSS and JavaScript from <a href="https://getbootstrap.com/"  class="external-link" target="_blank" rel="noopener">Bootstrap</a>. I don&rsquo;t want to go into how Bootstrap works as it can be its own blogpost. Instead I will point to other references which explain how to use it with Flask (see <a href="https://pythonprogramming.net/flask-bootstrap/"  class="external-link" target="_blank" rel="noopener">here</a> and <a href="https://codeloop.org/flask-tutorial-adding-bootstrap-styles-to-flask/"  class="external-link" target="_blank" rel="noopener">here</a>).</p>
+<p>The <code>main.py</code> script looks like:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>app <span style="color:#f92672">=</span> FastAPI()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>app<span style="color:#f92672">.</span>mount(<span style="color:#e6db74">&#34;/static&#34;</span>, StaticFiles(directory<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;static&#34;</span>), name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;static&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>templates <span style="color:#f92672">=</span> Jinja2Templates(directory<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;templates&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@app.get</span>(<span style="color:#e6db74">&#39;/&#39;</span>, response_class<span style="color:#f92672">=</span>HTMLResponse)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@app.get</span>(<span style="color:#e6db74">&#39;/input&#39;</span>,response_class<span style="color:#f92672">=</span>HTMLResponse)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">input_page</span>(request: Request):
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> templates<span style="color:#f92672">.</span>TemplateResponse(<span style="color:#e6db74">&#34;input.html&#34;</span>, {<span style="color:#e6db74">&#34;request&#34;</span>: request})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@app.get</span>(<span style="color:#e6db74">&#34;/output&#34;</span>, response_class<span style="color:#f92672">=</span>HTMLResponse)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">output_page</span>(request: Request, text : str):
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    clean_text  <span style="color:#f92672">=</span> re<span style="color:#f92672">.</span>sub(<span style="color:#e6db74">r</span><span style="color:#e6db74">&#34;[^a-zA-Z0-9_]&#34;</span>, <span style="color:#e6db74">&#34; &#34;</span>, text)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    data  <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;{&#34;text&#34;:&#34;&#39;</span> <span style="color:#f92672">+</span> clean_text <span style="color:#f92672">+</span> <span style="color:#e6db74">&#39;&#34;}&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    result <span style="color:#f92672">=</span> requests<span style="color:#f92672">.</span>post(url   <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;http://0.0.0.0:8080/predict&#34;</span>,
+</span></span><span style="display:flex;"><span>                         data  <span style="color:#f92672">=</span> data,
+</span></span><span style="display:flex;"><span>                         headers <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#39;Content-Type&#39;</span>:<span style="color:#e6db74">&#39;application/json&#39;</span>})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    topic  <span style="color:#f92672">=</span> result<span style="color:#f92672">.</span>json()[<span style="color:#e6db74">&#34;label&#34;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> templates<span style="color:#f92672">.</span>TemplateResponse(<span style="color:#e6db74">&#34;output.html&#34;</span>, {<span style="color:#e6db74">&#34;request&#34;</span>: request, 
+</span></span><span style="display:flex;"><span>                                                      <span style="color:#e6db74">&#34;text&#34;</span>: text,
+</span></span><span style="display:flex;"><span>                                                      <span style="color:#e6db74">&#34;topic&#34;</span>: topic})
+</span></span></code></pre></div><p>We can see again we create the app:</p>
+<pre><code>app = FastAPI()
+</code></pre>
+<p>We then add the <code>app/static/</code> sub-directory to the <code>app</code> object with the command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>app<span style="color:#f92672">.</span>mount(<span style="color:#e6db74">&#34;/static&#34;</span>, StaticFiles(directory<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;static&#34;</span>), name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;static&#34;</span>)
+</span></span></code></pre></div><p>We can get the templated HTML files from the <code>app/templates/</code> sub-directory with the command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>templates <span style="color:#f92672">=</span> Jinja2Templates(directory<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;templates&#34;</span>)
+</span></span></code></pre></div><p>The <code>input_page</code> function takes in a <a href="https://fastapi.tiangolo.com/advanced/using-request-directly/"  class="external-link" target="_blank" rel="noopener">Request</a> object called <code>request</code> and passes it to use in the <code>input.html</code> kept in the <code>templates</code> directory through the command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>templates<span style="color:#f92672">.</span>TemplateResponse(<span style="color:#e6db74">&#34;input.html&#34;</span>, {<span style="color:#e6db74">&#34;request&#34;</span>: request})
+</span></span></code></pre></div><p>This returns the html of the input (as signnified by the decorator returning an <a href="https://fastapi.tiangolo.com/advanced/custom-response/"  class="external-link" target="_blank" rel="noopener">HTMLResponse</a>) page which prompts the user to enter a paper abstract as shown below:</p>
+<img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/inputpage.png?raw=1" alt="drawing"/>
+<p>When the user enters the text and hits the &ldquo;Submit&rdquo; button the script then passes the Request object and entered text to the <code>output_page</code> function. The <code>output_page</code> strips any non-alphnumeric characters from the text and passes it to the Rest API model using the request package exactly as we did prior!</p>
+<p>We get the article&rsquo;s topic from the returned json object from the model&rsquo;s APi and pass it to the &ldquo;output.html&rdquo; file in the the <code>templates</code> directory through the command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>templates<span style="color:#f92672">.</span>TemplateResponse(<span style="color:#e6db74">&#34;output.html&#34;</span>, {<span style="color:#e6db74">&#34;request&#34;</span>: request, 
+</span></span><span style="display:flex;"><span>                                           <span style="color:#e6db74">&#34;text&#34;</span>: text,
+</span></span><span style="display:flex;"><span>                                           <span style="color:#e6db74">&#34;topic&#34;</span>: topic}) 
+</span></span></code></pre></div><p>This returns an <a href="https://fastapi.tiangolo.com/advanced/custom-response/"  class="external-link" target="_blank" rel="noopener">HTMLResponse</a> that is the output page and looks like:</p>
+<img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/outputpage.png?raw=1" alt="drawing" />
+<p>The output page has both the entered paper abstract text as well as the predicted topic of the paper.</p>
+<p>We now have a fully functional machine learning based web app!</p>
+<p>We can run web app by using the command from the <code>webapp</code> directory:</p>
+<pre><code>uvicorn --host 0.0.0.0 --port 8080 main:app
+</code></pre>
+<p>In the <a href="https://github.com/mdh266/DocumentClassificationNLP/blob/master/webapp/Dockerfile"  class="external-link" target="_blank" rel="noopener">Dockerfile</a> this is exactly what we do to run this app.</p>
+<h2 id="deploying-the-app-with-docker--google-cloud-run">
+  Deploying The App With Docker + Google Cloud Run <a class="anchor" id="fourth-bullet"></a>
+  <a class="heading-link" href="#deploying-the-app-with-docker--google-cloud-run">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Now let&rsquo;s go over how to deploy this web app to <a href="https://cloud.google.com/run"  class="external-link" target="_blank" rel="noopener">Google Cloud Run</a>. Cloud Run is super easy to use, cost efficient and requires us to use have <a href="https://www.docker.com/"  class="external-link" target="_blank" rel="noopener">Docker</a> to deploy our API and web app. We first deploy our model Rest API as we will need its URL before we deploy the web app. We note the Dockerfile for deploing the model API can be seen <a href="https://github.com/mdh266/DocumentClassificationNLP/blob/master/modelapi/Dockerfile"  class="external-link" target="_blank" rel="noopener">here</a>. The first thing to note is that we have to create this image off of the <a href="https://hub.docker.com/r/conda/miniconda3/"  class="external-link" target="_blank" rel="noopener">miniconda3</a> image. The reason for using miniconda is that it already has a lot the dependencies necessary for running scientific Python libraries. The other thing to note is that the API must use port 8080 instead of 8000 as this is necssary for using Cloud Run.</p>
+<p>We build and submit the image for the model rest API to the <a href="cloud.google.com/container/registry" >Google Container Registry</a>. We do this from the <code>modelapi</code> directory which contains the Dockerfile with the command:</p>
+<pre><code>gcloud builds submit --tag gcr.io/&lt;project-id&gt;/modelapi
+</code></pre>
+<p>This builds an image called <code>modelapi</code> and after the build is complete we see the following:</p>
+<img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/buildsuccess.png?raw=1" alt="drawing"/>
+<p>We can find image the registry from the Google Cloud console:</p>
+<img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/gcr.png?raw=1" alt="drawing"/>
+<p>We can then deploy the <code>modelapi</code> conatainer to Cloud Run with the command:</p>
+<pre><code>gcloud run deploy --image gcr.io/&lt;project-id&gt;/modelapi --platform managed
+</code></pre>
+<p>Notice how we deploy the container from the modelapi image in the contianer registry. After running the last commmand we will be prompted with a series of questions about our deplomyment:</p>
+<img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/deployapi.png?raw=1" alt="drawing" />
+<p>The highlighted URL is the address for our Rest API! We then replace the URL https://0.0.0.0:8000/predict in the <code>webapp/app/main.py</code> with the URL listed in the termal:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>result <span style="color:#f92672">=</span> requests<span style="color:#f92672">.</span>post(url     <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;https://modelapi-j3zdo3lhcq-uc.a.run.app/predict&#34;</span>,
+</span></span><span style="display:flex;"><span>                       data    <span style="color:#f92672">=</span> data,
+</span></span><span style="display:flex;"><span>                       headers <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#39;Content-Type&#39;</span>:<span style="color:#e6db74">&#39;application/json&#39;</span>})
+</span></span></code></pre></div><p>We can check that the container is running in the Cloud Run console:</p>
+<img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/cloudrun.png?raw=1" alt="drawing"/>
+<p>We next create the <a href="https://github.com/mdh266/DocumentClassificationNLP/blob/master/webapp/Dockerfile"  class="external-link" target="_blank" rel="noopener">Dockerfile</a> for the web app. Since this web app doesnt use any scientific libraries we can get away with using the lightweight <a href="https://towardsdatascience.com/slimming-down-your-docker-images-275f0ca9337e"  class="external-link" target="_blank" rel="noopener">alpine image</a> so our app&rsquo;s image is smaller.</p>
+<p>We then push the image (named webapp) to the Google Container Registry with the command:</p>
+<pre><code>gcloud builds submit --tag gcr.io/&lt;project-id&gt;/docwebapp
+</code></pre>
+<p>And then after it is successfully built we can deploy the container to Cloud Run:</p>
+<pre><code>gcloud run deploy --image gcr.io/&lt;project-id&gt;/docwebapp --platform managed
+</code></pre>
+<p>This returns us an url: <a href="https://docwebapp-j3zdo3lhcq-uc.a.run.app"  class="external-link" target="_blank" rel="noopener">https://docwebapp-j3zdo3lhcq-uc.a.run.app</a> and going to this web address we can see our app in production!</p>
+<h2 id="conclusions">
+  Conclusions  <a class="anchor" id="fifth-bullet"></a>
+  <a class="heading-link" href="#conclusions">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this post we went over how to convert a model into a rest API using <a href="https://fastapi.tiangolo.com/"  class="external-link" target="_blank" rel="noopener">FastAPI</a>. We then went over how to create a web app using FastAPI and <a href="https://getbootstrap.com/"  class="external-link" target="_blank" rel="noopener">Boostrap</a>. This web app prompts the user to enter a paper abstract and passes the text to the model rest API to get the predicted topic of the article. The web app returns the entered text and predicted output. We then deployed the rest API and web app to Google Cloud using <a href="https://www.docker.com/"  class="external-link" target="_blank" rel="noopener">Docker</a> and <a href="https://cloud.google.com/run"  class="external-link" target="_blank" rel="noopener">Cloud Run</a> to make the app serverless! We covered a lot of cool topics in this post, I hope you enjoyed reading it!</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+      <h3 id="see-also-in-nlp">
+        See also in NLP
+        <a class="heading-link" href="#see-also-in-nlp">
+          <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+          <span class="sr-only">Link to heading</span>
+        </a>
+      </h3>
+      <nav>
+        <ul>
+        
+        
+          
+            <li>
+              <a href="/posts/bert/">Text Classification 5: Fine Tuning BERT With HuggingFace</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/jfk2/">Creating An AI-Based JFK Speech Writer: Part 2</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/jfk1/">Creating An AI-Based JFK Speech Writer: Part 1</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/nlp4/">Text Classification 4: Deep Learning With Tensorflow &amp; Optuna</a>
+            </li>
+          
+        
+          
+        
+          
+            <li>
+              <a href="/posts/nlp1/">Text Classification 1: Imbalanced Data</a>
+            </li>
+          
+        
+        </ul>
+      </nav>
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Building &amp; Deploying A Serverless Multimodal ChatBot: Part 1 · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+1. Introduction
+2. Chatting With Llama 3 Using LangChain &amp; Groq
+3. Speech &amp; Text With Google Cloud API
+4. Putting It Together As An App Using Streamlit
+5. Next Steps
+
+  1. Introduction 
+  
+    
+    Link to heading
+  
+
+
+In this blog post I will go over how to create a create multimodal chatbot using a Large Language Model (LLM). Specifically, I&rsquo;ll build an app that you can speak to and get an audio reply. The app will also optionally transcribe conversation. I will go over how to do this all in a serverless framework and using cloud-based APIs so that (baring the app getting really popular) the costs will be next to nothing!">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Building & Deploying A Serverless Multimodal ChatBot: Part 1">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. Chatting With Llama 3 Using LangChain &amp; Groq
+3. Speech &amp; Text With Google Cloud API
+4. Putting It Together As An App Using Streamlit
+5. Next Steps
+1. Introduction Link to heading In this blog post I will go over how to create a create multimodal chatbot using a Large Language Model (LLM). Specifically, I’ll build an app that you can speak to and get an audio reply. The app will also optionally transcribe conversation. I will go over how to do this all in a serverless framework and using cloud-based APIs so that (baring the app getting really popular) the costs will be next to nothing!">
+
+<meta property="og:url" content="http://localhost:1313/posts/chatbot1/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Building & Deploying A Serverless Multimodal ChatBot: Part 1">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. Chatting With Llama 3 Using LangChain &amp; Groq
+3. Speech &amp; Text With Google Cloud API
+4. Putting It Together As An App Using Streamlit
+5. Next Steps
+1. Introduction Link to heading In this blog post I will go over how to create a create multimodal chatbot using a Large Language Model (LLM). Specifically, I’ll build an app that you can speak to and get an audio reply. The app will also optionally transcribe conversation. I will go over how to do this all in a serverless framework and using cloud-based APIs so that (baring the app getting really popular) the costs will be next to nothing!">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2024-12-23T00:00:00+00:00">
+    <meta property="article:modified_time" content="2024-12-23T00:00:00+00:00">
+    <meta property="article:tag" content="LLMs">
+    <meta property="article:tag" content="LangChain">
+    <meta property="article:tag" content="Streamlit">
+    <meta property="article:tag" content="Google Cloud">
+    <meta property="article:tag" content="Llama3">
+      <meta property="og:see_also" content="http://localhost:1313/posts/rag_jfk2/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/rag_jfk1/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/chatbot2/">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/chatbot1/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/chatbot1/">
+              Building &amp; Deploying A Serverless Multimodal ChatBot: Part 1
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2024-12-23T00:00:00Z">
+                December 23, 2024
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              11-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/llms/">LLMs</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/langchain/">LangChain</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/streamlit/">Streamlit</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/google-cloud/">Google Cloud</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/llama3/">Llama3</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#first-bullet" >1. Introduction</a></strong></p>
+<p><strong><a href="#second-bullet" >2. Chatting With Llama 3 Using LangChain &amp; Groq</a></strong></p>
+<p><strong><a href="#third-bullet" >3. Speech &amp; Text With Google Cloud API</a></strong></p>
+<p><strong><a href="#fourth-bullet" >4. Putting It Together As An App Using Streamlit</a></strong></p>
+<p><strong><a href="#fifth-bullet" >5. Next Steps</a></strong></p>
+<h2 id="1-introduction">
+  1. Introduction <a class="anchor" id="first-bullet"></a>
+  <a class="heading-link" href="#1-introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this blog post I will go over how to create a create multimodal chatbot using a <a href="https://en.wikipedia.org/wiki/Large_language_model"  class="external-link" target="_blank" rel="noopener">Large Language Model (LLM)</a>. Specifically, I&rsquo;ll build an app that you can speak to and get an audio reply. The app will also optionally transcribe conversation. I will go over how to do this all in a serverless framework and using cloud-based APIs so that (baring the app getting really popular) the costs will be next to nothing!</p>
+<p>I&rsquo;ll do this by using <a href="https://www.langchain.com/"  class="external-link" target="_blank" rel="noopener">LangChain</a> &amp; <a href="https://groq.com/"  class="external-link" target="_blank" rel="noopener">Groq API</a> to interact with the <a href="https://ai.meta.com/blog/meta-llama-3/"  class="external-link" target="_blank" rel="noopener">Llama 3</a> Open Source LLM and the Google Cloud API for <a href="https://cloud.google.com/text-to-speech?hl=en"  class="external-link" target="_blank" rel="noopener">Text-To-Speech</a> and <a href="https://cloud.google.com/speech-to-text/?hl=en"  class="external-link" target="_blank" rel="noopener">Speech-To-Text</a>. For the front end and deployment I&rsquo;ll use <a href="https://streamlit.io/"  class="external-link" target="_blank" rel="noopener">Streamlit</a>, <a href="https://www.docker.com/"  class="external-link" target="_blank" rel="noopener">Docker</a> and <a href="https://cloud.google.com/run"  class="external-link" target="_blank" rel="noopener">Google Cloud Run</a>.</p>
+<p>Lastly, I wanted to make this app multi-lingual so that my wife could have someone to practice Hebrew with and my mom could practice French with. In this first post I&rsquo;ll cover building the app and running it locally, while in a follow up one I will cover how to deploy the app.</p>
+<p>Now let&rsquo;s go over how to use LLMs!</p>
+<h3 id="2-chatting-with-llama-3-using-langchain--groq">
+  2. Chatting With Llama 3 Using LangChain &amp; Groq <a class="anchor" id="second-bullet"></a>
+  <a class="heading-link" href="#2-chatting-with-llama-3-using-langchain--groq">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<hr>
+<p>There are many different <a href="https://en.wikipedia.org/wiki/Large_language_model"  class="external-link" target="_blank" rel="noopener">Large Language Models (LLM)</a> that we can use for this app, but I chose <a href="https://ai.meta.com/blog/meta-llama-3/"  class="external-link" target="_blank" rel="noopener">Llama 3</a> since its Open Source (free); specifically, I used the <a href="https://groq.com/a-new-scaling-paradigm-metas-llama-3-3-70b-challenges-death-of-scaling-law/"  class="external-link" target="_blank" rel="noopener">Llama 3.3 70 Billion parameter model</a>.</p>
+<p>For serving the model I used the <a href="https://groq.com/"  class="external-link" target="_blank" rel="noopener">Groq API</a> since its free for personal use (at least for me so far). There are quite a few methods to interact with Groq and I chose to use <a href="https://www.langchain.com/"  class="external-link" target="_blank" rel="noopener">LangChain</a>. At first I thought LangChain was a little over engineered (why do you need class for templated prompts? Isn&rsquo;t it just an f-string?), but now I see the point and am on-board! LangChain allows for a consistent API across most models and abstracts away a lot of pain points. The prompt templates do make sense now, and my only complaint is I cant tell what library something should come from (langchain, langchain_core, langchain_community?), but given how much the API has changed around, it seems neither does the community. :-)</p>
+<p>I&rsquo;ll start off going over how to use an LLM first. First thing I&rsquo;ll do is import <a href="https://python.langchain.com/docs/integrations/chat/groq/"  class="external-link" target="_blank" rel="noopener">ChatGroq</a> class and use <a href="https://pypi.org/project/python-dotenv/"  class="external-link" target="_blank" rel="noopener">pydot-env</a> to load environment variables that have my API keys.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_groq <span style="color:#f92672">import</span> ChatGroq
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> dotenv <span style="color:#f92672">import</span> load_dotenv
+</span></span><span style="display:flex;"><span>load_dotenv()
+</span></span></code></pre></div><pre><code>True
+</code></pre>
+<p>Instantiating the ChatGroq chat object gives me a model that I can query using the <code>invoke</code> method:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>llm <span style="color:#f92672">=</span> ChatGroq(
+</span></span><span style="display:flex;"><span>        model<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;llama-3.3-70b-versatile&#34;</span>,
+</span></span><span style="display:flex;"><span>        temperature<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>        max_tokens<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>,
+</span></span><span style="display:flex;"><span>        timeout<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>,
+</span></span><span style="display:flex;"><span>        max_retries<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>result <span style="color:#f92672">=</span> llm<span style="color:#f92672">.</span>invoke(<span style="color:#e6db74">&#34;What is the square root of 9?&#34;</span>)
+</span></span></code></pre></div><p>The returned object is of type <a href="https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.AIMessage.html"  class="external-link" target="_blank" rel="noopener">AIMessage</a> and the message can be obtained with the <code>.content</code> attribute:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(result<span style="color:#f92672">.</span>content)
+</span></span></code></pre></div><pre><code>The square root of 9 is 3.
+</code></pre>
+<p>Simple enough!</p>
+<p>We can go one step further and use the <a href="https://js.langchain.com/docs/concepts/output_parsers"  class="external-link" target="_blank" rel="noopener">StrOutputParser</a> to get the result as just a string.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.output_parsers <span style="color:#f92672">import</span> StrOutputParser
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>parser <span style="color:#f92672">=</span> StrOutputParser()
+</span></span><span style="display:flex;"><span>print(parser<span style="color:#f92672">.</span>invoke(result))
+</span></span></code></pre></div><pre><code>The square root of 9 is 3.
+</code></pre>
+<p>We can put them together and create a simple chain using the <code>|</code> operator:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>chain <span style="color:#f92672">=</span> llm <span style="color:#f92672">|</span> parser 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(chain<span style="color:#f92672">.</span>invoke(<span style="color:#e6db74">&#34;What is the square root of 9?&#34;</span>))
+</span></span></code></pre></div><pre><code>The square root of 9 is 3.
+</code></pre>
+<p>Now let&rsquo;s go over using a <a href="https://python.langchain.com/docs/concepts/prompt_templates/"  class="external-link" target="_blank" rel="noopener">PrompteTemplate</a> in LangChain. PromptTemplates are used to create prompts (questions/queries) that can have variables in them (like <a href="https://realpython.com/python-f-strings/"  class="external-link" target="_blank" rel="noopener">f-strings</a>). This allows user to chain together the prompt with the LLM into a pipeline that is called a &ldquo;chain.&rdquo; Then the user only has to invoke the chain with an input dictionary that has the variables and their values and they will get back out the response for that user prompt!</p>
+<p>Let&rsquo;s show how TemplatePrompts work and how to use them with LLMs as a chain. First we import the PromptTemplate class and create a template string that looks sort of like like an <code>f-string</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.prompts <span style="color:#f92672">import</span> PromptTemplate
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>template <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;What is the square root of </span><span style="color:#e6db74">{n}</span><span style="color:#e6db74">?&#34;</span>
+</span></span></code></pre></div><p>Now we use the <a href="https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/prompts/prompt.py#L249"  class="external-link" target="_blank" rel="noopener">from_template</a> class method (I have not seen it them used that often!) to make a templated prompt:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>prompt <span style="color:#f92672">=</span> PromptTemplate<span style="color:#f92672">.</span>from_template(template)
+</span></span><span style="display:flex;"><span>prompt
+</span></span></code></pre></div><pre><code>PromptTemplate(input_variables=['n'], input_types={}, partial_variables={}, template='What is the square root of {n}?')
+</code></pre>
+<p>Now the actual prompt can be created by filling in the variable <code>n</code> using a dictionary from the <code>invoke</code> method,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>prompt<span style="color:#f92672">.</span>invoke({<span style="color:#e6db74">&#34;n&#34;</span>: <span style="color:#ae81ff">9</span>})
+</span></span></code></pre></div><pre><code>StringPromptValue(text='What is the square root of 9?')
+</code></pre>
+<p>Now the really cool thing is when we chain the PromptTemplate and the LLM together into a &ldquo;chain&rdquo; using the <code>|</code> operator to represent seperate components of the chain:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>chain <span style="color:#f92672">=</span> prompt <span style="color:#f92672">|</span> llm <span style="color:#f92672">|</span> parser
+</span></span></code></pre></div><p>This allows the user to input a value of n=16 using dictionary with a single invoke command and get back the reply!</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>result <span style="color:#f92672">=</span> chain<span style="color:#f92672">.</span>invoke({<span style="color:#e6db74">&#34;n&#34;</span>: <span style="color:#ae81ff">16</span>})
+</span></span><span style="display:flex;"><span>print(result)
+</span></span></code></pre></div><pre><code>The square root of 16 is 4.
+</code></pre>
+<p>Great!</p>
+<p>Now we can put it all together to create a function that takes a message in one language and converts it into another. I&rsquo;ll need this if the my end user speaks one lanuages and wants the bot to reply in another.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">translate_text</span>(language: str, text: str) <span style="color:#f92672">-&gt;</span> str:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> language <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> (<span style="color:#e6db74">&#34;English&#34;</span>, <span style="color:#e6db74">&#34;French&#34;</span>, <span style="color:#e6db74">&#34;Hebrew&#34;</span>):
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">ValueError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Not valid language choice: </span><span style="color:#e6db74">{</span>language<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        template <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Translate the following into </span><span style="color:#e6db74">{language}</span><span style="color:#e6db74"> and only return the translated text: </span><span style="color:#e6db74">{text}</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        prompt <span style="color:#f92672">=</span> PromptTemplate<span style="color:#f92672">.</span>from_template(template)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        llm <span style="color:#f92672">=</span> ChatGroq(
+</span></span><span style="display:flex;"><span>                model<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;llama-3.3-70b-versatile&#34;</span>,
+</span></span><span style="display:flex;"><span>                temperature<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>                max_tokens<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>,
+</span></span><span style="display:flex;"><span>                timeout<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>,
+</span></span><span style="display:flex;"><span>                max_retries<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        translation_chain <span style="color:#f92672">=</span> prompt <span style="color:#f92672">|</span> llm <span style="color:#f92672">|</span> StrOutputParser()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        result <span style="color:#f92672">=</span> translation_chain<span style="color:#f92672">.</span>invoke(
+</span></span><span style="display:flex;"><span>                {
+</span></span><span style="display:flex;"><span>                        <span style="color:#e6db74">&#34;language&#34;</span>: language,
+</span></span><span style="display:flex;"><span>                        <span style="color:#e6db74">&#34;text&#34;</span>: text,
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> result
+</span></span></code></pre></div><p>Notice I use the prompt to not only to pass in the users question, but also to tell the LLM to reply back in a specified language. Let&rsquo;s try it out!</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>result <span style="color:#f92672">=</span> translate_text(language<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;French&#34;</span>, text<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Hello World!&#34;</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(result)
+</span></span></code></pre></div><pre><code>Bonjour le monde !
+</code></pre>
+<p>One issue with just using the LLM for chat bots is that it wont remember anything we asked previously! See the example below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(llm<span style="color:#f92672">.</span>invoke(<span style="color:#e6db74">&#34;Set x = 9&#34;</span>)<span style="color:#f92672">.</span>content)
+</span></span><span style="display:flex;"><span>print(llm<span style="color:#f92672">.</span>invoke(<span style="color:#e6db74">&#34;What is x + 3?&#34;</span>)<span style="color:#f92672">.</span>content)
+</span></span></code></pre></div><pre><code>x = 9
+To determine the value of x + 3, I would need to know the value of x. Could you please provide the value of x?
+</code></pre>
+<p>The LLM has no recollection of anything from prior invocations!</p>
+<p>We have add a &ldquo;memory&rdquo; our AI chatbot. At first I thought memory was something special, but its really keeping a record of the conversation and feeding the entire convesation so fare into the LLM before asking another question. The chat history will look like list of tuples. The first entry to the tuple signifies whether it is the &ldquo;ai&rdquo; system (chatbot) or the &ldquo;human&rdquo; and the second entry in the tuple is the actual message. For example the conversation above could be seen as,</p>
+<pre><code>history = [
+    (&quot;human&quot;, &quot;Set x = 9&quot;),
+    (&quot;ai&quot;, &quot;9&quot;),
+    (&quot;human&quot;, &quot;What is x + 3?&quot;),
+    ...
+]
+</code></pre>
+<p>Similar to the <a href="https://python.langchain.com/docs/concepts/prompt_templates/"  class="external-link" target="_blank" rel="noopener">PrompteTemplate</a> there is a <a href="https://python.langchain.com/api_reference/core/prompts/langchain_core.prompts.chat.ChatPromptTemplate.html"  class="external-link" target="_blank" rel="noopener">ChatPromptTemplate</a> that can be used to create the history of the chat conversation. This used in conjunction with the <a href="https://python.langchain.com/api_reference/core/prompts/langchain_core.prompts.chat.MessagesPlaceholder.html"  class="external-link" target="_blank" rel="noopener">MessagePlaceholder</a> to unwind the conversation into a prompt with the entire history and the new question at the very end.</p>
+<p>An example is below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.prompts <span style="color:#f92672">import</span> ChatPromptTemplate, MessagesPlaceholder
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>prompt <span style="color:#f92672">=</span> ChatPromptTemplate<span style="color:#f92672">.</span>from_messages(
+</span></span><span style="display:flex;"><span>    [
+</span></span><span style="display:flex;"><span>        MessagesPlaceholder(<span style="color:#e6db74">&#34;history&#34;</span>),
+</span></span><span style="display:flex;"><span>        (<span style="color:#e6db74">&#34;human&#34;</span>, <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{question}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>    ]
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>history <span style="color:#f92672">=</span> [(<span style="color:#e6db74">&#34;human&#34;</span>, <span style="color:#e6db74">&#34;Set x = 9&#34;</span>), (<span style="color:#e6db74">&#34;ai&#34;</span>, <span style="color:#e6db74">&#34;9&#34;</span>)]
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>prompt<span style="color:#f92672">.</span>invoke(
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;history&#34;</span>: history,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;question&#34;</span>: <span style="color:#e6db74">&#34;What is x + 3?&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>)<span style="color:#f92672">.</span>messages
+</span></span></code></pre></div><pre><code>[HumanMessage(content='Set x = 9', additional_kwargs={}, response_metadata={}),
+ AIMessage(content='9', additional_kwargs={}, response_metadata={}),
+ HumanMessage(content='What is x + 3?', additional_kwargs={}, response_metadata={})]
+</code></pre>
+<p>Now we can form a chain with memory:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>history <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>chain <span style="color:#f92672">=</span> prompt <span style="color:#f92672">|</span> llm <span style="color:#f92672">|</span> parser
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>question <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;set x = 9&#34;</span>
+</span></span><span style="display:flex;"><span>answer <span style="color:#f92672">=</span> chain<span style="color:#f92672">.</span>invoke({<span style="color:#e6db74">&#34;history&#34;</span>: history, <span style="color:#e6db74">&#34;question&#34;</span>: question})
+</span></span><span style="display:flex;"><span>history<span style="color:#f92672">.</span>extend([(<span style="color:#e6db74">&#34;human&#34;</span>, question), (<span style="color:#e6db74">&#34;ai&#34;</span>, answer)])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>question <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;what is x + 3?&#34;</span>
+</span></span><span style="display:flex;"><span>print(chain<span style="color:#f92672">.</span>invoke({<span style="color:#e6db74">&#34;history&#34;</span>: history, <span style="color:#e6db74">&#34;question&#34;</span>: question}))           
+</span></span></code></pre></div><pre><code>x = 9
+x + 3 = 12
+</code></pre>
+<p>Putting it all together into a function below using the history concept from above,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> langchain_core.prompts <span style="color:#f92672">import</span> ChatPromptTemplate, MessagesPlaceholder 
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> typing <span style="color:#f92672">import</span> Iterator, List, Tuple
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">ask_question</span>(
+</span></span><span style="display:flex;"><span>    llm: ChatGroq,
+</span></span><span style="display:flex;"><span>    history: List[Tuple[str, str]], 
+</span></span><span style="display:flex;"><span>    question: str,
+</span></span><span style="display:flex;"><span>    ai_language: str,
+</span></span><span style="display:flex;"><span>) <span style="color:#f92672">-&gt;</span> str:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    prompt <span style="color:#f92672">=</span> ChatPromptTemplate<span style="color:#f92672">.</span>from_messages(
+</span></span><span style="display:flex;"><span>        [
+</span></span><span style="display:flex;"><span>            (<span style="color:#e6db74">&#34;system&#34;</span>, <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;&#34;&#34;You are a helpful teacher having a conversation with a student in </span><span style="color:#e6db74">{</span>ai_language<span style="color:#e6db74">}</span><span style="color:#e6db74">.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">             Only reply back in </span><span style="color:#e6db74">{</span>ai_language<span style="color:#e6db74">}</span><span style="color:#e6db74"> not matter what language the student uses.&#34;&#34;&#34;</span>),
+</span></span><span style="display:flex;"><span>            MessagesPlaceholder(<span style="color:#e6db74">&#34;history&#34;</span>),
+</span></span><span style="display:flex;"><span>            (<span style="color:#e6db74">&#34;human&#34;</span>, <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{question}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>        ]
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    chain <span style="color:#f92672">=</span> prompt <span style="color:#f92672">|</span> llm <span style="color:#f92672">|</span> StrOutputParser()
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    answer <span style="color:#f92672">=</span> chain<span style="color:#f92672">.</span>invoke(
+</span></span><span style="display:flex;"><span>                    {
+</span></span><span style="display:flex;"><span>                        <span style="color:#e6db74">&#34;history&#34;</span>: history,
+</span></span><span style="display:flex;"><span>                        <span style="color:#e6db74">&#34;question&#34;</span>: question
+</span></span><span style="display:flex;"><span>                    }
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> answer
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(
+</span></span><span style="display:flex;"><span>    ask_question(
+</span></span><span style="display:flex;"><span>    llm<span style="color:#f92672">=</span>llm,
+</span></span><span style="display:flex;"><span>    history<span style="color:#f92672">=</span>history,
+</span></span><span style="display:flex;"><span>    ai_language<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;English&#34;</span>,
+</span></span><span style="display:flex;"><span>    question<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;What is x + 3?&#34;</span>
+</span></span><span style="display:flex;"><span>))
+</span></span></code></pre></div><pre><code>To find the value of x + 3, we need to add 3 to the value of x. Since x = 9, we get:
+
+x + 3 = 9 + 3
+= 12
+
+So, x + 3 is equal to 12.
+</code></pre>
+<p>Now the prompt I set in prepending the history allows me to get the answer in any language! For instance,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>answer <span style="color:#f92672">=</span> ask_question(
+</span></span><span style="display:flex;"><span>    llm<span style="color:#f92672">=</span>llm,
+</span></span><span style="display:flex;"><span>    history<span style="color:#f92672">=</span>history,
+</span></span><span style="display:flex;"><span>    ai_language<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;French&#34;</span>,
+</span></span><span style="display:flex;"><span>    question<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;What is x + 3?&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(answer)
+</span></span></code></pre></div><pre><code>Pour trouver la valeur de x + 3, il faut ajouter 3 à la valeur de x. Puisque x = 9, on a x + 3 = 9 + 3 = 12. La réponse est donc 12.
+</code></pre>
+<p>Now in English! (The math in Hebrew got messed up with sentences being read right to left&hellip; )</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(translate_text(language<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;English&#34;</span>, text<span style="color:#f92672">=</span>answer))
+</span></span></code></pre></div><pre><code>To find the value of x + 3, you need to add 3 to the value of x. Since x = 9, we have x + 3 = 9 + 3 = 12. The answer is therefore 12.
+</code></pre>
+<p>Very cool!!</p>
+<p>LangChain makes this so easy!</p>
+<p>We now have enough to make a ChatBot, but I wanted to take this one step further and have an application you can speak with in one language and it would speak back to you in another (or the same) language.</p>
+<h3 id="3-speech--text-with-google-cloud-api">
+  3. Speech &amp; Text With Google Cloud API <a class="anchor" id="third-bullet"></a>
+  <a class="heading-link" href="#3-speech--text-with-google-cloud-api">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<hr>
+<p>In order to make an app that an end user can chat with using speech, we need to use <a href="https://cloud.google.com/speech-to-text?hl=en"  class="external-link" target="_blank" rel="noopener">Speech-To-Text</a> to convert the end users audio into text that can be feed into the <a href="https://github.com/mdh266/speech-chatbot/blob/main/src/utils.py#L45"  class="external-link" target="_blank" rel="noopener">ask_question</a> function above.</p>
+<p>The resulting response from the LLM can be converted into an audio reply using <a href="https://cloud.google.com/text-to-speech?hl=en"  class="external-link" target="_blank" rel="noopener">Text-To-Speech</a> and played back to the end users. There are  actually pretty straight forward using the Google Cloud API. I will just reference the code I wrote, <a href="https://github.com/mdh266/speech-chatbot/blob/main/src/utils.py#L136"  class="external-link" target="_blank" rel="noopener">speech_to_text</a> and <a href="https://github.com/mdh266/speech-chatbot/blob/main/src/utils.py#L111"  class="external-link" target="_blank" rel="noopener">text_to_speech</a> and note that there are <a href="https://cloud.google.com/text-to-speech/docs/voices"  class="external-link" target="_blank" rel="noopener">plently of languages</a> that Google supports!</p>
+<p>The one tricky part is setting up the API keys to be able to use these capabilities. The first step is to enable the <a href="https://cloud.google.com/speech-to-text?hl=en"  class="external-link" target="_blank" rel="noopener">Speech-To-Text</a> and the <a href="https://cloud.google.com/text-to-speech?hl=en"  class="external-link" target="_blank" rel="noopener">Text-To-Speech</a> services on your account. Next you will need to create an API key that you can use to access them. You can go to your console then select &ldquo;APIs &amp; Services&rdquo; -&gt; &ldquo;Enabled APIs &amp; services&rdquo; as shown below:</p>
+<figure>
+<img src="https://github.com/mdh266/speech-chatbot/blob/main/notebooks/images/gcp_api_1.png?raw=1" width="500">
+<p>Then on the left sidebar select the &ldquo;Credentials&rdquo; tab, then on the top click &ldquo;Create Credentials&rdquo; and select &ldquo;API key&rdquo; from the drop down,</p>
+<figure>
+<img src="https://github.com/mdh266/speech-chatbot/blob/main/notebooks/images/gcp_api_2.png?raw=1">
+</figure>
+<!-- ![images/gcp_api_2.jpg](images/gcp_api_2.png) -->
+<p><strong>Once you create your API key it will have unlimited access by default</strong>, so let&rsquo;s restrict the access. You can click edit the API Key, and then under the &ldquo;API Restrictions&rdquo; section click &ldquo;Restrict Key&rdquo; and search for the &ldquo;Text-To-Speech&rdquo; and &ldquo;Speech-To-Test&rdquo; services,</p>
+<figure>
+<img src="https://github.com/mdh266/speech-chatbot/blob/main/notebooks/images/gcp_api_3.jpg?raw=1" width="500">
+</figure>
+<p>If you can&rsquo;t find the services in the search that probably means you didn&rsquo;t enable them in your account.</p>
+<h3 id="4-putting-it-together-as-an-app-using-streamlit">
+  4. Putting It Together As An App Using Streamlit <a class="anchor" id="fourth-bullet"></a>
+  <a class="heading-link" href="#4-putting-it-together-as-an-app-using-streamlit">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<hr>
+<p>Now in order to make an app that people can interact with we need to create a front end. In the past I have done this more or less by hand using <a href="http://michael-harmon.com/CrimeTime/"  class="external-link" target="_blank" rel="noopener">Flask</a> and <a href="https://github.com/mdh266/TextClassificationApp"  class="external-link" target="_blank" rel="noopener">FastAPI</a>. Nowdays many people use <a href="https://streamlit.io/"  class="external-link" target="_blank" rel="noopener">Streamlit</a> to create apps which is <em>MUCH</em> easier!</p>
+<p>My Streamlit app is written module <a href="https://github.com/mdh266/speech-chatbot/blob/main/src/main.py"  class="external-link" target="_blank" rel="noopener">main.py</a> and uses the <a href="https://docs.streamlit.io/develop/api-reference/widgets/st.audio_input"  class="external-link" target="_blank" rel="noopener">audio_input</a> function to capture the end users questions and uses the <code>speech_to_text</code> function to convert the audio to text. Before the question is sent to the <code>ask_question</code> function above I use the following function to convert the history of chats into list of tuples as shown above,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">tuplify</span>(history: List[Dict[str, str]]) <span style="color:#f92672">-&gt;</span> List[Tuple[str, str]]:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> [(d[<span style="color:#e6db74">&#39;role&#39;</span>], d[<span style="color:#e6db74">&#39;content&#39;</span>]) <span style="color:#66d9ef">for</span> d <span style="color:#f92672">in</span> history]
+</span></span></code></pre></div><p>The LLM&rsquo;S response is converted back to audio using the <code>text_to_speech</code> function and uses Streamlit&rsquo;s <a href="https://docs.streamlit.io/develop/api-reference/media/st.audio"  class="external-link" target="_blank" rel="noopener">audio</a> function to play the response.</p>
+<p>As I mentioned, in order to make LLM have memory I need to keep track of the conversation. I do so by using a list called <code>messages</code>. The way Streamlit works is that it runs the entire script from top to bottom any time anything in changed, so the messages would be cleared after the first run. In order to to maintain a history of the conversation I had to save them part of the <a href="https://docs.streamlit.io/develop/api-reference/caching-and-state/st.session_state"  class="external-link" target="_blank" rel="noopener">session_state</a>. The last tricky part that I had to figure out was how to create a button to clear the messages. Every time I tried, it still had the variable from the <code>audio_input</code> set and I couldnt clear the first message. In order to fix this I had to create a <a href="https://docs.streamlit.io/develop/concepts/architecture/forms"  class="external-link" target="_blank" rel="noopener">form</a> along with using the <a href="https://docs.streamlit.io/develop/api-reference/execution-flow/st.form_submit_button"  class="external-link" target="_blank" rel="noopener">form_submit_button</a> and viola the clear button now worked!</p>
+<p>You can try running the app using the command,</p>
+<pre><code>streamlit run src/main.py 
+</code></pre>
+<p>If your browser doesn&rsquo;t automatically open, you can go to https://localhost:8051 and you will be able to see something similar to the below,</p>
+<figure>
+<img src="https://github.com/mdh266/speech-chatbot/blob/main/notebooks/images/ui.jpg?raw=1" width=500>
+</figure>
+<h3 id="5-next-steps">
+  5. Next Steps <a class="anchor" id="fifth-bullet"></a>
+  <a class="heading-link" href="#5-next-steps">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<hr>
+<p>In the next post I&rsquo;ll cover how to deploy this app using <a href="https://www.docker.com/"  class="external-link" target="_blank" rel="noopener">Docker</a> for containerization which will allow us to run the app both locally and on the cloud. Then well cover <a href="https://github.com/features/actions"  class="external-link" target="_blank" rel="noopener">GitHub Actions</a> for automatically building the image and pushing it to <a href="https://hub.docker.com/"  class="external-link" target="_blank" rel="noopener">Docker Hub</a> where it can be pulled and run on <a href="https://cloud.google.com/run"  class="external-link" target="_blank" rel="noopener">Google Cloud Run</a> to create a serverless application.</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+      <h3 id="see-also-in-llms">
+        See also in LLMs
+        <a class="heading-link" href="#see-also-in-llms">
+          <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+          <span class="sr-only">Link to heading</span>
+        </a>
+      </h3>
+      <nav>
+        <ul>
+        
+        
+          
+            <li>
+              <a href="/posts/rag_jfk2/">Retrieval Augmented Generation On JFK Speeches: Part 2</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/rag_jfk1/">Retrieval Augmented Generation On JFK Speeches: Part 1</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/chatbot2/">Building &amp; Deploying A Serverless Multimodal ChatBot: Part 2</a>
+            </li>
+          
+        
+          
+        
+        </ul>
+      </nav>
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>

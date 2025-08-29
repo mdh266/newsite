@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Web Scraping on Mike Harmon</title>
+    <link>http://localhost:1313/tags/web-scraping/</link>
+    <description>Recent content in Web Scraping on Mike Harmon</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Fri, 23 Dec 2022 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/web-scraping/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Creating An AI-Based JFK Speech Writer: Part 1</title>
+      <link>http://localhost:1313/posts/jfk1/</link>
+      <pubDate>Fri, 23 Dec 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/posts/jfk1/</guid>
+      <description>&lt;h2 id=&#34;introduction&#34;&gt;&#xA;  Introduction&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#introduction&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;One of the most quintessential projects to complete when getting started with Deep Learning and Natural Language Processing is with text generation with Recurrent Neural Networks. The internet is littered with examples of people training on books of Shakespeare and using the network to generate new text that mimics Shakespeare&amp;rsquo;s style. I wanted to do something along these lines, but a little more creative. Many would agree one of the best orators of all time would have to be John F. Kennedy. I am a personally a big nerd of an President Kennedy&amp;rsquo;s speeches and spent many hours listening to his words. So I started this project to see if could write a neural network to generate a Kennedy-like speech writer.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

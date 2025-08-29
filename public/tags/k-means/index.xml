@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>K-Means on Mike Harmon</title>
+    <link>http://localhost:1313/tags/k-means/</link>
+    <description>Recent content in K-Means on Mike Harmon</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 04 May 2022 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/k-means/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Writing A Scikit Learn Compatible Clustering Algorithm</title>
+      <link>http://localhost:1313/posts/kmeans/</link>
+      <pubDate>Wed, 04 May 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/posts/kmeans/</guid>
+      <description>&lt;h2 id=&#34;contents&#34;&gt;&#xA;  Contents&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#contents&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#first-bullet&#34; &gt;1. Introduction&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#second-bullet&#34; &gt;2. The k-means clustering alogorithm&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#third-bullet&#34; &gt;3. Writing the k-means algorithm with NumPy&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#fourth-bullet&#34; &gt;4. Writing a Scikit-Learn compatible estimator&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#fifth-bullet&#34; &gt;5. Using the elbow method and Pipelines&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#sixth-bullet&#34; &gt;6. Summary &amp;amp; References&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;introduction&#34;&gt;&#xA;  Introduction &lt;a class=&#34;anchor&#34; id=&#34;first-bullet&#34;&gt;&lt;/a&gt;&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#introduction&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;Clustering algorithms and unsupervised learning methods have been gaining popularity recently. This is partly because the amount of data being generated has increased exponentially, but also because labels for this data are often still hard to come by. Labeling data can be time consuming and requires human effort which can be expensive. Unsupervised learning methods are machine learning methods that can be used to gleam information from unlabeled data. Clustering algorithms specifically take unlabeled points within a dataset and try to group them into &amp;ldquo;clusters&amp;rdquo;. Within clusters datapoints are very &amp;ldquo;similar&amp;rdquo; (in some sense that will be discussed later) and datapoints between cluster are very &amp;ldquo;disimilar&amp;rdquo;.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

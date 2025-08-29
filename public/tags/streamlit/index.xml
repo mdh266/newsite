@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Streamlit on Mike Harmon</title>
+    <link>http://localhost:1313/tags/streamlit/</link>
+    <description>Recent content in Streamlit on Mike Harmon</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Mon, 23 Dec 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/streamlit/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Building &amp; Deploying A Serverless Multimodal ChatBot: Part 1</title>
+      <link>http://localhost:1313/posts/chatbot1/</link>
+      <pubDate>Mon, 23 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/posts/chatbot1/</guid>
+      <description>&lt;h2 id=&#34;contents&#34;&gt;&#xA;  Contents&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#contents&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#first-bullet&#34; &gt;1. Introduction&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#second-bullet&#34; &gt;2. Chatting With Llama 3 Using LangChain &amp;amp; Groq&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#third-bullet&#34; &gt;3. Speech &amp;amp; Text With Google Cloud API&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#fourth-bullet&#34; &gt;4. Putting It Together As An App Using Streamlit&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#fifth-bullet&#34; &gt;5. Next Steps&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;1-introduction&#34;&gt;&#xA;  1. Introduction &lt;a class=&#34;anchor&#34; id=&#34;first-bullet&#34;&gt;&lt;/a&gt;&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#1-introduction&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;In this blog post I will go over how to create a create multimodal chatbot using a &lt;a href=&#34;https://en.wikipedia.org/wiki/Large_language_model&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Large Language Model (LLM)&lt;/a&gt;. Specifically, I&amp;rsquo;ll build an app that you can speak to and get an audio reply. The app will also optionally transcribe conversation. I will go over how to do this all in a serverless framework and using cloud-based APIs so that (baring the app getting really popular) the costs will be next to nothing!&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

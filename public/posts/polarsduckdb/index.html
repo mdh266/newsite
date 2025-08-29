@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Polars &amp; DuckDB: DataFrames and SQL For Python Without Pandas · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+1. Introduction
+2. Getting Set Up On AWS with Docker
+3. Intro To Polars
+4. DuckDB To The Rescue For SQL
+5. Conclusions
+
+  Introduction 
+  
+    
+    Link to heading
+  
+
+
+In the last few years there has been an explosion of dataframe alternatives to Pandas due to its limitations. Even the original author, Wes McKinney, wrote a blog post about 10 Things I Hate About Pandas.">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Polars & DuckDB: DataFrames and SQL For Python Without Pandas">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. Getting Set Up On AWS with Docker
+3. Intro To Polars
+4. DuckDB To The Rescue For SQL
+5. Conclusions
+Introduction Link to heading In the last few years there has been an explosion of dataframe alternatives to Pandas due to its limitations. Even the original author, Wes McKinney, wrote a blog post about 10 Things I Hate About Pandas.">
+
+<meta property="og:url" content="http://localhost:1313/posts/polarsduckdb/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Polars & DuckDB: DataFrames and SQL For Python Without Pandas">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. Getting Set Up On AWS with Docker
+3. Intro To Polars
+4. DuckDB To The Rescue For SQL
+5. Conclusions
+Introduction Link to heading In the last few years there has been an explosion of dataframe alternatives to Pandas due to its limitations. Even the original author, Wes McKinney, wrote a blog post about 10 Things I Hate About Pandas.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2023-07-19T00:00:00+00:00">
+    <meta property="article:modified_time" content="2023-07-19T00:00:00+00:00">
+    <meta property="article:tag" content="Polars">
+    <meta property="article:tag" content="DuckDb">
+    <meta property="article:tag" content="SQL">
+    <meta property="article:tag" content="AWS">
+    <meta property="article:tag" content="Docker">
+      <meta property="og:see_also" content="http://localhost:1313/posts/sqlwars/">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/polarsduckdb/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/polarsduckdb/">
+              Polars &amp; DuckDB: DataFrames and SQL For Python Without Pandas
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2023-07-19T00:00:00Z">
+                July 19, 2023
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              21-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/polars/">Polars</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/duckdb/">DuckDb</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/sql/">SQL</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/aws/">AWS</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/docker/">Docker</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#first-bullet" >1. Introduction</a></strong></p>
+<p><strong><a href="#second-bullet" >2. Getting Set Up On AWS with Docker</a></strong></p>
+<p><strong><a href="#third-bullet" >3. Intro To Polars</a></strong></p>
+<p><strong><a href="#fourth-bullet" >4. DuckDB To The Rescue For SQL</a></strong></p>
+<p><strong><a href="#fifth" >5. Conclusions</a></strong></p>
+<h2 id="introduction">
+  Introduction <a class="anchor" id="first-bullet"></a>
+  <a class="heading-link" href="#introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In the last few years there has been an explosion of dataframe alternatives to <a href="https://pandas.pydata.org/"  class="external-link" target="_blank" rel="noopener">Pandas</a> due to its <a href="https://insightsndata.com/what-are-the-limitations-of-pandas-35d462990c43"  class="external-link" target="_blank" rel="noopener">limitations</a>. Even the original author, Wes McKinney, wrote a blog post about <a href="https://wesmckinney.com/blog/apache-arrow-pandas-internals/"  class="external-link" target="_blank" rel="noopener">10 Things I Hate About Pandas</a>.</p>
+<p>My biggest complaints about Pandas are:</p>
+<ol>
+<li>High memory usage</li>
+<li>Limited multi-core algorithms</li>
+<li>No ability to execute SQL statements (like <a href="https://spark.apache.org/sql/"  class="external-link" target="_blank" rel="noopener">SparkSQL &amp; DataFrame</a>)</li>
+<li>No query planning/lazy-execution</li>
+<li><a href="https://pandas.pydata.org/docs/user_guide/integer_na.html"  class="external-link" target="_blank" rel="noopener">NULL values only exist for floats not ints</a> (this changed in Pandas 1.0+)</li>
+<li>Using <a href="https://pandas.pydata.org/docs/user_guide/text.html"  class="external-link" target="_blank" rel="noopener">strings is inefficient</a> (this too changed in Pandas 1.0+</li>
+</ol>
+<p>I should note that many of these issues have been addressed by the <a href="https://pandas.pydata.org/docs/dev/whatsnew/v2.0.0.html"  class="external-link" target="_blank" rel="noopener">Pandas 2.0 release</a>. And while there has been a steady march towards replacing the <a href="https://numpy.org/"  class="external-link" target="_blank" rel="noopener">NumPy</a> backend with <a href="https://arrow.apache.org/"  class="external-link" target="_blank" rel="noopener">Apache Arrow</a>, I still feel the lack of SQL and overall API design is a major weakness of Pandas. Let me expand upon tha last point.</p>
+<p>For context I have been using a <a href="https://spark.apache.org/"  class="external-link" target="_blank" rel="noopener">Apache Spark</a> since 2017 and love it not just from a performance point of view, but I also love how well the API is designed. The syntax makes sense coming from a SQL users perspective. If I want to group by a column and count in SQL or on Spark DataFrame I get what I expect either way: <em>A single column with the count of each item the original dataframes/tables column.</em> In Pandas, this is not the result.</p>
+<p>For example using this datas set from <a href="https://opendata.cityofnewyork.us/"  class="external-link" target="_blank" rel="noopener">NYC Open Data</a> on <a href="https://data.cityofnewyork.us/Public-Safety/Motor-Vehicle-Collisions-Crashes/h9gi-nx95"  class="external-link" target="_blank" rel="noopener">Motor Vechicle Collisions</a>, I can run a groupby-count expression on a Pandas DataFrame and I get:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas <span style="color:#66d9ef">as</span> pd
+</span></span><span style="display:flex;"><span>pd_df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>read_csv(<span style="color:#e6db74">&#34;https://data.cityofnewyork.us/resource/h9gi-nx95.csv&#34;</span>)
+</span></span><span style="display:flex;"><span>pd_df<span style="color:#f92672">.</span>groupby(<span style="color:#e6db74">&#34;borough&#34;</span>)<span style="color:#f92672">.</span>count()
+</span></span></code></pre></div><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>crash_date</th>
+      <th>crash_time</th>
+      <th>zip_code</th>
+      <th>latitude</th>
+      <th>longitude</th>
+      <th>location</th>
+      <th>on_street_name</th>
+      <th>off_street_name</th>
+      <th>cross_street_name</th>
+      <th>number_of_persons_injured</th>
+      <th>...</th>
+      <th>contributing_factor_vehicle_2</th>
+      <th>contributing_factor_vehicle_3</th>
+      <th>contributing_factor_vehicle_4</th>
+      <th>contributing_factor_vehicle_5</th>
+      <th>collision_id</th>
+      <th>vehicle_type_code1</th>
+      <th>vehicle_type_code2</th>
+      <th>vehicle_type_code_3</th>
+      <th>vehicle_type_code_4</th>
+      <th>vehicle_type_code_5</th>
+    </tr>
+    <tr>
+      <th>borough</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>BRONX</th>
+      <td>107</td>
+      <td>107</td>
+      <td>107</td>
+      <td>107</td>
+      <td>107</td>
+      <td>107</td>
+      <td>59</td>
+      <td>59</td>
+      <td>48</td>
+      <td>107</td>
+      <td>...</td>
+      <td>81</td>
+      <td>5</td>
+      <td>0</td>
+      <td>0</td>
+      <td>107</td>
+      <td>106</td>
+      <td>65</td>
+      <td>4</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>BROOKLYN</th>
+      <td>247</td>
+      <td>247</td>
+      <td>247</td>
+      <td>245</td>
+      <td>245</td>
+      <td>245</td>
+      <td>155</td>
+      <td>155</td>
+      <td>92</td>
+      <td>247</td>
+      <td>...</td>
+      <td>192</td>
+      <td>24</td>
+      <td>7</td>
+      <td>2</td>
+      <td>247</td>
+      <td>242</td>
+      <td>157</td>
+      <td>22</td>
+      <td>7</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>MANHATTAN</th>
+      <td>98</td>
+      <td>98</td>
+      <td>98</td>
+      <td>96</td>
+      <td>96</td>
+      <td>96</td>
+      <td>52</td>
+      <td>52</td>
+      <td>46</td>
+      <td>98</td>
+      <td>...</td>
+      <td>65</td>
+      <td>6</td>
+      <td>1</td>
+      <td>1</td>
+      <td>98</td>
+      <td>96</td>
+      <td>57</td>
+      <td>5</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>QUEENS</th>
+      <td>154</td>
+      <td>154</td>
+      <td>153</td>
+      <td>150</td>
+      <td>150</td>
+      <td>150</td>
+      <td>98</td>
+      <td>98</td>
+      <td>56</td>
+      <td>154</td>
+      <td>...</td>
+      <td>120</td>
+      <td>9</td>
+      <td>2</td>
+      <td>0</td>
+      <td>154</td>
+      <td>154</td>
+      <td>97</td>
+      <td>7</td>
+      <td>2</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>STATEN ISLAND</th>
+      <td>27</td>
+      <td>27</td>
+      <td>27</td>
+      <td>26</td>
+      <td>26</td>
+      <td>26</td>
+      <td>18</td>
+      <td>18</td>
+      <td>9</td>
+      <td>27</td>
+      <td>...</td>
+      <td>21</td>
+      <td>2</td>
+      <td>2</td>
+      <td>1</td>
+      <td>27</td>
+      <td>27</td>
+      <td>19</td>
+      <td>2</td>
+      <td>2</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 28 columns</p>
+</div>
+<p>Notice this is the number of non nulls in every column. Not exactly what I wanted.</p>
+<p>To get what I want I have to use the syntax:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>pd_df<span style="color:#f92672">.</span>groupby(<span style="color:#e6db74">&#34;borough&#34;</span>)<span style="color:#f92672">.</span>size() <span style="color:#75715e"># or pd_df.value_counts()</span>
+</span></span></code></pre></div><pre><code>borough
+BRONX            107
+BROOKLYN         247
+MANHATTAN         98
+QUEENS           154
+STATEN ISLAND     27
+dtype: int64
+</code></pre>
+<p>But this returns a <a href="https://pandas.pydata.org/docs/reference/api/pandas.Series.html"  class="external-link" target="_blank" rel="noopener">Pandas Series</a>. It seems like a trivial difference, but counting duplicates in a column is easy in Spark because we can use method chaining, to the do the equivalent in Pandas I have to convert the series back to a dataframe and reset the index first:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>pd_df<span style="color:#f92672">.</span>groupby(<span style="color:#e6db74">&#34;borough&#34;</span>)<span style="color:#f92672">.</span>size()<span style="color:#f92672">.</span>to_frame(<span style="color:#e6db74">&#34;counts&#34;</span>)<span style="color:#f92672">.</span>reset_index()<span style="color:#f92672">.</span>query(<span style="color:#e6db74">&#34;counts &gt; 0&#34;</span>)
+</span></span></code></pre></div><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>borough</th>
+      <th>counts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>BRONX</td>
+      <td>107</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>BROOKLYN</td>
+      <td>247</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>MANHATTAN</td>
+      <td>98</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>QUEENS</td>
+      <td>154</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>STATEN ISLAND</td>
+      <td>27</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>Furthermore, <strong>in Pandas there are too many ways to do the same thing.</strong>  In my opinion, in a well designed API this shouldn&rsquo;t be the case. Lastly, in Pandas, window functions, which are incredibly import in SQL are just awkward to write.</p>
+<p>For years I have been using Spark for large datasets, but for smaller ones sticking with Pandas and making do. Recently though, I heard lots of hype about <a href="https://www.pola.rs/"  class="external-link" target="_blank" rel="noopener">Polars</a> and <a href="https://duckdb.org/"  class="external-link" target="_blank" rel="noopener">DuckDB</a> and decide to try them myself and was immediately impressed. In my opinion, Polars is not 100% mature yet, but I still  has a lot of potential, many because for me the API is much more similar to Spark&rsquo;s than Pandas is.</p>
+<p>In this blog post I go over my first interactions with both libraries and call out things I like and do not like, but first let&rsquo;s get set up to run this notebook on an AWS EC2 instance using <a href="https://www.docker.com/"  class="external-link" target="_blank" rel="noopener">Docker</a>.</p>
+<h2 id="getting-set-up-on-aws-with-docker">
+  Getting Set Up On AWS with Docker <a class="anchor" id="second-bullet"></a>
+  <a class="heading-link" href="#getting-set-up-on-aws-with-docker">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>I have mostly used <a href="https://cloud.google.com/"  class="external-link" target="_blank" rel="noopener">Google Cloud</a> for my prior personal projects, but for this project I wanted to use <a href="https://aws.com/"  class="external-link" target="_blank" rel="noopener">Amazon Web Services</a>. The first thing I do is create a <a href="https://aws.amazon.com/s3/"  class="external-link" target="_blank" rel="noopener">S3 bucket</a>. I do this from the console by signing on to <a href="aws.com" >aws.com</a> and going to the S3 page:</p>
+<img src="https://github.com/mdh266/PolarsDuckDBPlayGround/blob/main/images/s3.png?raw=1" width="1000">
+<p>I can click the <code>Create bucket</code> button and create a bucket called <code>harmonskis</code> (for funskis) with all the default settings and click the<code>Create bucket</code> button on the bottom right side.</p>
+<p>Next I need to have access to read and write to and from the S3 bucket so I create an <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html"  class="external-link" target="_blank" rel="noopener">IAM role</a> to do so. Going to the signin dashboard I can search for &ldquo;IAM&rdquo; and click on the link. This takes me to another site where selecting the &ldquo;Roles&rdquo; link in the the &ldquo;Access Management&rdquo; drop down on the left hand side takes me to the following:</p>
+<img src="https://github.com/mdh266/PolarsDuckDBPlayGround/blob/main/images/IAM.png?raw=1" width="1000">
+<p>I can click create the <code>Create role</code> button on the top right that takes me to the page:</p>
+<img src="https://github.com/mdh266/PolarsDuckDBPlayGround/blob/main/images/ec2-role.png?raw=1" width="1000">
+<p>I keep the selection of &ldquo;AWS Service&rdquo;, select the &ldquo;ec2&rdquo; option and then click the <code>Next</code> button on the bottom right. This takes me to a page where I can create a policy. Searching for &ldquo;s3&rdquo; I select the following policy that gives me read/write access:</p>
+<img src="https://github.com/mdh266/PolarsDuckDBPlayGround/blob/main/images/create_policy.png?raw=1" width="1000">
+<p>I then click the <code>Next</code> button in the bottom right which takes me to the final page:</p>
+<img src="https://github.com/mdh266/PolarsDuckDBPlayGround/blob/main/images/role.png?raw=1" width="1000">
+<p>I give the role the name &ldquo;s3acess&rdquo; (spelling isnt my best skill) and then click <code>Create role</code> in the bottom right.</p>
+<p>Next I will create my <a href="https://aws.amazon.com/ec2/"  class="external-link" target="_blank" rel="noopener">Elastic Compute Cloud
+(EC2) Instance</a> instance by going to the console again and clicking on ec2, scrolling down and clicking the orange <code>Launch instance</code> button,</p>
+<img src="https://github.com/mdh266/PolarsDuckDBPlayGround/blob/main/images/launch.png?raw=1" width="1000">
+<p>Next I have to make sure I create a <code>keypair</code> file called &ldquo;mikeskey.pem&rdquo; that I download.</p>
+<img src="https://github.com/mdh266/PolarsDuckDBPlayGround/blob/main/images/keypair.png?raw=1" width="1000">
+<p>Notice that in the security group I use allows SSH traffic from &ldquo;Anywhere&rdquo;. Finally, under the &ldquo;Advanced details&rdquo; drop down I select &ldquo;s3acess&rdquo; (I&rsquo;m living with my spelling mistake) from the &ldquo;IAM instance policy&rdquo;:</p>
+<img src="https://github.com/mdh266/PolarsDuckDBPlayGround/blob/main/images/s3access.png?raw=1" width="1000">
+<p>Once I launch the EC2 instance I can see the instance running and click on <code>Instance ID</code> as shown below:</p>
+<img src="https://github.com/mdh266/PolarsDuckDBPlayGround/blob/main/images/instance.png?raw=1" width="1000">
+<p>I can then click on the pop up choice of <code>Connect</code>. This takes me to another page where I get the command at the bottom of the page to SSH onto my machine using the keypair I created:</p>
+<img src="https://github.com/mdh266/PolarsDuckDBPlayGround/blob/main/images/connect.png?raw=1" width="1000">
+<p>I could ssh onto the server with the following command:</p>
+<pre><code>ssh -i &lt;path-to-key&gt;/mikeskey.pem ec2-user@&lt;dns-address&gt;.compute-1.amazonaws.com
+</code></pre>
+<p>Note that I didnt create a user name so it defaulted to <code>ec2-user</code>.</p>
+<p>However, since I&rsquo;ll be running jupyter lab on a remote EC2 server I need to set up <a href="https://linuxize.com/post/how-to-setup-ssh-tunneling/"  class="external-link" target="_blank" rel="noopener">ssh-tunneling</a> as described <a href="https://towardsdatascience.com/setting-up-and-using-jupyter-notebooks-on-aws-61a9648db6c5"  class="external-link" target="_blank" rel="noopener">here</a> so that I can access it from the web browser on my laptop. I can do this by running the command:</p>
+<pre><code>ssh -i &lt;path-to-key&gt;/mikeskey.pem -L 8888:localhost:8888 ec2-user@&lt;dns-address&gt;.compute-1.amazonaws.com
+</code></pre>
+<p>Next I set up git ssh-keys so I could develop on the instance as described <a href="https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent"  class="external-link" target="_blank" rel="noopener">here</a> and clone the repo. I can then set up Docker as discussed <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-container-image.html"  class="external-link" target="_blank" rel="noopener">here</a>. Then I build the image and call it <code>polars_nb</code>:</p>
+<pre><code>sudo docker build -t polars_nb . 
+</code></pre>
+<p>Finally, I start up the container from this image using port forwarding and loading the current directory as the volume:</p>
+<pre><code>sudo docker run -ip 8888:8888 -v `pwd`:/home/jovyan/ -t polars_nb
+</code></pre>
+<p>The terminal shows a link that I can copy and paste into my webbrowser, I make sure to copy the one with the 127 in it and viola it works!</p>
+<h2 id="intro-to-polars">
+  Intro To Polars <a class="anchor" id="third-bullet"></a>
+  <a class="heading-link" href="#intro-to-polars">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Now that we&rsquo;re set up with a notebook on an EC2 isntance we can start to discuss <a href="https://www.pola.rs/"  class="external-link" target="_blank" rel="noopener">Polars</a> dataframes. The Polars library is written in Rust with Python bindings. Polars uses multi-core processing making it fast and the authors smartly used <a href="https://arrow.apache.org/"  class="external-link" target="_blank" rel="noopener">Apache Arrow</a> making it efficient for cross-language in-memory dataframes as there is no serialization between the Rust and Python. According to the website the philosophy of Polars is,</p>
+<p>The goal of Polars is to provide a lightning fast DataFrame library that:</p>
+<ul>
+<li>Utilizes all available cores on your machine.</li>
+<li>Optimizes queries to reduce unneeded work/memory allocations.</li>
+<li>Handles datasets much larger than your available RAM.</li>
+<li>Has an API that is consistent and predictable.</li>
+<li>Has a strict schema (data-types should be known before running the query).</li>
+</ul>
+<p>Let&rsquo;s get started! We can import polars and read in a dataset from <a href="https://opendata.cityofnewyork.us/"  class="external-link" target="_blank" rel="noopener">NY Open Data</a> on <a href="https://data.cityofnewyork.us/Public-Safety/Motor-Vehicle-Collisions-Crashes/h9gi-nx95"  class="external-link" target="_blank" rel="noopener">Motor Vehicle Collisions</a> using the <a href="https://pola-rs.github.io/polars/py-polars/html/reference/api/polars.read_csv.html"  class="external-link" target="_blank" rel="noopener">read_csv</a> function:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> polars <span style="color:#66d9ef">as</span> pl
+</span></span><span style="display:flex;"><span>df <span style="color:#f92672">=</span> pl<span style="color:#f92672">.</span>read_csv(<span style="color:#e6db74">&#34;https://data.cityofnewyork.us/resource/h9gi-nx95.csv&#34;</span>)
+</span></span><span style="display:flex;"><span>df<span style="color:#f92672">.</span>head(<span style="color:#ae81ff">2</span>)
+</span></span></code></pre></div><div><style>
+.dataframe > thead > tr > th,
+.dataframe > tbody > tr > td {
+  text-align: right;
+}
+</style>
+<small>shape: (2, 29)</small><table border="1" class="dataframe"><thead><tr><th>crash_date</th><th>crash_time</th><th>borough</th><th>zip_code</th><th>latitude</th><th>longitude</th><th>location</th><th>on_street_name</th><th>off_street_name</th><th>cross_street_name</th><th>number_of_persons_injured</th><th>number_of_persons_killed</th><th>number_of_pedestrians_injured</th><th>number_of_pedestrians_killed</th><th>number_of_cyclist_injured</th><th>number_of_cyclist_killed</th><th>number_of_motorist_injured</th><th>number_of_motorist_killed</th><th>contributing_factor_vehicle_1</th><th>contributing_factor_vehicle_2</th><th>contributing_factor_vehicle_3</th><th>contributing_factor_vehicle_4</th><th>contributing_factor_vehicle_5</th><th>collision_id</th><th>vehicle_type_code1</th><th>vehicle_type_code2</th><th>vehicle_type_code_3</th><th>vehicle_type_code_4</th><th>vehicle_type_code_5</th></tr><tr><td>str</td><td>str</td><td>str</td><td>i64</td><td>f64</td><td>f64</td><td>str</td><td>str</td><td>str</td><td>str</td><td>i64</td><td>i64</td><td>i64</td><td>i64</td><td>i64</td><td>i64</td><td>i64</td><td>i64</td><td>str</td><td>str</td><td>str</td><td>str</td><td>str</td><td>i64</td><td>str</td><td>str</td><td>str</td><td>str</td><td>str</td></tr></thead><tbody><tr><td>&quot;2021-09-11T00:…</td><td>&quot;2:39&quot;</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>&quot;WHITESTONE EXP…</td><td>&quot;20 AVENUE&quot;</td><td>null</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>2</td><td>0</td><td>&quot;Aggressive Dri…</td><td>&quot;Unspecified&quot;</td><td>null</td><td>null</td><td>null</td><td>4455765</td><td>&quot;Sedan&quot;</td><td>&quot;Sedan&quot;</td><td>null</td><td>null</td><td>null</td></tr><tr><td>&quot;2022-03-26T00:…</td><td>&quot;11:45&quot;</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>&quot;QUEENSBORO BRI…</td><td>null</td><td>null</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>&quot;Pavement Slipp…</td><td>null</td><td>null</td><td>null</td><td>null</td><td>4513547</td><td>&quot;Sedan&quot;</td><td>null</td><td>null</td><td>null</td><td>null</td></tr></tbody></table></div>
+<p>The initial reading of CSVs is the same as Pandas and the <a href="https://pola-rs.github.io/polars/py-polars/html/reference/dataframe/api/polars.DataFrame.head.html"  class="external-link" target="_blank" rel="noopener">head</a> dataframe method returns the top <code>n</code> rows as Pandas does. However, in addition to the printed rows, I also get shape of the dataframe as well as the datatypes of the columns.</p>
+<p>I can get the name of columns and their datatypes using the <a href="https://pola-rs.github.io/polars/py-polars/html/reference/dataframe/api/polars.DataFrame.schema.html"  class="external-link" target="_blank" rel="noopener">schema</a> method which is similar to Spark:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df<span style="color:#f92672">.</span>schema
+</span></span></code></pre></div><pre><code>{'crash_date': Utf8,
+ 'crash_time': Utf8,
+ 'borough': Utf8,
+ 'zip_code': Int64,
+ 'latitude': Float64,
+ 'longitude': Float64,
+ 'location': Utf8,
+ 'on_street_name': Utf8,
+ 'off_street_name': Utf8,
+ 'cross_street_name': Utf8,
+ 'number_of_persons_injured': Int64,
+ 'number_of_persons_killed': Int64,
+ 'number_of_pedestrians_injured': Int64,
+ 'number_of_pedestrians_killed': Int64,
+ 'number_of_cyclist_injured': Int64,
+ 'number_of_cyclist_killed': Int64,
+ 'number_of_motorist_injured': Int64,
+ 'number_of_motorist_killed': Int64,
+ 'contributing_factor_vehicle_1': Utf8,
+ 'contributing_factor_vehicle_2': Utf8,
+ 'contributing_factor_vehicle_3': Utf8,
+ 'contributing_factor_vehicle_4': Utf8,
+ 'contributing_factor_vehicle_5': Utf8,
+ 'collision_id': Int64,
+ 'vehicle_type_code1': Utf8,
+ 'vehicle_type_code2': Utf8,
+ 'vehicle_type_code_3': Utf8,
+ 'vehicle_type_code_4': Utf8,
+ 'vehicle_type_code_5': Utf8}
+</code></pre>
+<p>We can see that the datatypes of Polars are built on top of <a href="https://arrow.apache.org/docs/python/api/datatypes.html"  class="external-link" target="_blank" rel="noopener">Arrow&rsquo;s datatypes</a> and use Arrow arrays. This is awesome because Arrow is memory efficient and can also used for in-memory dataframes with zero-serialization across languages.</p>
+<p>The first command I tried with Polars was looking for duplicates in the dataframe. I found I could do this with the syntax:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>test <span style="color:#f92672">=</span> (df<span style="color:#f92672">.</span>groupby(<span style="color:#e6db74">&#34;collision_id&#34;</span>)
+</span></span><span style="display:flex;"><span>           <span style="color:#f92672">.</span>count()
+</span></span><span style="display:flex;"><span>           <span style="color:#f92672">.</span>filter(pl<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;count&#34;</span>) <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">1</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>test
+</span></span></code></pre></div><div><style>
+.dataframe > thead > tr > th,
+.dataframe > tbody > tr > td {
+  text-align: right;
+}
+</style>
+<small>shape: (0, 2)</small><table border="1" class="dataframe"><thead><tr><th>collision_id</th><th>count</th></tr><tr><td>i64</td><td>u32</td></tr></thead><tbody></tbody></table></div>
+<p>Right away from the syntax I was in love.</p>
+<p>Then I saw statements returned a dataframe:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>type(test)
+</span></span></code></pre></div><pre><code>polars.dataframe.frame.DataFrame
+</code></pre>
+<p>This is exactly what I want! I don&rsquo;t want a series (even though Polars does have <a href="https://pola-rs.github.io/polars/py-polars/html/reference/series/index.html"  class="external-link" target="_blank" rel="noopener">Series</a> data structures). You can even print the dataframes:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(test)
+</span></span></code></pre></div><pre><code>shape: (0, 2)
+┌──────────────┬───────┐
+│ collision_id ┆ count │
+│ ---          ┆ ---   │
+│ i64          ┆ u32   │
+╞══════════════╪═══════╡
+└──────────────┴───────┘
+</code></pre>
+<p>This turns out to be helpful when you have lazy execution (which I&rsquo;ll go over later). The next thing I tried was to access the column of the dataframe by using the dot operator:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df<span style="color:#f92672">.</span>crash_date
+</span></span></code></pre></div><pre><code>---------------------------------------------------------------------------
+
+AttributeError                            Traceback (most recent call last)
+
+Cell In[8], line 1
+----&gt; 1 df.crash_date
+
+
+AttributeError: 'DataFrame' object has no attribute 'crash_date'
+</code></pre>
+<p>I was actually happy to see this was not implemented! For me a column in a dataframe should not be accessed this way. The dot operator is meant to access attributes of the class.</p>
+<p>Instead we can access the column of the dataframe like a dictionary&rsquo;s key:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df[<span style="color:#e6db74">&#34;crash_date&#34;</span>]<span style="color:#f92672">.</span>is_null()<span style="color:#f92672">.</span>any()
+</span></span></code></pre></div><pre><code>False
+</code></pre>
+<p>The crash dates are strings that I wanted to convert to datetime type (I&rsquo;m doing this to build up to more complex queries). I can see the format of the string:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df[<span style="color:#e6db74">&#39;crash_date&#39;</span>][<span style="color:#ae81ff">0</span>] <span style="color:#75715e"># the .loc method doesnt exist!</span>
+</span></span></code></pre></div><pre><code>'2021-09-11T00:00:00.000'
+</code></pre>
+<p>To do so, I write two queries:</p>
+<ol>
+<li>The first query extracts the year-month-day and writes it as a string in the format YYYY-MM-DD</li>
+<li>The second query converts the YYYY-MM-DD strings into timestamp objects</li>
+</ol>
+<p>For the first query I can extract the year-month-day from the string and assign that to a new column named <code>crash_date_str</code>. Note the syntax to create a new column in Polars is <a href="https://pola-rs.github.io/polars/py-polars/html/reference/dataframe/api/polars.DataFrame.with_columns.html"  class="external-link" target="_blank" rel="noopener">with_columns</a> (similar to <a href="https://sparkbyexamples.com/pyspark/pyspark-withcolumn/"  class="external-link" target="_blank" rel="noopener">withColumn</a> in Spark) and I have to use the <a href="https://pola-rs.github.io/polars/py-polars/html/reference/expressions/api/polars.col.html"  class="external-link" target="_blank" rel="noopener">col</a> function similar to Spark! I can get the first 10 characters of the string using the vectorized <a href="https://pandas.pydata.org/docs/reference/api/pandas.Series.str.html"  class="external-link" target="_blank" rel="noopener">str method</a> similar to Pandas. Finally, I rename the new column <code>crash_data_str</code> using the <a href="https://pola-rs.github.io/polars/py-polars/html/reference/expressions/api/polars.Expr.alias.html"  class="external-link" target="_blank" rel="noopener">alias</a> function (again just like Spark). The default for the <code>with_column</code> is to label the new column name the same as the old column name, so we use alias to rename it.</p>
+<p>In the second query I use the vectorized string method <a href="https://pola-rs.github.io/polars/py-polars/html/reference/expressions/api/polars.Expr.str.strptime.html"  class="external-link" target="_blank" rel="noopener">strptime</a> to convert the <code>crash_date_str</code> column to a PyArrow datetime object and rename that column <code>crash_date</code> (overriding the old column with this name).</p>
+<p>These two queries are chained together and the results are shown below.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df <span style="color:#f92672">=</span> df<span style="color:#f92672">.</span>with_columns(
+</span></span><span style="display:flex;"><span>            pl<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;crash_date&#34;</span>)<span style="color:#f92672">.</span>str<span style="color:#f92672">.</span>slice(<span style="color:#ae81ff">0</span>, length<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>)<span style="color:#f92672">.</span>alias(<span style="color:#e6db74">&#34;crash_date_str&#34;</span>)
+</span></span><span style="display:flex;"><span>      )<span style="color:#f92672">.</span>with_columns(
+</span></span><span style="display:flex;"><span>            pl<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;crash_date_str&#34;</span>)<span style="color:#f92672">.</span>str<span style="color:#f92672">.</span>strptime(
+</span></span><span style="display:flex;"><span>                pl<span style="color:#f92672">.</span>Datetime, <span style="color:#e6db74">&#34;%Y-%m-</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">&#34;</span>, strict<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)<span style="color:#f92672">.</span>alias(<span style="color:#e6db74">&#34;crash_date&#34;</span>)
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>df<span style="color:#f92672">.</span>select([<span style="color:#e6db74">&#34;crash_date&#34;</span>, <span style="color:#e6db74">&#34;crash_date_str&#34;</span>])<span style="color:#f92672">.</span>head()
+</span></span></code></pre></div><div><style>
+.dataframe > thead > tr > th,
+.dataframe > tbody > tr > td {
+  text-align: right;
+}
+</style>
+<small>shape: (5, 2)</small><table border="1" class="dataframe"><thead><tr><th>crash_date</th><th>crash_date_str</th></tr><tr><td>datetime[μs]</td><td>str</td></tr></thead><tbody><tr><td>2021-09-11 00:00:00</td><td>&quot;2021-09-11&quot;</td></tr><tr><td>2022-03-26 00:00:00</td><td>&quot;2022-03-26&quot;</td></tr><tr><td>2022-06-29 00:00:00</td><td>&quot;2022-06-29&quot;</td></tr><tr><td>2021-09-11 00:00:00</td><td>&quot;2021-09-11&quot;</td></tr><tr><td>2021-12-14 00:00:00</td><td>&quot;2021-12-14&quot;</td></tr></tbody></table></div>
+<p>Notice the <a href="https://pola-rs.github.io/polars/py-polars/html/reference/expressions/api/polars.col.html"  class="external-link" target="_blank" rel="noopener">col</a> function in Polars lets me access derived columns that are not in the original dataframe. In Pandas to do the same operations I would have to use a lambda function within an assign function:</p>
+<pre><code>df.assign(crash_date=lambda: df[&quot;crash_date_str&quot;].str.strptime(...))
+</code></pre>
+<p>I can see the number of crashes in each borough of NYC with the query</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>groupby(<span style="color:#e6db74">&#34;borough&#34;</span>)<span style="color:#f92672">.</span>count())
+</span></span></code></pre></div><pre><code>shape: (6, 2)
+┌───────────────┬───────┐
+│ borough       ┆ count │
+│ ---           ┆ ---   │
+│ str           ┆ u32   │
+╞═══════════════╪═══════╡
+│ MANHATTAN     ┆ 98    │
+│ STATEN ISLAND ┆ 27    │
+│ BROOKLYN      ┆ 247   │
+│ BRONX         ┆ 107   │
+│ null          ┆ 367   │
+│ QUEENS        ┆ 154   │
+└───────────────┴───────┘
+</code></pre>
+<p>There is a borough value of NULL. I can filter this out with the commands:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>nn_df <span style="color:#f92672">=</span> df<span style="color:#f92672">.</span>filter(pl<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;borough&#34;</span>)<span style="color:#f92672">.</span>is_not_null())
+</span></span></code></pre></div><p>Now I can get just the unique values of non-null boroughs with the query:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>filter(pl<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;borough&#34;</span>)<span style="color:#f92672">.</span>is_not_null())
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">.</span>select(<span style="color:#e6db74">&#34;borough&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">.</span>unique())
+</span></span></code></pre></div><pre><code>shape: (5, 1)
+┌───────────────┐
+│ borough       │
+│ ---           │
+│ str           │
+╞═══════════════╡
+│ STATEN ISLAND │
+│ MANHATTAN     │
+│ QUEENS        │
+│ BRONX         │
+│ BROOKLYN      │
+└───────────────┘
+</code></pre>
+<p>Notice that I can use the <a href="https://pola-rs.github.io/polars/py-polars/html/reference/dataframe/api/polars.DataFrame.select.html"  class="external-link" target="_blank" rel="noopener">select</a> method in Polars to select just the columns I need. This is actually pretty powerful, as I can select columns and run queries on them similar to <a href="https://spark.apache.org/docs/3.1.3/api/python/reference/api/pyspark.sql.DataFrame.selectExpr.html"  class="external-link" target="_blank" rel="noopener">selectEpr</a> in Spark:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(
+</span></span><span style="display:flex;"><span> df<span style="color:#f92672">.</span>filter(pl<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;borough&#34;</span>)<span style="color:#f92672">.</span>is_not_null())
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">.</span>select([
+</span></span><span style="display:flex;"><span>       <span style="color:#e6db74">&#34;borough&#34;</span>, 
+</span></span><span style="display:flex;"><span>       (pl<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;number_of_persons_injured&#34;</span>)  <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">.</span>alias(<span style="color:#e6db74">&#34;number_of_persons_injured_plus1&#34;</span>)
+</span></span><span style="display:flex;"><span>    ])<span style="color:#f92672">.</span>head()
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><pre><code>shape: (5, 2)
+┌───────────┬─────────────────────────────────┐
+│ borough   ┆ number_of_persons_injured_plus1 │
+│ ---       ┆ ---                             │
+│ str       ┆ i64                             │
+╞═══════════╪═════════════════════════════════╡
+│ BROOKLYN  ┆ 1                               │
+│ BROOKLYN  ┆ 1                               │
+│ BRONX     ┆ 3                               │
+│ BROOKLYN  ┆ 1                               │
+│ MANHATTAN ┆ 1                               │
+└───────────┴─────────────────────────────────┘
+</code></pre>
+<p>Doing the same query in Pandas is not as elegant or readable:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>(pd_df[<span style="color:#f92672">~</span>pd_df[<span style="color:#e6db74">&#34;borough&#34;</span>]<span style="color:#f92672">.</span>isnull()]
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">.</span>assign(number_of_persons_injured_plus1<span style="color:#f92672">=</span>pd_df[<span style="color:#e6db74">&#34;number_of_persons_injured&#34;</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>      [[<span style="color:#e6db74">&#34;borough&#34;</span>, <span style="color:#e6db74">&#34;number_of_persons_injured_plus1&#34;</span>]]
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">.</span>head()
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>borough</th>
+      <th>number_of_persons_injured_plus1</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>3</th>
+      <td>BROOKLYN</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>BROOKLYN</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>BRONX</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>BROOKLYN</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>MANHATTAN</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>To me, the Polars query is so much easier to read. And what&rsquo;s more is that it&rsquo;s actually more efficient. The Pandas dataframe transforms the whole dataset, then subsets the columns to return just two. On the other hand Polars subsets the two columns first and then transforms just those two columns.</p>
+<p>Now I can create a Polars dataframe the exact same way as in Pandas:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>borough_df <span style="color:#f92672">=</span> pl<span style="color:#f92672">.</span>DataFrame({
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;borough&#34;</span>: [<span style="color:#e6db74">&#34;BROOKLYN&#34;</span>, <span style="color:#e6db74">&#34;BRONX&#34;</span>, <span style="color:#e6db74">&#34;MANHATTAN&#34;</span>, <span style="color:#e6db74">&#34;STATEN ISLAND&#34;</span>, <span style="color:#e6db74">&#34;QUEENS&#34;</span>],
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;population&#34;</span>: [<span style="color:#ae81ff">2590516</span>, <span style="color:#ae81ff">1379946</span>, <span style="color:#ae81ff">1596273</span>, <span style="color:#ae81ff">2278029</span>, <span style="color:#ae81ff">378977</span>],
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;area&#34;</span>:[<span style="color:#ae81ff">179.7</span>, <span style="color:#ae81ff">109.2</span>, <span style="color:#ae81ff">58.68</span>, <span style="color:#ae81ff">281.6</span>, <span style="color:#ae81ff">149.0</span>]
+</span></span><span style="display:flex;"><span>})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(borough_df)
+</span></span></code></pre></div><pre><code>shape: (5, 3)
+┌───────────────┬────────────┬───────┐
+│ borough       ┆ population ┆ area  │
+│ ---           ┆ ---        ┆ ---   │
+│ str           ┆ i64        ┆ f64   │
+╞═══════════════╪════════════╪═══════╡
+│ BROOKLYN      ┆ 2590516    ┆ 179.7 │
+│ BRONX         ┆ 1379946    ┆ 109.2 │
+│ MANHATTAN     ┆ 1596273    ┆ 58.68 │
+│ STATEN ISLAND ┆ 2278029    ┆ 281.6 │
+│ QUEENS        ┆ 378977     ┆ 149.0 │
+└───────────────┴────────────┴───────┘
+</code></pre>
+<p>This is the population and area of the boroughs which I got from Wikipedia. I&rsquo;ll save it to s3. It was a little awkward to write to s3 with Polars directly so I&rsquo;ll first convert the dataframe to Pandas and then write to s3:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>borough_df<span style="color:#f92672">.</span>to_pandas()<span style="color:#f92672">.</span>to_parquet(<span style="color:#e6db74">&#34;s3://harmonskis/nyc_populations.parquet&#34;</span>)
+</span></span></code></pre></div><p>However, reading from s3 is just the same as with Pandas:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>borough_df <span style="color:#f92672">=</span> pl<span style="color:#f92672">.</span>read_parquet(<span style="color:#e6db74">&#34;s3://harmonskis/nyc_populations.parquet&#34;</span>)
+</span></span></code></pre></div><p>We&rsquo;ll use it to go over a more complicated query:</p>
+<pre><code>Get the total number of injuries per borough then join that result to the borough dataframe to get the injuries by population and finally sort them by borough name.
+</code></pre>
+<p>In Polars this can be using method chaining on the dataframe:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(
+</span></span><span style="display:flex;"><span> df<span style="color:#f92672">.</span>filter(pl<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;borough&#34;</span>)<span style="color:#f92672">.</span>is_not_null())
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">.</span>select([<span style="color:#e6db74">&#34;borough&#34;</span>, <span style="color:#e6db74">&#34;number_of_persons_injured&#34;</span>])
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">.</span>groupby(<span style="color:#e6db74">&#34;borough&#34;</span>)
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">.</span>sum()
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">.</span>join(borough_df, on<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#34;borough&#34;</span>])
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">.</span>select([
+</span></span><span style="display:flex;"><span>       <span style="color:#e6db74">&#34;borough&#34;</span>, 
+</span></span><span style="display:flex;"><span>       (pl<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;number_of_persons_injured&#34;</span>) <span style="color:#f92672">/</span> pl<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;population&#34;</span>))<span style="color:#f92672">.</span>alias(<span style="color:#e6db74">&#34;injuries_per_population&#34;</span>)
+</span></span><span style="display:flex;"><span>   ])
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">.</span>sort(pl<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;borough&#34;</span>))
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><pre><code>shape: (5, 2)
+┌───────────────┬─────────────────────────┐
+│ borough       ┆ injuries_per_population │
+│ ---           ┆ ---                     │
+│ str           ┆ f64                     │
+╞═══════════════╪═════════════════════════╡
+│ BRONX         ┆ 0.000033                │
+│ BROOKLYN      ┆ 0.000045                │
+│ MANHATTAN     ┆ 0.000025                │
+│ QUEENS        ┆ 0.000193                │
+│ STATEN ISLAND ┆ 0.000007                │
+└───────────────┴─────────────────────────┘
+</code></pre>
+<p>Doing the same query in the Pandas API would be an awkward mess. As we can see in Polars it&rsquo;s very easy to use method chaining and the resulting syntax reads pretty similar to SQL!</p>
+<p>Which brings me to something that was super exciting to see in Polars: <a href="https://pola-rs.github.io/polars/py-polars/html/reference/api/polars.SQLContext.execute.html"  class="external-link" target="_blank" rel="noopener">sqlcontext</a>. SQLContext in Polars can be used to create a table from a Polars dataframe and then run SQL commands that return another Polars dataframe.</p>
+<p>We can see this by creating a table called <code>crashes</code> from the dataframe <code>df</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ctx <span style="color:#f92672">=</span> pl<span style="color:#f92672">.</span>SQLContext(crashes<span style="color:#f92672">=</span>df)
+</span></span></code></pre></div><p>Now I can get the sum of every crash per day in each borough:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>daily_df <span style="color:#f92672">=</span> ctx<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    SELECT
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        borough,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        crash_date AS day,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        SUM(number_of_persons_injured)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    FROM 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        crashes
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    WHERE 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        borough IS NOT NULL
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    GROUP BY 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        borough, crash_date
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    ORDER BY 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        borough, day
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(daily_df<span style="color:#f92672">.</span>collect()<span style="color:#f92672">.</span>head())
+</span></span></code></pre></div><pre><code>shape: (5, 3)
+┌─────────┬─────────────────────┬───────────────────────────┐
+│ borough ┆ day                 ┆ number_of_persons_injured │
+│ ---     ┆ ---                 ┆ ---                       │
+│ str     ┆ datetime[μs]        ┆ i64                       │
+╞═════════╪═════════════════════╪═══════════════════════════╡
+│ BRONX   ┆ 2021-02-26 00:00:00 ┆ 0                         │
+│ BRONX   ┆ 2021-04-06 00:00:00 ┆ 0                         │
+│ BRONX   ┆ 2021-04-08 00:00:00 ┆ 0                         │
+│ BRONX   ┆ 2021-04-10 00:00:00 ┆ 4                         │
+│ BRONX   ┆ 2021-04-11 00:00:00 ┆ 0                         │
+└─────────┴─────────────────────┴───────────────────────────┘
+</code></pre>
+<p>Notice I had to use <code>collect()</code> function to get the results. That is because by default SQL in Polars uses lazy execution.</p>
+<p>You can see evidence of this when printing the resulting dataframe; it actually prints the query plan:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(daily_df)
+</span></span></code></pre></div><pre><code>naive plan: (run LazyFrame.explain(optimized=True) to see the optimized plan)
+
+SORT BY [col(&quot;borough&quot;), col(&quot;day&quot;)]
+   SELECT [col(&quot;borough&quot;), col(&quot;crash_date&quot;).alias(&quot;day&quot;), col(&quot;number_of_persons_injured&quot;)] FROM
+    AGGREGATE
+    	[col(&quot;number_of_persons_injured&quot;).sum()] BY [col(&quot;borough&quot;), col(&quot;crash_date&quot;)] FROM
+      FILTER col(&quot;borough&quot;).is_not_null() FROM
+      DF [&quot;crash_date&quot;, &quot;crash_time&quot;, &quot;borough&quot;, &quot;zip_code&quot;]; PROJECT */30 COLUMNS; SELECTION: &quot;None&quot;
+</code></pre>
+<p>To get back a Polars dataframe from this result I would have to use the <code>eager=True</code> parameter in the execute method.</p>
+<p>I can register this new dataframe as a table called <code>daily_crashes</code> in the SQLContext:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ctx <span style="color:#f92672">=</span> ctx<span style="color:#f92672">.</span>register(<span style="color:#e6db74">&#34;daily_crashes&#34;</span>, daily_df)
+</span></span></code></pre></div><p>I can see the tables that are registered using the command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ctx<span style="color:#f92672">.</span>tables()
+</span></span></code></pre></div><pre><code>['crashes', 'daily_crashes']
+</code></pre>
+<p>Now say I want to get the current day&rsquo;s number of injured people and the prior days; I could use the <a href="https://www.sqlshack.com/sql-lag-function-overview-and-examples/"  class="external-link" target="_blank" rel="noopener">lag</a> function in SQL to do so:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ctx<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    SELECT
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        borough,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        day,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        number_of_persons_injured,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        LAG(1,number_of_persons_injured) 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            OVER (
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            PARTITION BY borough 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            ORDER BY day ASC
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            ) AS prior_day_injured
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">FROM
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    daily_crashes
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">ORDER BY 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    borough,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    day DESC
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>, eager<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span></code></pre></div><pre><code>---------------------------------------------------------------------------
+
+InvalidOperationError                     Traceback (most recent call last)
+
+Cell In[26], line 1
+----&gt; 1 ctx.execute(&quot;&quot;&quot;
+      2     SELECT
+      3         borough,
+      4         day,
+      5         number_of_persons_injured,
+      6         LAG(1,number_of_persons_injured) 
+      7             OVER (
+      8             PARTITION BY borough 
+      9             ORDER BY day ASC
+     10             ) AS prior_day_injured
+     11 FROM
+     12     daily_crashes
+     13 ORDER BY 
+     14     borough,
+     15     day DESC
+     16 &quot;&quot;&quot;, eager=True)
+
+
+File /opt/conda/lib/python3.10/site-packages/polars/sql/context.py:282, in SQLContext.execute(self, query, eager)
+    204 def execute(self, query: str, eager: bool | None = None) -&gt; LazyFrame | DataFrame:
+    205     &quot;&quot;&quot;
+    206     Parse the given SQL query and execute it against the registered frame data.
+    207 
+   (...)
+    280     └────────┴─────────────┴─────────┘
+    281     &quot;&quot;&quot;
+--&gt; 282     res = wrap_ldf(self._ctxt.execute(query))
+    283     return res.collect() if (eager or self._eager_execution) else res
+
+
+InvalidOperationError: unsupported SQL function: lag
+</code></pre>
+<p>I finally hit snag in Polars: their doesnt seem to be a lot of support for Window functions. This was initially disappointing since the library was so promising!</p>
+<p>Upon further research I found window functions are supported, infact they are <a href="https://pola-rs.github.io/polars-book/user-guide/expressions/window/"  class="external-link" target="_blank" rel="noopener"><strong>VERY WELL supported!</strong></a>. The query I was trying to turns out to be fairly easy to write as dataframe operations using the <a href="https://pola-rs.github.io/polars/py-polars/html/reference/expressions/api/polars.Expr.over.html"  class="external-link" target="_blank" rel="noopener">over</a> expression. This is exactly the same as SQL where the column names within the <code>over(...)</code> operator are the columns you partition by. You can the sort within each partition (or group as they say in Polars) and use shift instead of LAG:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(
+</span></span><span style="display:flex;"><span>    daily_df<span style="color:#f92672">.</span>with_columns(
+</span></span><span style="display:flex;"><span>            pl<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;number_of_persons_injured&#34;</span>)
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">.</span>sort_by(<span style="color:#e6db74">&#34;day&#34;</span>, descending<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">.</span>shift(periods<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">.</span>over(<span style="color:#e6db74">&#34;borough&#34;</span>)
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">.</span>alias(<span style="color:#e6db74">&#34;prior_day_injured&#34;</span>)
+</span></span><span style="display:flex;"><span>)<span style="color:#f92672">.</span>collect()<span style="color:#f92672">.</span>head(<span style="color:#ae81ff">8</span>))
+</span></span></code></pre></div><pre><code>shape: (8, 4)
+┌─────────┬─────────────────────┬───────────────────────────┬───────────────────┐
+│ borough ┆ day                 ┆ number_of_persons_injured ┆ prior_day_injured │
+│ ---     ┆ ---                 ┆ ---                       ┆ ---               │
+│ str     ┆ datetime[μs]        ┆ i64                       ┆ i64               │
+╞═════════╪═════════════════════╪═══════════════════════════╪═══════════════════╡
+│ BRONX   ┆ 2021-02-26 00:00:00 ┆ 0                         ┆ null              │
+│ BRONX   ┆ 2021-04-06 00:00:00 ┆ 0                         ┆ 0                 │
+│ BRONX   ┆ 2021-04-08 00:00:00 ┆ 0                         ┆ 0                 │
+│ BRONX   ┆ 2021-04-10 00:00:00 ┆ 4                         ┆ 0                 │
+│ BRONX   ┆ 2021-04-11 00:00:00 ┆ 0                         ┆ 4                 │
+│ BRONX   ┆ 2021-04-12 00:00:00 ┆ 0                         ┆ 0                 │
+│ BRONX   ┆ 2021-04-13 00:00:00 ┆ 3                         ┆ 0                 │
+│ BRONX   ┆ 2021-04-14 00:00:00 ┆ 3                         ┆ 3                 │
+└─────────┴─────────────────────┴───────────────────────────┴───────────────────┘
+</code></pre>
+<p>It turns out you can do the same thing with Pandas as shown below.</p>
+<p>Note that I have to collect the lazy datafame and convert it to Pandas first:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>pd_daily_df <span style="color:#f92672">=</span> daily_df<span style="color:#f92672">.</span>collect()<span style="color:#f92672">.</span>to_pandas()
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>pd_daily_df <span style="color:#f92672">=</span> pd_daily_df<span style="color:#f92672">.</span>assign(prior_day_injured<span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>                        pd_daily_df<span style="color:#f92672">.</span>sort_values(by<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;day&#39;</span>], ascending<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>                          <span style="color:#f92672">.</span>groupby([<span style="color:#e6db74">&#39;borough&#39;</span>])
+</span></span><span style="display:flex;"><span>                          [<span style="color:#e6db74">&#39;number_of_persons_injured&#39;</span>]
+</span></span><span style="display:flex;"><span>                          <span style="color:#f92672">.</span>shift(<span style="color:#ae81ff">1</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>pd_daily_df<span style="color:#f92672">.</span>head(<span style="color:#ae81ff">8</span>)
+</span></span></code></pre></div><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>borough</th>
+      <th>day</th>
+      <th>number_of_persons_injured</th>
+      <th>prior_day_injured</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>BRONX</td>
+      <td>2021-02-26</td>
+      <td>0</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>BRONX</td>
+      <td>2021-04-06</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>BRONX</td>
+      <td>2021-04-08</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>BRONX</td>
+      <td>2021-04-10</td>
+      <td>4</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>BRONX</td>
+      <td>2021-04-11</td>
+      <td>0</td>
+      <td>4.0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>BRONX</td>
+      <td>2021-04-12</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>BRONX</td>
+      <td>2021-04-13</td>
+      <td>3</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>BRONX</td>
+      <td>2021-04-14</td>
+      <td>3</td>
+      <td>3.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>Syntactically, I still perfer the Polars to Pandas.</p>
+<p>But let&rsquo;s I really want to use SQL and not do things in the dataframe, atleast to me, it doesnt seem possible with Polars.</p>
+<p>Luckily there is another library that support blazingly fast SQL queries and integrates with Polars (and Pandas) directly: DuckDB.</p>
+<h2 id="duckdb-to-the-rescue-for-sql">
+  DuckDB To The Rescue For SQL <a class="anchor" id="fourth-bullet"></a>
+  <a class="heading-link" href="#duckdb-to-the-rescue-for-sql">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>I heard about <a href="https://duckdb.org/"  class="external-link" target="_blank" rel="noopener">DuckDB</a> when I saw someone star it on github and thought it was &ldquo;Yet Another SQL Engine&rdquo;. While DuckDB is a SQL engine, it does much more than I thought a SQL engine could!</p>
+<p>DuckDB is a parallel query processing library written in C++ and according to their website:</p>
+<pre><code>    DuckDB is designed to support analytical query workloads, also known as Online analytical processing (OLAP). These workloads are characterized by complex, relatively long-running queries that process significant portions of the stored dataset, for example aggregations over entire tables or joins between several large tables.
+    ...
+    DuckDB contains a columnar-vectorized query execution engine, where queries are still interpreted, but a large batch of values (a “vector”) are processed in one operation.
+</code></pre>
+<p>In other words, DuckDB can be used for fast SQL query execution on large datasets. For example the above query that failed in Polars runs perfectly using DuckDB:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> duckdb
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>query <span style="color:#f92672">=</span> duckdb<span style="color:#f92672">.</span>sql(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    SELECT
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        borough,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        day,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        number_of_persons_injured,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        LAG(1, number_of_persons_injured) 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            OVER (
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                PARTITION BY borough 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                ORDER BY day ASC
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                ) as prior_day_injured
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">FROM
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    daily_df
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">ORDER BY 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    borough,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    day DESC
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">LIMIT 5
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>)
+</span></span></code></pre></div><p>Now we can see the output of the query:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>query
+</span></span></code></pre></div><pre><code>┌─────────┬─────────────────────┬───────────────────────────┬───────────────────┐
+│ borough │         day         │ number_of_persons_injured │ prior_day_injured │
+│ varchar │      timestamp      │           int64           │       int32       │
+├─────────┼─────────────────────┼───────────────────────────┼───────────────────┤
+│ BRONX   │ 2022-04-24 00:00:00 │                         0 │                 1 │
+│ BRONX   │ 2022-03-26 00:00:00 │                         7 │                 1 │
+│ BRONX   │ 2022-03-25 00:00:00 │                         1 │                 1 │
+│ BRONX   │ 2022-03-24 00:00:00 │                         1 │                 1 │
+│ BRONX   │ 2022-03-22 00:00:00 │                         1 │                 1 │
+└─────────┴─────────────────────┴───────────────────────────┴───────────────────┘
+</code></pre>
+<p>We can return the result as polars dataframe using the <code>pl</code> method:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>day_prior_df <span style="color:#f92672">=</span> query<span style="color:#f92672">.</span>pl()
+</span></span><span style="display:flex;"><span>print(day_prior_df<span style="color:#f92672">.</span>head(<span style="color:#ae81ff">5</span>))
+</span></span></code></pre></div><pre><code>shape: (5, 4)
+┌─────────┬─────────────────────┬───────────────────────────┬───────────────────┐
+│ borough ┆ day                 ┆ number_of_persons_injured ┆ prior_day_injured │
+│ ---     ┆ ---                 ┆ ---                       ┆ ---               │
+│ str     ┆ datetime[μs]        ┆ i64                       ┆ i32               │
+╞═════════╪═════════════════════╪═══════════════════════════╪═══════════════════╡
+│ BRONX   ┆ 2022-04-24 00:00:00 ┆ 0                         ┆ 1                 │
+│ BRONX   ┆ 2022-03-26 00:00:00 ┆ 7                         ┆ 1                 │
+│ BRONX   ┆ 2022-03-25 00:00:00 ┆ 1                         ┆ 1                 │
+│ BRONX   ┆ 2022-03-24 00:00:00 ┆ 1                         ┆ 1                 │
+│ BRONX   ┆ 2022-03-22 00:00:00 ┆ 1                         ┆ 1                 │
+└─────────┴─────────────────────┴───────────────────────────┴───────────────────┘
+</code></pre>
+<p>Now we can see another cool part of DuckDB, you can execute SQL directly on local files!</p>
+<p>First we save the daily crash dataframe as <a href="https://parquet.apache.org/"  class="external-link" target="_blank" rel="noopener">Parquet</a>  file, but first remember it&rsquo;s a &ldquo;lazy dataframe&rdquo;:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>daily_df
+</span></span></code></pre></div><p><i>naive plan: (run <b>LazyFrame.explain(optimized=True)</b> to see the optimized plan)</i>
+<p></p>
+<div>SORT BY [col(&ldquo;borough&rdquo;), col(&ldquo;day&rdquo;)]<p></p>   SELECT [col(&ldquo;borough&rdquo;), col(&ldquo;crash_date&rdquo;).alias(&ldquo;day&rdquo;), col(&ldquo;number_of_persons_injured&rdquo;)] FROM<p></p>    AGGREGATE<p></p>    	[col(&ldquo;number_of_persons_injured&rdquo;).sum()] BY [col(&ldquo;borough&rdquo;), col(&ldquo;crash_date&rdquo;)] FROM<p></p>      FILTER col(&ldquo;borough&rdquo;).is_not_null() FROM<p></p>      DF [&ldquo;crash_date&rdquo;, &ldquo;crash_time&rdquo;, &ldquo;borough&rdquo;, &ldquo;zip_code&rdquo;]; PROJECT */30 COLUMNS; SELECTION: &ldquo;None&rdquo;</div></p>
+<p>It turns out you cant write lazy dataframes as Parquet using Polars. So first we&rsquo;ll collect it and then write it to parquet:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>daily_df<span style="color:#f92672">.</span>collect()<span style="color:#f92672">.</span>write_parquet(<span style="color:#e6db74">&#34;daily_crashes.parquet&#34;</span>)
+</span></span></code></pre></div><p><a href="https://parquet.apache.org/"  class="external-link" target="_blank" rel="noopener">Apache Parquet</a> is a compressed columnar-stored file format that is great for analytical queries. Column-based formats are particularly good for <a href="https://aws.amazon.com/what-is/olap/"  class="external-link" target="_blank" rel="noopener">OLAP</a> queries since columns can subsetted and be read in continuously allowing for aggregations to be easily performed on them. The datatypes for each column in Parquet are known which allows the format to be compressed. Since the columns and datatypes are known metadata we can read them in with the following query:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>duckdb<span style="color:#f92672">.</span>sql(<span style="color:#e6db74">&#34;SELECT * FROM parquet_schema(daily_crashes.parquet)&#34;</span>)<span style="color:#f92672">.</span>pl()
+</span></span></code></pre></div><div><style>
+.dataframe > thead > tr > th,
+.dataframe > tbody > tr > td {
+  text-align: right;
+}
+</style>
+<small>shape: (4, 11)</small><table border="1" class="dataframe"><thead><tr><th>file_name</th><th>name</th><th>type</th><th>type_length</th><th>repetition_type</th><th>num_children</th><th>converted_type</th><th>scale</th><th>precision</th><th>field_id</th><th>logical_type</th></tr><tr><td>str</td><td>str</td><td>str</td><td>str</td><td>str</td><td>i64</td><td>str</td><td>i64</td><td>i64</td><td>i64</td><td>str</td></tr></thead><tbody><tr><td>&quot;daily_crashes.…</td><td>&quot;root&quot;</td><td>null</td><td>null</td><td>null</td><td>3</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td></tr><tr><td>&quot;daily_crashes.…</td><td>&quot;borough&quot;</td><td>&quot;BYTE_ARRAY&quot;</td><td>null</td><td>&quot;OPTIONAL&quot;</td><td>null</td><td>&quot;UTF8&quot;</td><td>null</td><td>null</td><td>null</td><td>&quot;StringType()&quot;</td></tr><tr><td>&quot;daily_crashes.…</td><td>&quot;day&quot;</td><td>&quot;INT64&quot;</td><td>null</td><td>&quot;OPTIONAL&quot;</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>&quot;TimestampType(…</td></tr><tr><td>&quot;daily_crashes.…</td><td>&quot;number_of_pers…</td><td>&quot;INT64&quot;</td><td>null</td><td>&quot;OPTIONAL&quot;</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td></tr></tbody></table></div>
+<p>Now we can perform queries on the actualy files without having to resort to dataframes at all:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>query <span style="color:#f92672">=</span> duckdb<span style="color:#f92672">.</span>sql(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    SELECT
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        borough,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        day,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        number_of_persons_injured,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        SUM(number_of_persons_injured) 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            OVER (
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                PARTITION BY borough 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                ORDER BY day ASC
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                ) AS cumulative_injuried
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    FROM 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        read_parquet(daily_crashes.parquet)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    ORDER BY
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        borough,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        day ASC
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(query<span style="color:#f92672">.</span>pl()<span style="color:#f92672">.</span>head(<span style="color:#ae81ff">8</span>))
+</span></span></code></pre></div><pre><code>shape: (8, 4)
+┌─────────┬─────────────────────────┬───────────────────────────┬─────────────────────┐
+│ borough ┆ day                     ┆ number_of_persons_injured ┆ cumulative_injuried │
+│ ---     ┆ ---                     ┆ ---                       ┆ ---                 │
+│ str     ┆ str                     ┆ i64                       ┆ f64                 │
+╞═════════╪═════════════════════════╪═══════════════════════════╪═════════════════════╡
+│ BRONX   ┆ 2021-02-26T00:00:00.000 ┆ 0                         ┆ 0.0                 │
+│ BRONX   ┆ 2021-04-06T00:00:00.000 ┆ 0                         ┆ 0.0                 │
+│ BRONX   ┆ 2021-04-08T00:00:00.000 ┆ 0                         ┆ 0.0                 │
+│ BRONX   ┆ 2021-04-10T00:00:00.000 ┆ 4                         ┆ 4.0                 │
+│ BRONX   ┆ 2021-04-11T00:00:00.000 ┆ 0                         ┆ 4.0                 │
+│ BRONX   ┆ 2021-04-12T00:00:00.000 ┆ 0                         ┆ 4.0                 │
+│ BRONX   ┆ 2021-04-13T00:00:00.000 ┆ 3                         ┆ 7.0                 │
+│ BRONX   ┆ 2021-04-14T00:00:00.000 ┆ 3                         ┆ 10.0                │
+└─────────┴─────────────────────────┴───────────────────────────┴─────────────────────┘
+</code></pre>
+<p>Pretty cool!!!</p>
+<h2 id="conclusions">
+  Conclusions <a class="anchor" id="fifth-bullet"></a>
+  <a class="heading-link" href="#conclusions">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>In this post I quickly covered what I view as the limitations of Pandas library. Next I covered how to get set up in with
+Jupyter lab using <a href="https://www.docker.com/"  class="external-link" target="_blank" rel="noopener">Docker</a> on <a href="https://aws.amazon.com/"  class="external-link" target="_blank" rel="noopener">AWS</a> and covered some basics of <a href="https://www.pola.rs/"  class="external-link" target="_blank" rel="noopener">Polars</a>, <a href="https://duckdb.org/"  class="external-link" target="_blank" rel="noopener">DuckDB</a> and how to use the two in combination. The benefits of Polars is that,</p>
+<ul>
+<li>It allows for fast parallel querying on dataframes.</li>
+<li>It uses Apache Arrow for backend datatypes making it memory efficient.</li>
+<li>It has both lazy and eager execution mode.</li>
+<li>It allows for SQL queries directly on dataframes.</li>
+<li>Its API is similar to Spark&rsquo;s API and allows for highly readable queries using method chaining.</li>
+</ul>
+<p>I am still new to both libraries, but looking forward to learning more about them.</p>
+<p>Hope you enjoyed reading this!</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+      <h3 id="see-also-in-sql">
+        See also in SQL
+        <a class="heading-link" href="#see-also-in-sql">
+          <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+          <span class="sr-only">Link to heading</span>
+        </a>
+      </h3>
+      <nav>
+        <ul>
+        
+        
+          
+        
+          
+            <li>
+              <a href="/posts/sqlwars/">SQL Wars: Comparing Relational Databases</a>
+            </li>
+          
+        
+        </ul>
+      </nav>
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>

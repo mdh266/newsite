@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>PyMC3 on Mike Harmon</title>
+    <link>http://localhost:1313/tags/pymc3/</link>
+    <description>Recent content in PyMC3 on Mike Harmon</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 04 May 2021 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/pymc3/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Frequentist &amp; Bayesian Statistics With Py4J &amp; PyMC3</title>
+      <link>http://localhost:1313/posts/bayesmle/</link>
+      <pubDate>Tue, 04 May 2021 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/posts/bayesmle/</guid>
+      <description>&lt;h2 id=&#34;contents&#34;&gt;&#xA;  Contents&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#contents&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#first-bullet&#34; &gt;1. Introduction&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#second-bullet&#34; &gt;2. Sampling A Distribution Written In Scala Using Py4J&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#third-bullet&#34; &gt;3. The Maximum Likelihood Estimator&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#fourth-bullet&#34; &gt;4. Confidence Intervals From Fisher Information&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#fifth-bullet&#34; &gt;5. Bayesian Esimatators &amp;amp; Credible Intervals With PyMC3&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#sixth-bullet&#34; &gt;6. Connecting The Two Methods&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#seventh-bullet&#34; &gt;7. Conclusions&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;1-introduction&#34;&gt;&#xA;  1. Introduction &lt;a class=&#34;anchor&#34; id=&#34;first-bullet&#34;&gt;&lt;/a&gt;&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#1-introduction&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;In this post I want to go back to the basics of statistics, but with an advanced spin on things. By &amp;ldquo;advanced spin&amp;rdquo; I mean, both from in terms of mathematics and computational techniques. The topic I&amp;rsquo;ll dive into is:&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

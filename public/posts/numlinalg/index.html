@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Numerical Linear Algebra In Machine Learning · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+
+
+Introduction
+
+
+Introduction To Function Approximation
+
+
+Introduction To Regression
+
+
+Linear Solvers For Least Squares Regression
+
+
+Cholesky Factorization For Normal Equations
+
+
+Singular Values Decomposition
+
+
+Controlling For Overfitting With Regularization
+
+
+Implementation in Scikit-learn
+
+
+
+
+A Touch Of Recommendation Systems
+
+
+Where To Go From Here
+
+
+
+  Introduction
+  
+    
+    Link to heading
+  
+
+
+In this blogpost we&rsquo;ll go over applications of numerical linear algebra in machine learning starting out with regression and ending with modern recommender systems! Numerical linear algebra (and numerical analysis more generally) was one of thoses courses that I learned, thought was boring and never wanted to study again. Only with maturity that comes with age (and a PhD) was I able to understand and appreciate the true power of numerical linear alebra.  Infact understanding (distribued) linear algebra is probably one of the most important and useful tools I have ever learned.  It has allowed me to contribute to open source libraries for scientific computing and understand how big data and machine learning systems work.  The reason why numerical linear algebra is so important is because it allows us to approximate functions.  In scientific computing and machine learning one is interested in how to approximate a function f(x)f(x)
+.  Numerical analysis and statistics concerns itself with how good is our approximation to f(x)f(x)
+?">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Numerical Linear Algebra In Machine Learning">
+  <meta name="twitter:description" content="Contents Link to heading Introduction
+Introduction To Function Approximation
+Introduction To Regression
+Linear Solvers For Least Squares Regression
+Cholesky Factorization For Normal Equations
+Singular Values Decomposition
+Controlling For Overfitting With Regularization
+Implementation in Scikit-learn
+A Touch Of Recommendation Systems
+Where To Go From Here
+Introduction Link to heading In this blogpost we’ll go over applications of numerical linear algebra in machine learning starting out with regression and ending with modern recommender systems! Numerical linear algebra (and numerical analysis more generally) was one of thoses courses that I learned, thought was boring and never wanted to study again. Only with maturity that comes with age (and a PhD) was I able to understand and appreciate the true power of numerical linear alebra. Infact understanding (distribued) linear algebra is probably one of the most important and useful tools I have ever learned. It has allowed me to contribute to open source libraries for scientific computing and understand how big data and machine learning systems work. The reason why numerical linear algebra is so important is because it allows us to approximate functions. In scientific computing and machine learning one is interested in how to approximate a function f(x)f(x) . Numerical analysis and statistics concerns itself with how good is our approximation to f(x)f(x) ?">
+
+<meta property="og:url" content="http://localhost:1313/posts/numlinalg/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Numerical Linear Algebra In Machine Learning">
+  <meta property="og:description" content="Contents Link to heading Introduction
+Introduction To Function Approximation
+Introduction To Regression
+Linear Solvers For Least Squares Regression
+Cholesky Factorization For Normal Equations
+Singular Values Decomposition
+Controlling For Overfitting With Regularization
+Implementation in Scikit-learn
+A Touch Of Recommendation Systems
+Where To Go From Here
+Introduction Link to heading In this blogpost we’ll go over applications of numerical linear algebra in machine learning starting out with regression and ending with modern recommender systems! Numerical linear algebra (and numerical analysis more generally) was one of thoses courses that I learned, thought was boring and never wanted to study again. Only with maturity that comes with age (and a PhD) was I able to understand and appreciate the true power of numerical linear alebra. Infact understanding (distribued) linear algebra is probably one of the most important and useful tools I have ever learned. It has allowed me to contribute to open source libraries for scientific computing and understand how big data and machine learning systems work. The reason why numerical linear algebra is so important is because it allows us to approximate functions. In scientific computing and machine learning one is interested in how to approximate a function f(x)f(x) . Numerical analysis and statistics concerns itself with how good is our approximation to f(x)f(x) ?">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2019-12-11T00:00:00+00:00">
+    <meta property="article:modified_time" content="2019-12-11T00:00:00+00:00">
+    <meta property="article:tag" content="Linear Algebra">
+    <meta property="article:tag" content="Singular Value Decomposition">
+    <meta property="article:tag" content="Regression">
+    <meta property="article:tag" content="Alternating Least Squares">
+    <meta property="article:tag" content="Scikit-Learn">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/numlinalg/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/numlinalg/">
+              Numerical Linear Algebra In Machine Learning
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2019-12-11T00:00:00Z">
+                December 11, 2019
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              28-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/linear-algebra/">Linear Algebra</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/singular-value-decomposition/">Singular Value Decomposition</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/regression/">Regression</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/alternating-least-squares/">Alternating Least Squares</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/scikit-learn/">Scikit-Learn</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<ol>
+<li>
+<p>Introduction</p>
+</li>
+<li>
+<p>Introduction To Function Approximation</p>
+</li>
+<li>
+<p>Introduction To Regression</p>
+</li>
+<li>
+<p>Linear Solvers For Least Squares Regression</p>
+<ul>
+<li>
+<p>Cholesky Factorization For Normal Equations</p>
+</li>
+<li>
+<p>Singular Values Decomposition</p>
+</li>
+<li>
+<p>Controlling For Overfitting With Regularization</p>
+</li>
+<li>
+<p>Implementation in Scikit-learn</p>
+</li>
+</ul>
+</li>
+<li>
+<p>A Touch Of Recommendation Systems</p>
+</li>
+<li>
+<p>Where To Go From Here</p>
+</li>
+</ol>
+<h2 id="introduction">
+  Introduction
+  <a class="heading-link" href="#introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this blogpost we&rsquo;ll go over applications of numerical linear algebra in machine learning starting out with regression and ending with modern recommender systems! Numerical linear algebra (and numerical analysis more generally) was one of thoses courses that I learned, thought was boring and never wanted to study again. Only with maturity that comes with age (and a PhD) was I able to understand and appreciate the true power of numerical linear alebra.  Infact <em>understanding (distribued) linear algebra is probably one of the most important and useful tools I have ever learned.</em>  It has allowed me to contribute to open source libraries for scientific computing and understand how big data and machine learning systems work.  The reason why numerical linear algebra is so important is because it allows us to approximate functions.  In scientific computing and machine learning one is interested in <strong>how to approximate a function</strong> <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(x)</annotation></semantics></math></span>
+.  Numerical analysis and statistics concerns itself with <strong>how good is our approximation to</strong> <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(x)</annotation></semantics></math></span>
+?</p>
+<p>Traditionally algorithms in Numerical Linear Algebra are taught/learned in <a href="https://www.mathworks.com/products/matlab.html"  class="external-link" target="_blank" rel="noopener">Matlab</a> for easy learning, but written for production Fortran and C/C++ for high performance. The fields of Data Science, Machine Learning and Artifical Intelligence have a seen recent boom and given a new life and applications to these algorithms. These fields lean more to using Python (though R is often used as well) as the primaty programming language, but make heavy use of wrappers to <a href="http://www.netlib.org/blas/"  class="external-link" target="_blank" rel="noopener">BLAS</a> and <a href="http://www.netlib.org/lapack/"  class="external-link" target="_blank" rel="noopener">LAPACK</a> libraries written in Fortran and C/C++.</p>
+<p>Many Data Scientists and Machine Learning Researchers also heavily make use of <a href="https://jupyter.org/"  class="external-link" target="_blank" rel="noopener">Jupyter</a> notebook as a tool for rapid prototyping and writing experiments in Python (though it also allows for the use of other languages likes R, Julia and Scala). Jupyter notebook is as an interactive envrionment for computing that runs in your web browser and is very similar to <a href="https://www.wolfram.com/notebooks/"  class="external-link" target="_blank" rel="noopener">Mathematica&rsquo;s</a> notebook. The fact it runs in a web browser is quite convenient as it will allows users to easily work on a remote computer without any complicated set up.  See this <a href="http://michael-harmon.com/blog/JupyterOnGCP.html"  class="external-link" target="_blank" rel="noopener">post</a> about how to get set up with Python &amp; Jupyter notebooks on Google Cloud with all the dependencies installed for this post.</p>
+<h2 id="introduction-to-function-approximation">
+  Introduction To Function Approximation
+  <a class="heading-link" href="#introduction-to-function-approximation">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Let&rsquo;s now move onto function approximation.  One learns in Calculus to represent smooth functions <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo>:</mo><mtext> </mtext><mi mathvariant="double-struck">R</mi><mo>−</mo><mo>&gt;</mo><mi mathvariant="double-struck">R</mi></mrow><annotation encoding="application/x-tex">f : \, \mathbb{R} -&gt; \mathbb{R}</annotation></semantics></math></span>
+ about some point <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">x_0</annotation></semantics></math></span>
+ using special polynomials called <a href="http://tutorial.math.lamar.edu/Classes/CalcII/PowerSeries.aspx"  class="external-link" target="_blank" rel="noopener">power series</a> or <a href="http://mathworld.wolfram.com/TaylorSeries.html"  class="external-link" target="_blank" rel="noopener">Taylor series</a>:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>=</mo><munderover><mo>∑</mo><mrow><mi>n</mi><mo>=</mo><mn>0</mn></mrow><mi mathvariant="normal">∞</mi></munderover><mtext> </mtext><msub><mi>a</mi><mi>n</mi></msub><mo stretchy="false">(</mo><mi>x</mi><mo>−</mo><msub><mi>x</mi><mn>0</mn></msub><msup><mo stretchy="false">)</mo><mi>n</mi></msup></mrow><annotation encoding="application/x-tex">
+f(x) \, = \sum_{n=0}^{\infty} \, a_n (x - x_0)^{n}
+</annotation></semantics></math></span>
+<p>We can find the coefficients to the series by the equation,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>a</mi><mi>n</mi></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mn>1</mn><mrow><mi>n</mi><mo stretchy="false">!</mo></mrow></mfrac><mtext> </mtext><msup><mi>f</mi><mi>n</mi></msup><mo stretchy="false">(</mo><msub><mi>x</mi><mn>0</mn></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> 
+a_{n} \; = \; \frac{1}{n!} \, f^{n}(x_0)
+</annotation></semantics></math></span>
+<p>We observed that there is a radius of convergence <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi><mtext> </mtext><mo>∈</mo><mi mathvariant="double-struck">R</mi></mrow><annotation encoding="application/x-tex">R \, \in \mathbb{R}</annotation></semantics></math></span>
+ such that within <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>−</mo><mi>R</mi><mo separator="true">,</mo><msub><mi>x</mi><mn>0</mn></msub><mo>+</mo><mi>R</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(x_0 - R, x_0 + R)</annotation></semantics></math></span>
+ (one should test the end points too) the series converges to <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(x)</annotation></semantics></math></span>
+ <a href="http://web.math.ucsb.edu/~padraic/caltech/math1d_2010/ma1d_wk5_notes_2010.pdf"  class="external-link" target="_blank" rel="noopener">uniformly</a> and outside that it does not necessarily converge to <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(x)</annotation></semantics></math></span>
+.</p>
+<p>We then learned that we can approximate our function <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(x)</annotation></semantics></math></span>
+ with the finite degree polynomial,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>≃</mo><mtext> </mtext><msub><mi>f</mi><mi>N</mi></msub><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>=</mo><mtext> </mtext><msub><mi>a</mi><mn>0</mn></msub><mtext> </mtext><mo>+</mo><mtext> </mtext><msub><mi>a</mi><mn>1</mn></msub><mo stretchy="false">(</mo><mi>x</mi><mo>−</mo><msub><mi>x</mi><mn>0</mn></msub><mo stretchy="false">)</mo><mtext> </mtext><mo>+</mo><mtext> </mtext><msub><mi>a</mi><mn>2</mn></msub><mo stretchy="false">(</mo><mi>x</mi><mo>−</mo><msub><mi>x</mi><mn>0</mn></msub><msup><mo stretchy="false">)</mo><mn>2</mn></msup><mtext> </mtext><mo>+</mo><mo>…</mo><mtext> </mtext><mo>+</mo><mtext> </mtext><msub><mi>a</mi><mi>N</mi></msub><mo stretchy="false">(</mo><mi>x</mi><mo>−</mo><msub><mi>x</mi><mn>0</mn></msub><msup><mo stretchy="false">)</mo><mi>N</mi></msup></mrow><annotation encoding="application/x-tex">
+f(x) \, \simeq \, f_N(x) \, = \, a_0  \, + \, a_1 (x - x_0) \, + \,a_2 (x - x_0)^2 \, + \ldots \, + \, a_N (x - x_0)^N
+</annotation></semantics></math></span>
+<p>We can then use that approximation to perform calculations on our function that might not have been possible otherwise.  The most memorialble for me being learning how to <a href="http://www.faculty.umassd.edu/michele.mandrioli/424book/fchm4.5.html"  class="external-link" target="_blank" rel="noopener">integrate a Gaussian</a>. Though in practice <a href="https://en.wikipedia.org/wiki/Numerical_integration"  class="external-link" target="_blank" rel="noopener">numerical integration</a> is usually perferred for finite integrals.</p>
+<p>Power series were originaly developed to <a href="https://en.wikipedia.org/wiki/Power_series_solution_of_differential_equations">approximate solutions to differential equations</a>. As science and engineering progressed the differential equations become more complicated and harder to solve.  Other approximation methods were invented like <a href="https://en.wikipedia.org/wiki/Fourier_series">Fourier Series</a>:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>≃</mo><mtext> </mtext><msub><mi>f</mi><mi>N</mi></msub><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>=</mo><mtext> </mtext><mfrac><msub><mi>a</mi><mn>0</mn></msub><mn>2</mn></mfrac><mtext> </mtext><mo>+</mo><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></munderover><mrow><mo fence="true">(</mo><msub><mi>a</mi><mi>n</mi></msub><mi>cos</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>k</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow><mo>+</mo><msub><mi>b</mi><mi>n</mi></msub><mi>sin</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>k</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">
+f(x) \, \simeq \, f_N(x) \, = \, \frac{a_0}{2} \, + \sum_{k=1}^{N} \left(a_n \cos \left(\frac{2 \pi k x}{L} \right) + b_n \sin \left(\frac{2 \pi k x}{L} \right) \right)
+</annotation></semantics></math></span>
+<p>We remark that the functions <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>cos</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>k</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">\cos\left(\frac{2 \pi k x}{L}\right)</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>sin</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>k</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">\sin\left(\frac{2 \pi k x}{L}\right)</annotation></semantics></math></span>
+ form an <strong>orthogonal basis for the Hilbert Space</strong> <a href="http://mathworld.wolfram.com/L2-Space.html"  class="external-link" target="_blank" rel="noopener"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>L</mi><mn>2</mn></msup><mo stretchy="false">(</mo><mo stretchy="false">[</mo><mo>−</mo><mi>L</mi><mo separator="true">,</mo><mi>L</mi><mo stretchy="false">]</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">L^{2}([-L,L])</annotation></semantics></math></span>
+</a>.  <strong>Coefficients for the approximations are determined projecting the function onto the basis functions:</strong></p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>a</mi><mi>n</mi></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mn>2</mn><mi>L</mi></mfrac><mtext> </mtext><msubsup><mo>∫</mo><mrow><mo>−</mo><mi>L</mi></mrow><mi>L</mi></msubsup><mtext> </mtext><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>cos</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>n</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow><mtext> </mtext><mi>d</mi><mi>x</mi></mrow><annotation encoding="application/x-tex">
+a_n \; = \; \frac{2}{L} \, \int_{-L}^{L} \, f(x) \,\cos \left(\frac{2 \pi n x}{L} \right) \, dx 
+</annotation></semantics></math></span>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>b</mi><mi>n</mi></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mn>2</mn><mi>L</mi></mfrac><mtext> </mtext><msubsup><mo>∫</mo><mrow><mo>−</mo><mi>L</mi></mrow><mi>L</mi></msubsup><mtext> </mtext><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>sin</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>n</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow><mtext> </mtext><mi>d</mi><mi>x</mi></mrow><annotation encoding="application/x-tex">
+b_n \; = \; \frac{2}{L} \, \int_{-L}^{L} \, f(x) \,\sin \left(\frac{2 \pi n x}{L} \right) \, dx 
+</annotation></semantics></math></span>
+<p>The convergence of the Fourier series is much subtle issue. While the Taylor series was guaranteed to converge uniformly, the regularity conditions imposed to achieve this were quite strong.  The class of functions in <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>L</mi><mn>2</mn></msup><mo stretchy="false">(</mo><mo stretchy="false">[</mo><mo>−</mo><mi>L</mi><mo separator="true">,</mo><mi>L</mi><mo stretchy="false">]</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">L^{2}([-L,L])</annotation></semantics></math></span>
+ is quite broad and depending on the regularity conditions of our specific function we will get different modes of <a href="https://en.wikipedia.org/wiki/Convergence_of_Fourier_series"  class="external-link" target="_blank" rel="noopener">convergence</a>.</p>
+<p>Let&rsquo;s derive the second equation for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>b</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">b_n</annotation></semantics></math></span>
+ by using a &ldquo;projection&rdquo; onto the basis function <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>sin</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>n</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">\sin \left(\frac{2 \pi n x}{L} \right)</annotation></semantics></math></span>
+,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><msubsup><mo>∫</mo><mrow><mo>−</mo><mi>L</mi></mrow><mi>L</mi></msubsup><mi>sin</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>n</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow><mtext> </mtext><mrow><mo fence="true">[</mo><mfrac><msub><mi>a</mi><mn>0</mn></msub><mn>2</mn></mfrac><mtext> </mtext><mo>+</mo><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></munderover><mrow><mo fence="true">(</mo><msub><mi>a</mi><mi>n</mi></msub><mi>cos</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>k</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow><mo>+</mo><msub><mi>b</mi><mi>n</mi></msub><mi>sin</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>k</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow><mo fence="true">)</mo></mrow><mo fence="true">]</mo></mrow><mtext> </mtext><mi>d</mi><mi>x</mi><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><msubsup><mo>∫</mo><mrow><mo>−</mo><mi>L</mi></mrow><mi>L</mi></msubsup><mi>sin</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>n</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow><mtext> </mtext><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>d</mi><mi>x</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><msub><mi>b</mi><mi>n</mi></msub><mtext> </mtext><msubsup><mo>∫</mo><mrow><mo>−</mo><mi>L</mi></mrow><mi>L</mi></msubsup><msup><mrow><mi>sin</mi><mo>⁡</mo></mrow><mn>2</mn></msup><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>n</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow><mtext> </mtext><mi>d</mi><mi>x</mi><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><msubsup><mo>∫</mo><mrow><mo>−</mo><mi>L</mi></mrow><mi>L</mi></msubsup><mi>sin</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>n</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow><mtext> </mtext><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>d</mi><mi>x</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><msub><mi>b</mi><mi>n</mi></msub><mtext> </mtext><mfrac><mi>L</mi><mn>2</mn></mfrac><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><msubsup><mo>∫</mo><mrow><mo>−</mo><mi>L</mi></mrow><mi>L</mi></msubsup><mtext> </mtext><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>sin</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>n</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow><mtext> </mtext><mi>d</mi><mi>x</mi></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\int_{-L}^{L} \sin \left(\frac{2 \pi n x}{L} \right) \, \left[\frac{a_0}{2} \, + \sum_{k=1}^{N} \left(a_n \cos \left(\frac{2 \pi k x}{L} \right) + b_n \sin\left(\frac{2 \pi k  x}{L} \right) \right) \right] \, dx \; &amp;= \; \int_{-L}^{L} \sin \left(\frac{2 \pi n x}{L} \right) \, f(x) \, dx \\
+b_n \, \int_{-L}^{L} \sin^2  \left(\frac{2 \pi n x}{L} \right)\, dx  \; &amp;= \; \int_{-L}^{L} \sin \left(\frac{2 \pi n x}{L} \right) \, f(x) \, dx \\
+b_n \, \frac{L}{2} \; &amp;= \;  \int_{-L}^{L} \, f(x) \,\sin \left(\frac{2 \pi n x}{L} \right) \, dx 
+\end{aligned}</annotation></semantics></math></span>
+<p>Which finally becomes,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>b</mi><mi>n</mi></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mrow><mo fence="true">(</mo><mfrac><mi>L</mi><mn>2</mn></mfrac><mo fence="true">)</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup><msubsup><mo>∫</mo><mrow><mo>−</mo><mi>L</mi></mrow><mi>L</mi></msubsup><mtext> </mtext><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>sin</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>2</mn><mi>π</mi><mi>n</mi><mi>x</mi></mrow><mi>L</mi></mfrac><mo fence="true">)</mo></mrow><mtext> </mtext><mi>d</mi><mi>x</mi></mrow><annotation encoding="application/x-tex">
+b_n \; = \; \left(\frac{L}{2} \right)^{-1} \int_{-L}^{L} \, f(x) \,\sin \left(\frac{2 \pi n x}{L} \right) \, dx
+</annotation></semantics></math></span>
+<p>The above example illustrates the two steps in our approximation methods:</p>
+<ol>
+<li>
+<p><strong>Projecting the function (or its values) onto a finite dimensional space</strong></p>
+</li>
+<li>
+<p><strong>Solving for the co-efficients corresponding to each of the basis functions</strong></p>
+</li>
+</ol>
+<p>The last step is not usually as easy as the above example was and often requires <strong>solving a system of linear equations:</strong></p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>A</mi><mi>x</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><mi>b</mi></mrow><annotation encoding="application/x-tex">
+A x \, = \, b
+</annotation></semantics></math></span>
+<p>The need to solve a system of linear equations occurs most often because the basis for our finite dimensional space is not orthogonal.  If the basis were orthogonal, then the matrix would be <strong>diagonal</strong> and we could be invert it by hand, leading to equations like the Fourier coefficient equations.</p>
+<p>Each of these steps in our approximations methods introduces their own errors:</p>
+<ol>
+<li>
+<p>The error in your model approximation.</p>
+</li>
+<li>
+<p>The error in solving the linear system of equations.</p>
+</li>
+</ol>
+<p>The first error best summarized in the <a href="https://en.wikipedia.org/wiki/Bias%E2%80%93variance_tradeoff"  class="external-link" target="_blank" rel="noopener">bias-variance trade off</a> (see Section 2.2 in this <a href="http://faculty.marshall.usc.edu/gareth-james/ISL/"  class="external-link" target="_blank" rel="noopener">book</a> as well). By this I mean that by assuming that our function has only <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span>
+ features we introduce a bias into our model and as we increase the number we will most likely increase the variance in our model. The second error is due to rounding errors and <a href="https://en.wikipedia.org/wiki/Numerical_analysis#Numerical_stability_and_well-posed_problems"  class="external-link" target="_blank" rel="noopener">numerical stability</a>.  We won&rsquo;t touch on either of these topics too much, but mention them for completeness.</p>
+<p>With the advent of the computer and seemingly cheap and unlimited computational resources numerical methods like finite difference and finite element methods were invented to approximate solutions to differential equations. The finite element method is one that is particularly dear to my heart and has concepts that have proved useful in understanding models in statistics and machine learning, particularly, <a href="https://en.wikipedia.org/wiki/Generalized_additive_model">Generalized Addative Models</a>.</p>
+<p>In the next section well go into the basics of Linear Regression models which is a subset of the larger class of Generalized Additive Models.</p>
+<h2 id="introduction-to-regression">
+  Introduction To Regression
+  <a class="heading-link" href="#introduction-to-regression">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Linear regression is generally the first statistical modeling technique one learns.  It involves relating some target <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span>
+ that is a continuous <a href="https://en.wikipedia.org/wiki/Random_variable">random variable</a> to <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span>
+ &ldquo;features&rdquo; represented as a vector: <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>=</mo><mo stretchy="false">[</mo><mn>1</mn><mo separator="true">,</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>x</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>p</mi></msub><mo stretchy="false">]</mo><mtext>  </mtext><mo>∈</mo><mtext> </mtext><msup><mi mathvariant="double-struck">R</mi><mrow><mi>p</mi><mo>+</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\textbf{x}_{i} = [1, x_{1}, x_{2}, \ldots, x_{p}] \; \in \, \mathbb{R}^{p+1}</annotation></semantics></math></span>
+ using coefficients <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold-italic">ω</mi><mo>=</mo><mo stretchy="false">[</mo><msub><mi>ω</mi><mn>0</mn></msub><mo separator="true">,</mo><msub><mi>ω</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>ω</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>ω</mi><mi>p</mi></msub><mo stretchy="false">]</mo><mtext>  </mtext><mo>∈</mo><mtext> </mtext><msup><mi mathvariant="double-struck">R</mi><mrow><mi>p</mi><mo>+</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\boldsymbol \omega = [\omega_0, \omega_1, \omega_2, \ldots, \omega_p] \; \in \, \mathbb{R}^{p+1}</annotation></semantics></math></span>
+.  The coefficient <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ω</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">\omega_0</annotation></semantics></math></span>
+ is called the &ldquo;intercept.&rdquo; The features can have continuous and non-negative integer values and are generally considered to be non-random. The relationship between the target values and features values is described by the model,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mi mathvariant="bold-italic">ω</mi><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>+</mo><msub><mi>ϵ</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">
+y_{i} \; =\; \boldsymbol  \omega^{T} \textbf{x}_{i} + \epsilon_{i}
+</annotation></semantics></math></span>
+<p>Where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ϵ</mi><mi>i</mi></msub><mtext> </mtext><mo>∼</mo><mtext> </mtext><mi>N</mi><mo stretchy="false">(</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\epsilon_{i} \, \sim \, N(0,1)</annotation></semantics></math></span>
+ are independent and normal distributed with mean 0 and variance 1 and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold-italic">ω</mi><mtext> </mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>p</mi><mo>+</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\boldsymbol  \omega \, \in \mathbb{R}^{p+1}</annotation></semantics></math></span>
+ are the unknown co-efficients.  The fitting the linear regression model then becomes,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>h</mi><mi mathvariant="bold-italic">ω</mi></msub><mo stretchy="false">(</mo><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mi mathvariant="bold-italic">ω</mi><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">
+h_{\boldsymbol \omega}( \textbf{x}_{i}) \; =\; \boldsymbol  \omega^{T} \textbf{x}_{i}
+</annotation></semantics></math></span>
+<p>Fitting the model then becomes finding the cofficients <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold-italic">ω</mi></mrow><annotation encoding="application/x-tex">\boldsymbol \omega</annotation></semantics></math></span>
+ that best approximates <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msub><mi>h</mi><mi mathvariant="bold-italic">ω</mi></msub><mo stretchy="false">(</mo><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">y_i \; = \; h_{\boldsymbol \omega}( \textbf{x}_{i})</annotation></semantics></math></span>
+ for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">i=1, \ldots, n</annotation></semantics></math></span>
+.  This model is often called <a href="https://en.wikipedia.org/wiki/Ordinary_least_squares"  class="external-link" target="_blank" rel="noopener">ordinary least squares</a> and <a href="https://en.wikipedia.org/wiki/Consistent_estimator"  class="external-link" target="_blank" rel="noopener">converges in probability</a>.</p>
+<p>In general we will have many distinct measurements <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\textbf{x}_{i}</annotation></semantics></math></span>
+ corresponding to values <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">y_i</annotation></semantics></math></span>
+ that are collected into a <strong>training set</strong>, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mtext>Train</mtext></msub><mtext> </mtext><mo>=</mo><mtext> </mtext><msubsup><mrow><mo fence="true">{</mo><mo stretchy="false">(</mo><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo separator="true">,</mo><mtext> </mtext><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mo fence="true">}</mo></mrow><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></msubsup></mrow><annotation encoding="application/x-tex">D_{\text{Train}} \, = \,  \left\{ (\textbf{x}_{i}, \, y_{i})  \right\}_{i=1}^{n}</annotation></semantics></math></span>
+.  This can be represend in the form <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mtext>Train</mtext></msub><mtext> </mtext><mo>=</mo><mtext> </mtext><mo stretchy="false">(</mo><msub><mtext mathvariant="bold">X</mtext><mtext>Train</mtext></msub><mo separator="true">,</mo><msub><mtext mathvariant="bold">y</mtext><mtext>Train</mtext></msub></mrow><annotation encoding="application/x-tex">D_{\text{Train}} \, = \, (\textbf{X}_{\text{Train}}, \textbf{y}_{\text{Train}}</annotation></semantics></math></span>
+), where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="bold">X</mtext><mtext>Train</mtext></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>n</mi><mo>×</mo><mo stretchy="false">(</mo><mi>p</mi><mo>+</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">\textbf{X}_{\text{Train}} \in \mathbb{R}^{n \times (p+1)}</annotation></semantics></math></span>
+ is the <a href="https://en.wikipedia.org/wiki/Design_matrix">Design Matrix</a> and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="bold">y</mtext><mtext>Train</mtext></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mi>n</mi></msup></mrow><annotation encoding="application/x-tex">\textbf{y}_{\text{Train}} \in \mathbb{R}^{n}</annotation></semantics></math></span>
+ is the vector corresponding of target values. We also have a <strong>test set</strong>, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mtext>Test</mtext></msub><mtext> </mtext><mo>=</mo><mtext> </mtext><msubsup><mrow><mo fence="true">{</mo><mo stretchy="false">(</mo><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo separator="true">,</mo><mtext> </mtext><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mo fence="true">}</mo></mrow><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>m</mi></msubsup></mrow><annotation encoding="application/x-tex">D_{\text{Test}} \, = \,  \left\{ (\textbf{x}_{i}, \, y_{i})  \right\}_{i=1}^{m}</annotation></semantics></math></span>
+.  This can be represend in the form <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mtext>Test</mtext></msub><mtext> </mtext><mo>=</mo><mtext> </mtext><mo stretchy="false">(</mo><mtext mathvariant="bold">X</mtext><mo separator="true">,</mo><mtext mathvariant="bold">y</mtext></mrow><annotation encoding="application/x-tex">D_{\text{Test}} \, = \, (\textbf{X}, \textbf{y}</annotation></semantics></math></span>
+), where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="bold">X</mtext><mtext>Test</mtext></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>m</mi><mo>×</mo><mo stretchy="false">(</mo><mi>p</mi><mo>+</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">\textbf{X}_{\text{Test}} \in \mathbb{R}^{m \times (p+1)}</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="bold">y</mtext><mtext>Test</mtext></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mi>m</mi></msup></mrow><annotation encoding="application/x-tex">\textbf{y}_{\text{Test}} \in \mathbb{R}^{m}</annotation></semantics></math></span>
+ is the vector corresponding of target values.  The training set is the set of points we use to determine <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold-italic">ω</mi></mrow><annotation encoding="application/x-tex">\boldsymbol \omega</annotation></semantics></math></span>
+ and the testing evaluating the performance of our model.  For ease of notation we will simply drop the +1 from the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">p+1</annotation></semantics></math></span>
+, but the reader should always remember there is an intectept.  Let&rsquo;s make things concrete using some example data.</p>
+<p>The data we will use (<code>data.csv</code>) comes from the <a href="https://www1.nyc.gov/html/gbee/html/plan/ll84_scores.shtml">NYC Mayor&rsquo;s Office of Sustainbility</a> and contains energy efficiency measurements of multi-family housing units in New York City.  We will use some of the measurements to predict the Green House Gas Emissions of the buildings, you can read more how this data was cleaned <a href="http://michael-harmon.com/blog/NYCBuildingEnergy.html">here</a>.  The file has the following columns:</p>
+<ul>
+<li><code>NGI</code> : Nautral Gas Use Intensity (kBtu/ft 2 )</li>
+<li><code>EI</code> : Electricty Use Intensity (kBtu/ft 2 )</li>
+<li><code>WI</code> : Water Use Intensity (kga/ft 2 )</li>
+<li><code>Site_EUI</code> : Site Energy Usage Intensity (kBtu/ft 2 )</li>
+<li><code>GHGI</code> : Green House Gas Emissions Intensity (Metric Tons CO2e / ft 2 )</li>
+</ul>
+<p>We can import the data using <a href="https://pandas.pydata.org/">Pandas</a> which gives us a fast way to read in data from csv documents:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas  <span style="color:#66d9ef">as</span> pd
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#columns we care about</span>
+</span></span><span style="display:flex;"><span>cols <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;NGI&#39;</span>,<span style="color:#e6db74">&#39;EI&#39;</span>,<span style="color:#e6db74">&#39;WI&#39;</span>,<span style="color:#e6db74">&#39;Site_EUI&#39;</span>,<span style="color:#e6db74">&#39;GHGI&#39;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># read the data</span>
+</span></span><span style="display:flex;"><span>df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>read_csv(<span style="color:#e6db74">&#34;data.csv&#34;</span>,
+</span></span><span style="display:flex;"><span>                 usecols <span style="color:#f92672">=</span> cols)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#view the first 5 lines</span>
+</span></span><span style="display:flex;"><span>df<span style="color:#f92672">.</span>head()
+</span></span></code></pre></div><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Site_EUI</th>
+      <th>NGI</th>
+      <th>EI</th>
+      <th>WI</th>
+      <th>GHGI</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-0.037249</td>
+      <td>-0.016434</td>
+      <td>-0.012849</td>
+      <td>-0.104832</td>
+      <td>-0.037384</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-0.037921</td>
+      <td>-0.017372</td>
+      <td>-0.007096</td>
+      <td>-0.040264</td>
+      <td>-0.037782</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-0.033047</td>
+      <td>-0.013440</td>
+      <td>0.019025</td>
+      <td>-0.047608</td>
+      <td>-0.031731</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>-0.034623</td>
+      <td>-0.012073</td>
+      <td>-0.026548</td>
+      <td>-0.118878</td>
+      <td>-0.034398</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>-0.033804</td>
+      <td>-0.013676</td>
+      <td>0.008066</td>
+      <td>-0.077564</td>
+      <td>-0.032913</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>We split out dataframe into a training and test set:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df_test  <span style="color:#f92672">=</span> df<span style="color:#f92672">.</span>sample(frac<span style="color:#f92672">=</span><span style="color:#ae81ff">0.25</span>, random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">42</span>)
+</span></span><span style="display:flex;"><span>df_train <span style="color:#f92672">=</span> df<span style="color:#f92672">.</span>drop(df_test<span style="color:#f92672">.</span>index, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>)
+</span></span></code></pre></div><p>Then our target variable then is the <code>GHGI</code> and design matrix becomes the rest of the columns:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Design matrix</span>
+</span></span><span style="display:flex;"><span>X <span style="color:#f92672">=</span> df_train[[<span style="color:#e6db74">&#39;NGI&#39;</span>,<span style="color:#e6db74">&#39;EI&#39;</span>,<span style="color:#e6db74">&#39;WI&#39;</span>,<span style="color:#e6db74">&#39;Site_EUI&#39;</span>]]<span style="color:#f92672">.</span>values
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Target vector</span>
+</span></span><span style="display:flex;"><span>y <span style="color:#f92672">=</span> df_train[[<span style="color:#e6db74">&#34;GHGI&#34;</span>]]<span style="color:#f92672">.</span>values[:,<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Design matrix</span>
+</span></span><span style="display:flex;"><span>X_test  <span style="color:#f92672">=</span> df_test[[<span style="color:#e6db74">&#39;NGI&#39;</span>,<span style="color:#e6db74">&#39;EI&#39;</span>,<span style="color:#e6db74">&#39;WI&#39;</span>,<span style="color:#e6db74">&#39;Site_EUI&#39;</span>]]<span style="color:#f92672">.</span>values
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Target vector</span>
+</span></span><span style="display:flex;"><span>y_test  <span style="color:#f92672">=</span> df_test[[<span style="color:#e6db74">&#34;GHGI&#34;</span>]]<span style="color:#f92672">.</span>values[:,<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;X = </span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, X)
+</span></span><span style="display:flex;"><span>print()
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;X.shape = &#34;</span>, X<span style="color:#f92672">.</span>shape)
+</span></span><span style="display:flex;"><span>print()
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;y = </span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, y)
+</span></span><span style="display:flex;"><span>print()
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;X_test.shape = &#34;</span>, X_test<span style="color:#f92672">.</span>shape)
+</span></span></code></pre></div><pre><code>X = 
+ [[-0.0164345  -0.01284852 -0.1048316  -0.0372486 ]
+ [-0.01737222 -0.00709637 -0.04026423 -0.03792081]
+ [-0.01344039  0.01902526 -0.04760821 -0.0330473 ]
+ ...
+ [-0.01034947 -0.03023676  0.00994682 -0.03592519]
+ [-0.00979158 -0.03166883 -0.00486112 -0.0356311 ]
+ [-0.00874449 -0.02223016 -0.05749552 -0.03100967]]
+
+X.shape =  (3702, 4)
+
+y = 
+ [-0.03738401 -0.03778169 -0.03173064 ... -0.03306691 -0.03265591
+ -0.03082855]
+
+X_test.shape =  (1234, 4)
+</code></pre>
+<p><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span>
+ are now a <a href="https://numpy.org/"  class="external-link" target="_blank" rel="noopener">NumPy</a> matrix and array respectively and the same for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mtext>test</mtext></msub></mrow><annotation encoding="application/x-tex">X_{\text{test}}</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mtext>test</mtext></msub></mrow><annotation encoding="application/x-tex">y_{\text{test}}</annotation></semantics></math></span>
+. NumPy is Python library that has highly optimized data structures and algorithms for linear algebra.  Infact, <a href="https://stackoverflow.com/questions/11077023/what-are-the-differences-between-pandas-and-numpyscipy-in-python"  class="external-link" target="_blank" rel="noopener">Pandas is written on top of NumPy</a>.</p>
+<p>We can then look at the relationship or correlation each of the features has on the target variables by looking at their scatter plots using a function I wrote:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> plotting <span style="color:#f92672">import</span> plot_results
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span>matplotlib inline
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plot_results(df_test)
+</span></span></code></pre></div><p><img src="/numlinalg_files/numlinalg_8_0.png" alt="png"></p>
+<p>These scatter plots show us the correlation between <code>GHGI</code> and the different features.  The far panel on the right shows us that as we increase <code>Site_EUI</code> on average we see <code>GHGI</code> increase linearly.  This makes sense as the more energy a building uses the more green house gas it produces.  The same is true of natural gas (<code>NGI</code>) as it is used for heating or cooking.  Therefore if this goes up so should our green house gas emissions.  Less intuitive may be electricity usage. We might not expect that as our electicity usage increases our green house gases increases, however, this could be due to the fact the source of the electricity comes from gas or coal.  That fact this is less intuitive could also be why the shape is less linear than <code>Site_EUI</code>.  The amount of water we use shoul not effect the green house gas emissions (maybe for heating hot water). This realiztion is displayed in the scater plot for <code>WI</code> as it does not show any distinct pattern.</p>
+<p>Let&rsquo;s now return to the linear regression. Our goal is to approximate the target variable <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">y_i</annotation></semantics></math></span>
+ with a function <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>h</mi><mi mathvariant="bold-italic">ω</mi></msub><mo stretchy="false">(</mo><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">h_{\boldsymbol \omega}(\textbf{x}_{i})</annotation></semantics></math></span>
+. This function is a linear combination of our features,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>h</mi><mi mathvariant="bold-italic">ω</mi></msub><mo stretchy="false">(</mo><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo stretchy="false">)</mo><mtext> </mtext><mo>=</mo><mtext> </mtext><msup><mi mathvariant="bold-italic">ω</mi><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">
+h_{\boldsymbol \omega}(\textbf{x}_{i}) \, = \, \boldsymbol \omega^{T} \textbf{x}_{i} 
+</annotation></semantics></math></span>
+<p>We find the solution vector or coefficients <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold-italic">ω</mi></mrow><annotation encoding="application/x-tex">\boldsymbol \omega</annotation></semantics></math></span>
+ by minimizing the cost function <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>J</mi><mrow><mo fence="true">(</mo><mi mathvariant="bold-italic">ω</mi><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">J \left( \boldsymbol \omega \right)</annotation></semantics></math></span>
+,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mover accent="true"><mi mathvariant="bold-italic">ω</mi><mo>^</mo></mover><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mi mathvariant="bold-italic">ω</mi></munder><mtext> </mtext><mfrac><mn>1</mn><mn>2</mn></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msup><mrow><mo fence="true">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo>−</mo><msub><mi>h</mi><mi mathvariant="bold-italic">ω</mi></msub><mo stretchy="false">(</mo><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo stretchy="false">)</mo><mo fence="true">)</mo></mrow><mn>2</mn></msup></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mi mathvariant="bold-italic">ω</mi></munder><mtext> </mtext><mfrac><mn>1</mn><mn>2</mn></mfrac><mi mathvariant="normal">∥</mi><mtext mathvariant="bold">y</mtext><mo>−</mo><msub><mi>h</mi><mi mathvariant="bold-italic">ω</mi></msub><mo stretchy="false">(</mo><mtext mathvariant="bold">x</mtext><mo stretchy="false">)</mo><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mi mathvariant="bold-italic">ω</mi></munder><mtext> </mtext><mi>J</mi><mrow><mo fence="true">(</mo><mi mathvariant="bold-italic">ω</mi><mo fence="true">)</mo></mrow></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\hat{\boldsymbol \omega}
+ \; &amp;= \; 
+ \min_{\boldsymbol \omega} \, \frac{1}{2} \sum_{i=1}^{n} \left( y_{i}  -h_{\boldsymbol \omega}( \textbf{x}_{i}) \right)^{2} \\
+&amp;= \; 
+ \min_{\boldsymbol \omega} \, \frac{1}{2} \Vert \textbf{y} - h_{\boldsymbol \omega}(\textbf{x}) \Vert^{2} \\
+ &amp;= \; 
+ \min_{\boldsymbol \omega} \, J \left( \boldsymbol \omega \right)
+\end{aligned}</annotation></semantics></math></span>
+<p>Mininmizing <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>J</mi><mrow><mo fence="true">(</mo><mi mathvariant="bold-italic">ω</mi><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">J \left( \boldsymbol \omega \right)</annotation></semantics></math></span>
+ is equivalent to setting the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∇</mi><mi>J</mi><mrow><mo fence="true">(</mo><mi mathvariant="bold-italic">ω</mi><mo fence="true">)</mo></mrow><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex">\nabla J \left( \boldsymbol \omega \right) \; = \; 0</annotation></semantics></math></span>
+.  We can expand the cost function,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>J</mi><mo stretchy="false">(</mo><mi mathvariant="bold-italic">ω</mi><mo stretchy="false">)</mo><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mfrac><mn>1</mn><mn>2</mn></mfrac><mtext> </mtext><mi mathvariant="normal">∥</mi><mtext mathvariant="bold">y</mtext><mo>−</mo><mtext mathvariant="bold">X</mtext><mi mathvariant="bold-italic">ω</mi><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mi mathvariant="bold-italic">θ</mi></munder><mtext> </mtext><mfrac><mn>1</mn><mn>2</mn></mfrac><mi mathvariant="normal">∥</mi><mtext mathvariant="bold">y</mtext><mo>−</mo><mtext mathvariant="bold">X</mtext><mi mathvariant="bold-italic">ω</mi><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mfrac><mn>1</mn><mn>2</mn></mfrac><mtext> </mtext><msup><mrow><mo fence="true">(</mo><mtext mathvariant="bold">y</mtext><mo>−</mo><mtext mathvariant="bold">X</mtext><mi mathvariant="bold-italic">ω</mi><mo fence="true">)</mo></mrow><mi>T</mi></msup><mrow><mo fence="true">(</mo><mtext mathvariant="bold">y</mtext><mo>−</mo><mtext mathvariant="bold">X</mtext><mi mathvariant="bold-italic">ω</mi><mo fence="true">)</mo></mrow></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mfrac><mn>1</mn><mn>2</mn></mfrac><mtext> </mtext><mrow><mo fence="true">(</mo><msup><mtext mathvariant="bold">y</mtext><mi>T</mi></msup><mtext mathvariant="bold">y</mtext><mo>−</mo><msup><mtext mathvariant="bold">y</mtext><mi>T</mi></msup><mtext mathvariant="bold">X</mtext><mi mathvariant="bold-italic">ω</mi><mo>−</mo><msup><mi mathvariant="bold-italic">ω</mi><mi>T</mi></msup><msup><mtext mathvariant="bold">X</mtext><mi>T</mi></msup><mtext mathvariant="bold">y</mtext><mo>+</mo><msup><mi mathvariant="bold-italic">ω</mi><mi>T</mi></msup><msup><mtext mathvariant="bold">X</mtext><mi>T</mi></msup><mtext mathvariant="bold">X</mtext><mi mathvariant="bold-italic">ω</mi><mo fence="true">)</mo></mrow></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+J(\boldsymbol \omega ) 
+\; &amp;= \; 
+\frac{1}{2} \, \Vert  \textbf{y} - \textbf{X} \boldsymbol \omega \Vert^{2} \\
+&amp;= \; 
+ \min_{\boldsymbol \theta} \, \frac{1}{2} \Vert \textbf{y} - \textbf{X} \boldsymbol \omega \Vert^{2} \\
+&amp;= \; \frac{1}{2} \, \left( \textbf{y} - \textbf{X} \boldsymbol \omega \right)^{T}  \left( \textbf{y} - \textbf{X} \boldsymbol \omega  \right) \\
+&amp;= \; \frac{1}{2} \, \left( \textbf{y}^{T} \textbf{y}  - \textbf{y}^{T} \textbf{X} \boldsymbol \omega  - \boldsymbol \omega^{T} \textbf{X}^{T} \textbf{y} + \boldsymbol \omega^{T} \textbf{X}^{T} \textbf{X}  \boldsymbol \omega \right)
+\end{aligned}</annotation></semantics></math></span>
+<p>Taking the gradient of both sides we then have (for a review on matrix calculus see <a href="https://atmos.washington.edu/~dennis/MatrixCalculus.pdf"  class="external-link" target="_blank" rel="noopener">here</a>),</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="bold">∇</mi><mi>J</mi><mo stretchy="false">(</mo><mi mathvariant="bold-italic">ω</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mtext mathvariant="bold">X</mtext><mi>T</mi></msup><mrow><mo fence="true">(</mo><mtext mathvariant="bold">y</mtext><mo>−</mo><mtext mathvariant="bold">X</mtext><mi mathvariant="bold-italic">ω</mi><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">
+\boldsymbol \nabla J(\boldsymbol \omega ) 
+\; = \;
+\textbf{X}^{T} \left( \textbf{y} - \textbf{X} \boldsymbol \omega \right)
+</annotation></semantics></math></span>
+<p>Setting the above equal to zero yields the linear system of equations,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mrow><mo fence="true">(</mo><msup><mtext mathvariant="bold">X</mtext><mi>T</mi></msup><mtext mathvariant="bold">X</mtext><mo fence="true">)</mo></mrow><mtext> </mtext><mover accent="true"><mi mathvariant="bold-italic">ω</mi><mo>^</mo></mover><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mtext mathvariant="bold">X</mtext><mi>T</mi></msup><mtext mathvariant="bold">y</mtext></mrow><annotation encoding="application/x-tex"> 
+\left(\textbf{X}^{T}\textbf{X}\right) \,
+\hat{\boldsymbol \omega}
+\; = \;
+\textbf{X}^{T} \textbf{y} 
+</annotation></semantics></math></span>
+<p>The above formulation is the so-called <strong>&ldquo;Normal Equations&rdquo;</strong>.  We can rewrite them as,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>S</mi><mtext> </mtext><mover accent="true"><mi mathvariant="bold-italic">ω</mi><mo>^</mo></mover><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mtext mathvariant="bold">b</mtext></mrow><annotation encoding="application/x-tex"> 
+S \,
+\hat{\boldsymbol \omega}
+\; = \;
+\textbf{b}
+</annotation></semantics></math></span>
+<p>Where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">b</mtext><mtext> </mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mi>p</mi></msup></mrow><annotation encoding="application/x-tex">\textbf{b} \, \in \mathbb{R}^{p}</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><msup><mtext mathvariant="bold">X</mtext><mi>T</mi></msup><mtext mathvariant="bold">X</mtext><mtext> </mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>p</mi><mo>×</mo><mi>p</mi></mrow></msup></mrow><annotation encoding="application/x-tex">S \, = \, \textbf{X}^{T}\textbf{X} \, \in \mathbb{R}^{p \times p}</annotation></semantics></math></span>
+. When the features have been scaled (as we have assumed), the  matrix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span>
+ is the <strong>covariance matrix</strong></p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mrow><mo fence="true">(</mo><msup><mtext mathvariant="bold">X</mtext><mi>T</mi></msup><mtext mathvariant="bold">X</mtext><mo fence="true">)</mo></mrow><mrow><mi>i</mi><mo separator="true">,</mo><mi>j</mi></mrow></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mtext>Cov</mtext><mo stretchy="false">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo separator="true">,</mo><msub><mi>x</mi><mi>j</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">
+\left(\textbf{X}^{T}\textbf{X}\right)_{i,j} \; = \; \text{Cov}(x_{i},x_{j} )
+</annotation></semantics></math></span>
+<p>The vector <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><msup><mtext mathvariant="bold">X</mtext><mi>T</mi></msup><mtext mathvariant="bold">y</mtext></mrow><annotation encoding="application/x-tex">b \, = \, \textbf{X}^{T} \textbf{y} </annotation></semantics></math></span>
+ is the <em>projection of the target values onto the finite dimensional space that is spanned by the features.</em>  Defining the <strong>residual r</strong> as,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext mathvariant="bold">r</mtext><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mtext mathvariant="bold">y</mtext><mo>−</mo><mtext mathvariant="bold">X</mtext><mi mathvariant="bold-italic">ω</mi></mrow><annotation encoding="application/x-tex">
+\textbf{r} \; = \; \textbf{y} - \textbf{X} \boldsymbol \omega 
+</annotation></semantics></math></span>
+<p>Then we note <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∇</mi><mi>J</mi><mrow><mo fence="true">(</mo><mover accent="true"><mi mathvariant="bold-italic">ω</mi><mo>^</mo></mover><mo fence="true">)</mo></mrow><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex">\nabla J \left( \hat{\boldsymbol \omega} \right) \; = \; 0</annotation></semantics></math></span>
+ is the same thing as saying,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mi>X</mi><mi>T</mi></msup><mtext> </mtext><mtext mathvariant="bold">r</mtext><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex">
+X^{T} \, \textbf{r} \; = \; 0
+</annotation></semantics></math></span>
+<p>Or the solution <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi mathvariant="bold-italic">ω</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat{\boldsymbol \omega}</annotation></semantics></math></span>
+ is <em>value such that the residual is orthogonal to our feature space or the residual is statistically uncorrelated with any of the features.</em></p>
+<p>The covariance matrix is symmetric and positive definite, but if the two features are highly correlated then two rows in the matrix will be nearly identical and the matrix will be nearly singular. Statistically, having correlated features is bad since it makes it hard to determine the impact on any one feature has on the target. Numerically, having correlated features is bad because the condition number of the covariance matrix explodes.  The reason is that the condition number is definted as,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>κ</mi><mo stretchy="false">(</mo><mi>S</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mi mathvariant="normal">∥</mi><mi>S</mi><msub><mi mathvariant="normal">∥</mi><mn>2</mn></msub><mtext> </mtext><mi mathvariant="normal">∥</mi><msup><mi>S</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><msub><mi mathvariant="normal">∥</mi><mn>2</mn></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><msub><mi>σ</mi><mtext>max</mtext></msub><msub><mi>σ</mi><mtext>min</mtext></msub></mfrac></mrow><annotation encoding="application/x-tex">
+\kappa(S) \; = \; \Vert S \Vert_2 \, \Vert S^{-1} \Vert_2 \; = \; \frac{\sigma_{\text{max}}}{\sigma_{\text{min}}}
+</annotation></semantics></math></span>
+<p>Where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span>
+ are the singular values from the singular value decomposition.  As the matrix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span>
+ becomes more singular <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∥</mi><msup><mi>S</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><msub><mi mathvariant="normal">∥</mi><mn>2</mn></msub><mtext> </mtext><mo>→</mo><mtext> </mtext><mi mathvariant="normal">∞</mi></mrow><annotation encoding="application/x-tex">\Vert S^{-1} \Vert_2 \, \rightarrow \, \infty</annotation></semantics></math></span>
+, forcing the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>κ</mi><mtext> </mtext><mo>→</mo><mtext> </mtext><mi mathvariant="normal">∞</mi></mrow><annotation encoding="application/x-tex">\kappa \, \rightarrow \, \infty</annotation></semantics></math></span>
+.   We remark that the condition number affects not only the accuracy of your solution, but also the stability of the solvers, see <a href="https://people.maths.ox.ac.uk/trefethen/text.html"  class="external-link" target="_blank" rel="noopener">Lecture 12</a>.</p>
+<p>There are two we will go over about solving the over-determined system of equations <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi><mi mathvariant="bold-italic">ω</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><mtext mathvariant="bold">y</mtext></mrow><annotation encoding="application/x-tex">X \boldsymbol \omega \, = \, \textbf{y}</annotation></semantics></math></span>
+:</p>
+<ol>
+<li>
+<p>Solving the Normal Equations using the Cholesky Decomposition</p>
+</li>
+<li>
+<p>Solving the linear system using the Singular Value Decomposition</p>
+</li>
+</ol>
+<p>However, one can also solve the Normal Equations using an <a href="https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.linalg.lu_solve.html"  class="external-link" target="_blank" rel="noopener">LU factorization</a> or the original system with the <a href="https://en.wikipedia.org/wiki/QR_decomposition"  class="external-link" target="_blank" rel="noopener">QR factorization</a>.</p>
+<h2 id="linear-solvers-for-least-squares-regression">
+  Linear Solvers For Least Squares Regression
+  <a class="heading-link" href="#linear-solvers-for-least-squares-regression">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>See <a href="https://people.maths.ox.ac.uk/trefethen/text.html"  class="external-link" target="_blank" rel="noopener">Lecture 11</a> for more detailed discussions.</p>
+<h3 id="linear-solver-1-cholesky-decomposition-of-normal-equations">
+  Linear Solver 1: Cholesky Decomposition Of Normal Equations
+  <a class="heading-link" href="#linear-solver-1-cholesky-decomposition-of-normal-equations">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Let&rsquo;s first solve the Normal Equations:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>S</mi><mtext> </mtext><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mi>X</mi><mi>T</mi></msup><mtext mathvariant="bold">y</mtext></mrow><annotation encoding="application/x-tex"> 
+S \,
+\boldsymbol \omega
+\; = \;
+X^{T} \textbf{y} 
+</annotation></semantics></math></span>
+<p>Our covariance matrix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span>
+ is symmetrix positive definite we can use the <a href="https://en.wikipedia.org/wiki/Cholesky_decomposition"  class="external-link" target="_blank" rel="noopener">Cholesky decomposition</a>:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>S</mi><mo>=</mo><mi>L</mi><msup><mi>L</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex">
+S = L L^{T}
+</annotation></semantics></math></span>
+<p><strong>where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span>
+ is an lower triangular matrix.</strong> To solve the system from the nomrmal equations then becomes,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>S</mi><mtext> </mtext><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><msup><mi>X</mi><mi>T</mi></msup><mtext mathvariant="bold">y</mtext></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>L</mi><msup><mi>L</mi><mi>T</mi></msup><mtext> </mtext><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><msup><mi>X</mi><mi>T</mi></msup><mtext mathvariant="bold">y</mtext></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+S \, \boldsymbol \omega \; &amp;= \; X^{T} \textbf{y} \\
+L L^{T} \, \boldsymbol \omega \; &amp;= \; X^{T} \textbf{y}
+\end{aligned}</annotation></semantics></math></span>
+<p>Which we can rewrite as first solving,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>L</mi><mtext mathvariant="bold">z</mtext><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mi>X</mi><mi>T</mi></msup><mtext mathvariant="bold">y</mtext></mrow><annotation encoding="application/x-tex">
+L \textbf{z} \; = \; X^{T} \textbf{y}
+</annotation></semantics></math></span>
+<p>Then solve,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mi>L</mi><mi>T</mi></msup><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mtext mathvariant="bold">z</mtext></mrow><annotation encoding="application/x-tex">
+L^T \boldsymbol \omega \; = \; \textbf{z}
+</annotation></semantics></math></span>
+<p>As <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span>
+ is an lower triangular matrix each of these linear system of equations is simple to solve and the forward/backward substitutions made to solve them are backwards stable.</p>
+<p>Let&rsquo;s try this out by first analyzing the covariance matrix</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># Build the covariance matrix</span>
+</span></span><span style="display:flex;"><span>X_t <span style="color:#f92672">=</span> X<span style="color:#f92672">.</span>transpose()
+</span></span><span style="display:flex;"><span>S   <span style="color:#f92672">=</span> X_t<span style="color:#f92672">.</span>dot(X)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;S = </span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, S)
+</span></span></code></pre></div><pre><code>S = 
+ [[ 0.74547278  1.35358196  2.7794211   1.72619886]
+ [ 1.35358196  4.09897316  5.16118203  3.39404027]
+ [ 2.7794211   5.16118203 16.53112563  6.69851448]
+ [ 1.72619886  3.39404027  6.69851448  4.2625346 ]]
+</code></pre>
+<p>Let&rsquo;s take a look at the eigen values to understand the condititioning of our matrix</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>eigs <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>linalg<span style="color:#f92672">.</span>eigvals(S)
+</span></span><span style="display:flex;"><span>print(eigs)
+</span></span></code></pre></div><pre><code>[22.1809954   2.73222512  0.03890524  0.6859804 ]
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cond_num <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>sqrt( eigs<span style="color:#f92672">.</span>max() <span style="color:#f92672">/</span> eigs<span style="color:#f92672">.</span>min())
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Condition number = </span><span style="color:#e6db74">{</span>cond_num<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><pre><code>Condition number = 23.87736746652693
+</code></pre>
+<p>The eigenvalues are all positive and the condition number are not too big which is good!</p>
+<p>We will now be using many SciPy function calls. SciPy is a sister Python library with Numpy and supports many scientific algorithms.  <a href="https://docs.scipy.org/doc/scipy-0.16.1/reference/linalg.html"  class="external-link" target="_blank" rel="noopener">SciPy&rsquo;s</a> linear algebra routines expand on <a href="https://docs.scipy.org/doc/numpy/reference/routines.linalg.html"  class="external-link" target="_blank" rel="noopener">NumPy&rsquo;s</a> and even allow for use sparse matrices and vectors. SciPy acts a wrappers around LAPACK, indeed the eigenvalue calculator directly calls <a href="http://www.icl.utk.edu/~mgates3/docs/lapack.html#geev"  class="external-link" target="_blank" rel="noopener">LAPACK&rsquo;s</a> eigenvalue decomposition.</p>
+<p>Let&rsquo;s now perform the Cholesky Decomposition using <a href="https://docs.scipy.org/doc/scipy-0.15.1/reference/generated/scipy.linalg.cholesky.html"  class="external-link" target="_blank" rel="noopener">SciPy</a>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> scipy <span style="color:#f92672">import</span> linalg
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Perform the Cholesky Factsaorization</span>
+</span></span><span style="display:flex;"><span>L <span style="color:#f92672">=</span> linalg<span style="color:#f92672">.</span>cholesky(S, lower<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>L
+</span></span></code></pre></div><pre><code>array([[0.86340766, 0.        , 0.        , 0.        ],
+       [1.56772058, 1.28110317, 0.        , 0.        ],
+       [3.21912954, 0.08936547, 2.48200412, 0.        ],
+       [1.99928602, 0.2027303 , 0.0984836 , 0.46324014]])
+</code></pre>
+<p>We can check to make sure that <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><msup><mi>L</mi><mi>T</mi></msup><mtext> </mtext><mo>=</mo><mtext> </mtext><mi>S</mi></mrow><annotation encoding="application/x-tex">L L^T \, = \, S</annotation></semantics></math></span>
+:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>L<span style="color:#f92672">.</span>dot(L<span style="color:#f92672">.</span>T)
+</span></span></code></pre></div><pre><code>array([[ 0.74547278,  1.35358196,  2.7794211 ,  1.72619886],
+       [ 1.35358196,  4.09897316,  5.16118203,  3.39404027],
+       [ 2.7794211 ,  5.16118203, 16.53112563,  6.69851448],
+       [ 1.72619886,  3.39404027,  6.69851448,  4.2625346 ]])
+</code></pre>
+<p>Then use the matrix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span>
+ to solve the normal equations using SciPy&rsquo;s <a href="https://github.com/scipy/scipy/blob/v1.3.3/scipy/linalg/basic.py#L261"  class="external-link" target="_blank" rel="noopener">solve_triangular</a> (which solves a lower/upper linear system).  This function directly calls <a href="http://www.icl.utk.edu/~mgates3/docs/lapack.html#trtrs"  class="external-link" target="_blank" rel="noopener">LAPACK&rsquo;s</a> implementation of forward/backward substitution:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># solve for the coefficents</span>
+</span></span><span style="display:flex;"><span>z     <span style="color:#f92672">=</span> linalg<span style="color:#f92672">.</span>solve_triangular(L,   X_t<span style="color:#f92672">.</span>dot(y), lower<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>omega <span style="color:#f92672">=</span> linalg<span style="color:#f92672">.</span>solve_triangular(L<span style="color:#f92672">.</span>T, z, lower<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;omega : </span><span style="color:#e6db74">{</span>omega<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><pre><code>omega : [-0.2376972   0.03247505  0.01313829  1.02531297]
+</code></pre>
+<p>We can now get the predicted values from <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>y</mi><mo>^</mo></mover><mtext> </mtext><mo>=</mo><mtext> </mtext><mi>X</mi><mover accent="true"><mi mathvariant="bold-italic">ω</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat{y} \, = \, X \hat{\boldsymbol \omega}</annotation></semantics></math></span>
+ on the test set and plot the results against the true values <code>y_test</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># Get the in sample predicted values</span>
+</span></span><span style="display:flex;"><span>df_test[<span style="color:#e6db74">&#34;y_ols&#34;</span>] <span style="color:#f92672">=</span> X_test<span style="color:#f92672">.</span>dot(omega)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plot_results(df_test, <span style="color:#e6db74">&#39;y_ols&#39;</span>)
+</span></span></code></pre></div><p><img src="/numlinalg_files/numlinalg_24_0.png" alt="png"></p>
+<p>Not bad! Let&rsquo;s move onto solving the system of equations with the singular value decomposition. I should note SciPy implements a <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.cho_solve.html#scipy.linalg.cho_solve"  class="external-link" target="_blank" rel="noopener">Cholesky solver</a> that directly calls <a href="http://www.icl.utk.edu/~mgates3/docs/lapack.html#posv"  class="external-link" target="_blank" rel="noopener">LAPACK&rsquo;s</a> routine.</p>
+<h2 id="linear-solver-2-the-singular-value-decomposition-svd">
+  Linear Solver 2: The Singular Value Decomposition (SVD)
+  <a class="heading-link" href="#linear-solver-2-the-singular-value-decomposition-svd">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Let&rsquo;s solve the overdetermined system of equations,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>X</mi><mtext> </mtext><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mi>y</mi></mrow><annotation encoding="application/x-tex">
+X \, \boldsymbol \omega \; = \; y
+</annotation></semantics></math></span>
+<p>using the <a href="https://en.wikipedia.org/wiki/Singular_value_decomposition"  class="external-link" target="_blank" rel="noopener">Singular Value Decomposition (SVD)</a>:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>X</mi><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mi>U</mi><mi mathvariant="normal">Σ</mi><msup><mi>V</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex">
+X \; = \; U \Sigma V^{T}
+</annotation></semantics></math></span>
+<p>Where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>U</mi><mtext> </mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>n</mi><mo>×</mo><mi>n</mi></mrow></msup></mrow><annotation encoding="application/x-tex">U \, \in \mathbb{R}^{n \times n}</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><mtext> </mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>p</mi><mo>×</mo><mi>p</mi></mrow></msup></mrow><annotation encoding="application/x-tex">V \, \in  \mathbb{R}^{p \times p}</annotation></semantics></math></span>
+ are <a href="https://en.wikipedia.org/wiki/Unitary_matrix"  class="external-link" target="_blank" rel="noopener">unitary matrices</a> and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Σ</mi><mtext> </mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>n</mi><mo>×</mo><mi>p</mi></mrow></msup></mrow><annotation encoding="application/x-tex">\Sigma \, \in \mathbb{R}^{n \times p}</annotation></semantics></math></span>
+ is a diagonal matrix with the singular values along the diagonal. We can substitute in the SVD into our system of equations to obtain,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>X</mi><mtext> </mtext><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mi>y</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>U</mi><mi mathvariant="normal">Σ</mi><msup><mi>V</mi><mi>T</mi></msup><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mi>y</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><msup><mi>U</mi><mi>T</mi></msup><mi>U</mi><mi mathvariant="normal">Σ</mi><msup><mi>V</mi><mi>T</mi></msup><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><msup><mi>U</mi><mi>T</mi></msup><mtext> </mtext><mi>y</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi mathvariant="normal">Σ</mi><msup><mi>V</mi><mi>T</mi></msup><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><msup><mi>U</mi><mi>T</mi></msup><mtext> </mtext><mi>y</mi></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+X \, \boldsymbol \omega \; &amp;= \; y \\
+U \Sigma V^{T} \boldsymbol \omega \; &amp;= \; y \\
+U^{T} U \Sigma V^{T} \boldsymbol \omega \; &amp;= \; U^{T} \, y \\
+\Sigma V^{T} \boldsymbol \omega \; &amp;= \; U^{T} \, y
+\end{aligned}</annotation></semantics></math></span>
+<p>We then transform this to a system of equations:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="normal">Σ</mi><mtext> </mtext><mtext mathvariant="bold">z</mtext><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mi>U</mi><mi>T</mi></msup><mtext> </mtext><mi>y</mi></mrow><annotation encoding="application/x-tex">
+\Sigma \, \textbf{z} \; = \; U^{T} \, y
+</annotation></semantics></math></span>
+<p>and</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mi>V</mi><mi>T</mi></msup><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mtext mathvariant="bold">z</mtext></mrow><annotation encoding="application/x-tex">
+V^{T} \boldsymbol \omega \; = \; \textbf{z}
+</annotation></semantics></math></span>
+<p>The last system of equation can be transformed using the fact <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span>
+ is unitary (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><msup><mi>V</mi><mi>T</mi></msup><mtext> </mtext><mo>=</mo><mtext> </mtext><mi>I</mi></mrow><annotation encoding="application/x-tex">VV^{T} \, = \, I</annotation></semantics></math></span>
+):</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mi>V</mi><mtext mathvariant="bold">z</mtext></mrow><annotation encoding="application/x-tex">
+\boldsymbol \omega \; = \; V \textbf{z}
+</annotation></semantics></math></span>
+<p>We can then solve the original system of equations <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi><mtext> </mtext><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mi>y</mi></mrow><annotation encoding="application/x-tex">X \, \boldsymbol \omega \; = \; y</annotation></semantics></math></span>
+ by</p>
+<ol>
+<li>
+<p>Finding the SVD of the Design Matrix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mi>U</mi><mi mathvariant="normal">Σ</mi><msup><mi>V</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex">X \; = \; U \Sigma V^{T}</annotation></semantics></math></span>
+ then solve,</p>
+</li>
+<li>
+<p>Inverting the diagonal matrix to solve <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">z</mtext><mtext>  </mtext><mo>=</mo><msup><mi mathvariant="normal">Σ</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mtext>  </mtext><msup><mi>U</mi><mi>T</mi></msup><mtext> </mtext><mi>y</mi></mrow><annotation encoding="application/x-tex"> \textbf{z} \; = \Sigma^{-1} \; U^{T} \, y</annotation></semantics></math></span>
+</p>
+</li>
+<li>
+<p>Perform the matrix-vector multiplication: <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mi>V</mi><mtext mathvariant="bold">z</mtext></mrow><annotation encoding="application/x-tex">\boldsymbol \omega \; = \; V \textbf{z}</annotation></semantics></math></span>
+</p>
+</li>
+</ol>
+<p>We can perform the SVD using <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.svd.html#scipy.linalg.svd"  class="external-link" target="_blank" rel="noopener">SciPy</a>  (which to no surprise calls <a href="http://www.icl.utk.edu/~mgates3/docs/lapack.html#gesvd"  class="external-link" target="_blank" rel="noopener">LAPACK&rsquo;s</a> routine):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>U, Sig, Vt <span style="color:#f92672">=</span> linalg<span style="color:#f92672">.</span>svd(X, full_matrices<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span></code></pre></div><p>We can then look at the shapes of each of the resulting matrices:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>U<span style="color:#f92672">.</span>shape, Sig<span style="color:#f92672">.</span>shape, Vt<span style="color:#f92672">.</span>shape
+</span></span></code></pre></div><pre><code>((3702, 4), (4,), (4, 4))
+</code></pre>
+<p>And then perform the steps described above to find <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold-italic">ω</mi></mrow><annotation encoding="application/x-tex">\boldsymbol \omega</annotation></semantics></math></span>
+,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>z <span style="color:#f92672">=</span> (<span style="color:#ae81ff">1</span> <span style="color:#f92672">/</span> Sig) <span style="color:#f92672">*</span> U<span style="color:#f92672">.</span>transpose()<span style="color:#f92672">.</span>dot(y)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>omega <span style="color:#f92672">=</span> Vt<span style="color:#f92672">.</span>transpose()<span style="color:#f92672">.</span>dot(z)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;omega : </span><span style="color:#e6db74">{</span>omega<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><pre><code>omega : [-0.2376972   0.03247505  0.01313829  1.02531297]
+</code></pre>
+<p>The solution via Cholesky Factorization and the SVD have the same solutions!</p>
+<p>One very nice thing about linear regression is that it is very easy to interpret. In linear regression, the coefficients tell us how much an increase in one unit of the feature increases the target variable by one unit.  Therefore increases in the sites energy usage intensity (<code>Site_EUI</code>) increase the <code>GHGI</code> the most and intuitively this makes sense.  However, the model is also telling us that the increases in natural gas usage (<code>NGI</code>) <em>decrease</em> the <code>GHGI</code> which doesn&rsquo;t make sense. This most likely happened because the features are correlated (see off diagonal values in covariance matrix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span>
+) or because the model was over-fitting, i.e. giving to much weight to a specific feature.</p>
+<h3 id="controling-for-overfitting-with-regularization">
+  Controling For Overfitting With Regularization
+  <a class="heading-link" href="#controling-for-overfitting-with-regularization">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<hr>
+<p>Often times a linear regression will give us good results on the training set, but on very bad results on another independent (test) dataset.  This is an example of overfitting our model.  We can control for overfitting our model by introducting regularization of the form,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right" columnspacing=""><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>J</mi><mo stretchy="false">(</mo><mi mathvariant="bold-italic">ω</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mn>1</mn><mrow><mn>2</mn><mi>n</mi></mrow></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msup><mrow><mo fence="true">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo>−</mo><msub><mi>h</mi><mi mathvariant="bold-italic">ω</mi></msub><mo stretchy="false">(</mo><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo stretchy="false">)</mo><mo fence="true">)</mo></mrow><mn>2</mn></msup><mo>+</mo><mfrac><mi>λ</mi><mi>q</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></munderover><mi mathvariant="normal">∣</mi><msub><mi>ω</mi><mi>i</mi></msub><msup><mi mathvariant="normal">∣</mi><mi>q</mi></msup></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+J(\boldsymbol \omega )
+ \; = \; 
+ \frac{1}{2n} \sum_{i=1}^{n} \left( y_{i} -  h_{\boldsymbol \omega}(\textbf{x}_{i}) \right)^{2}   + \frac{\lambda}{q} \sum_{i=1}^{p} \vert \omega_{i} \vert^{q}
+\end{aligned}</annotation></semantics></math></span>
+<p>where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mtext> </mtext><mo>≥</mo><mtext> </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex">\lambda \, \geq \, 0</annotation></semantics></math></span>
+.  For <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">q=2</annotation></semantics></math></span>
+ this is called <a href="https://en.wikipedia.org/wiki/Tikhonov_regularization"  class="external-link" target="_blank" rel="noopener">Ridge Regression</a> and for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">q=1</annotation></semantics></math></span>
+ it is called <a href="https://en.wikipedia.org/wiki/Lasso_%28statistics%29"  class="external-link" target="_blank" rel="noopener">Lasso Regression</a>. Ridge Regression serves to control for over-fitting by shrinking the parameters <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ω</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\omega_{i}</annotation></semantics></math></span>
+ as <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ increases.  Not all individual parameters must shrink as <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ increases, but in aggregate <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∥</mi><mi mathvariant="bold-italic">ω</mi><msubsup><mi mathvariant="normal">∥</mi><msub><mi mathvariant="normal">ℓ</mi><mn>2</mn></msub><mn>2</mn></msubsup></mrow><annotation encoding="application/x-tex">\Vert \boldsymbol \omega \Vert^{2}_{\ell_2}</annotation></semantics></math></span>
+ decreases. We note that <em>both methods seek to reduce the variance in model, and subsequently increase the bias.</em></p>
+<p><strong>Remark: In neither method do we consider penalizing the value <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ω</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">\omega_0</annotation></semantics></math></span>
+.</strong></p>
+<p>In the case of Ridge Regression we can view the cost function as,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mover accent="true"><mi mathvariant="bold-italic">ω</mi><mo>^</mo></mover><mtext>  </mtext><mo>=</mo><mtext>  </mtext><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mi mathvariant="bold-italic">ω</mi></munder><mi mathvariant="normal">∥</mi><mtext mathvariant="bold">y</mtext><mo>−</mo><mtext mathvariant="bold">X</mtext><mi mathvariant="bold-italic">ω</mi><msubsup><mi mathvariant="normal">∥</mi><mn>2</mn><mn>2</mn></msubsup><mo>+</mo><mi>λ</mi><mi mathvariant="normal">∥</mi><mi mathvariant="bold-italic">ω</mi><msubsup><mi mathvariant="normal">∥</mi><mn>2</mn><mn>2</mn></msubsup></mrow><annotation encoding="application/x-tex">
+\hat{\boldsymbol \omega}
+ \; = \; 
+ \min_{\boldsymbol \omega}  \Vert \textbf{y} - \textbf{X} \boldsymbol \omega \Vert^{2}_{2}  +  \lambda  \Vert \boldsymbol \omega \Vert^{2}_{2}
+</annotation></semantics></math></span>
+<p>Which after expanding the values and setting the derivative to zero yields,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mover accent="true"><mi mathvariant="bold-italic">ω</mi><mo>^</mo></mover><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mrow><mo fence="true">(</mo><msup><mtext mathvariant="bold">X</mtext><mi>T</mi></msup><mtext mathvariant="bold">X</mtext><mo>+</mo><mi>λ</mi><mi>I</mi><mo fence="true">)</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup><mrow><mo fence="true">(</mo><msup><mtext mathvariant="bold">X</mtext><mi>T</mi></msup><mtext mathvariant="bold">y</mtext><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">
+\hat{\boldsymbol \omega}
+\; = \;
+\left(\textbf{X}^{T} \textbf{X}  + \lambda I \right)^{-1}
+ \left(\textbf{X}^{T} \textbf{y} \right)
+</annotation></semantics></math></span>
+<p>We can see that the regularization term acts to remove the singularity from the covariance matrix if there is correlation among features.  Using the SVD we arrive at:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow><mo fence="true">(</mo><msup><mtext mathvariant="bold">X</mtext><mi>T</mi></msup><mtext mathvariant="bold">X</mtext><mo>+</mo><mi>λ</mi><mi>I</mi><mo fence="true">)</mo></mrow><mtext> </mtext><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mrow><mo fence="true">(</mo><msup><mtext mathvariant="bold">X</mtext><mi>T</mi></msup><mtext mathvariant="bold">y</mtext><mo fence="true">)</mo></mrow></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow><mo fence="true">(</mo><mi>V</mi><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mi mathvariant="normal">Σ</mi><msup><mi>V</mi><mi>T</mi></msup><mo>+</mo><mi>λ</mi><mi>I</mi><mo fence="true">)</mo></mrow><mtext> </mtext><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mrow><mo fence="true">(</mo><mi>V</mi><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><msup><mi>U</mi><mi>T</mi></msup><mo fence="true">)</mo></mrow><mtext> </mtext><mtext mathvariant="bold">y</mtext></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>V</mi><mrow><mo fence="true">(</mo><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mi mathvariant="normal">Σ</mi><mo>+</mo><mi>λ</mi><mi>I</mi><mo fence="true">)</mo></mrow><msup><mi>V</mi><mi>T</mi></msup><mtext> </mtext><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mrow><mo fence="true">(</mo><mi>V</mi><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><msup><mi>U</mi><mi>T</mi></msup><mo fence="true">)</mo></mrow><mtext> </mtext><mtext mathvariant="bold">y</mtext></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow><mo fence="true">(</mo><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mi mathvariant="normal">Σ</mi><mo>+</mo><mi>λ</mi><mi>I</mi><mo fence="true">)</mo></mrow><msup><mi>V</mi><mi>T</mi></msup><mtext> </mtext><mi mathvariant="bold-italic">ω</mi><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mi>U</mi><mtext> </mtext><mtext mathvariant="bold">y</mtext></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\left(\textbf{X}^{T}\textbf{X}  + \lambda I \right) \, \boldsymbol \omega
+\; &amp;= \;
+ \left(\textbf{X}^{T} \textbf{y} \right) \\
+\left( V \Sigma^{T} \Sigma V^{T} + \lambda I \right) \, \boldsymbol \omega 
+\; &amp;= \;
+ \left(V \Sigma^{T} U^{T} \right) \, \textbf{y} \\
+ V \left( \Sigma^{T} \Sigma   + \lambda I \right) V^{T} \, \boldsymbol \omega 
+\; &amp;= \;
+\left(V \Sigma^{T} U^{T} \right) \, \textbf{y} \\
+\left( \Sigma^{T} \Sigma  + \lambda I \right) V^{T} \, \boldsymbol \omega 
+\; &amp;= \; \Sigma^{T} U \, \textbf{y}
+\end{aligned}</annotation></semantics></math></span>
+<p>
+We can transform the last equation to the system of equations:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mrow><mo fence="true">(</mo><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mi mathvariant="normal">Σ</mi><mo>+</mo><mi>λ</mi><mi>I</mi><mo fence="true">)</mo></mrow><mtext mathvariant="bold">z</mtext><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><msup><mi>U</mi><mi>T</mi></msup><mtext> </mtext><mtext mathvariant="bold">y</mtext></mrow><annotation encoding="application/x-tex">
+\left( \Sigma^{T} \Sigma + \lambda I \right) \textbf{z}
+\; = \; \Sigma^{T} U^{T} \, \textbf{y}
+</annotation></semantics></math></span>
+<p>with the system corresponding equation <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>V</mi><mi>T</mi></msup><mtext> </mtext><mover accent="true"><mi mathvariant="bold-italic">ω</mi><mo>^</mo></mover><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mtext mathvariant="bold">z</mtext></mrow><annotation encoding="application/x-tex">V^{T} \, \hat{\boldsymbol \omega} \; = \; \textbf{z}</annotation></semantics></math></span>
+ which can be rewritten using the unitary property of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span>
+ as the matrix-vector multiplication:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mover accent="true"><mi mathvariant="bold-italic">ω</mi><mo>^</mo></mover><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mi>V</mi><mtext mathvariant="bold">z</mtext></mrow><annotation encoding="application/x-tex">
+\hat{\boldsymbol \omega}\; = \; V \textbf{z}
+</annotation></semantics></math></span>
+<p>The matrix, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo fence="true">(</mo><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mi mathvariant="normal">Σ</mi><mo>+</mo><mi>λ</mi><mi>I</mi><mo fence="true">)</mo></mrow><mtext> </mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>p</mi><mo>×</mo><mi>p</mi></mrow></msup></mrow><annotation encoding="application/x-tex">\left( \Sigma^{T} \Sigma + \lambda I \right) \, \in \mathbb{R}^{p \times p}</annotation></semantics></math></span>
+ is diagonal and can be inverted by hand.  This gives us a way of solving the problem for Ridge Regression for a given <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+:</p>
+<ol>
+<li>
+<p>Finding the SVD <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mi>U</mi><mi mathvariant="normal">Σ</mi><msup><mi>V</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex">X \; = \; U \Sigma V^{T}</annotation></semantics></math></span>
+ then solve</p>
+</li>
+<li>
+<p>&ldquo;Invert&rdquo; the matrix to obtain <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">z</mtext><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mrow><mo fence="true">(</mo><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mi mathvariant="normal">Σ</mi><mo>+</mo><mi>λ</mi><mi>I</mi><mo fence="true">)</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup><mtext> </mtext><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mtext> </mtext><msup><mi>U</mi><mi>T</mi></msup><mtext> </mtext><mtext mathvariant="bold">y</mtext></mrow><annotation encoding="application/x-tex"> \textbf{z} \; = \; \left( \Sigma^{T} \Sigma  + \lambda I \right)^{-1} \, \Sigma^{T} \, U^{T} \, \textbf{y}</annotation></semantics></math></span>
+</p>
+</li>
+<li>
+<p>Perform the matrix-vector multiplication <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi mathvariant="bold-italic">ω</mi><mo>^</mo></mover><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mi>V</mi><mtext mathvariant="bold">z</mtext></mrow><annotation encoding="application/x-tex">\hat{\boldsymbol \omega} \; = \; V \textbf{z}</annotation></semantics></math></span>
+</p>
+</li>
+</ol>
+<p>We remark we can combine the 2. and 3. to obtain the formula:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mover accent="true"><mi mathvariant="bold-italic">ω</mi><mo>^</mo></mover><mtext>  </mtext><mo>=</mo><mi>V</mi><mtext> </mtext><msup><mrow><mo fence="true">(</mo><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mi mathvariant="normal">Σ</mi><mo>+</mo><mi>λ</mi><mi>I</mi><mo fence="true">)</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup><mtext> </mtext><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mtext> </mtext><msup><mi>U</mi><mi>T</mi></msup><mtext> </mtext><mtext mathvariant="bold">y</mtext></mrow><annotation encoding="application/x-tex">
+\hat{\boldsymbol \omega} \; = V \, \left( \Sigma^{T} \Sigma  + \lambda I \right)^{-1} \, \Sigma^{T} \, U^{T} \, \textbf{y}
+</annotation></semantics></math></span>
+<p>And then our predictions <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>y</mi><mo>^</mo></mover><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mi>X</mi><mtext> </mtext><mover accent="true"><mi>ω</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat{y} \; = \; X \, \hat{\omega}</annotation></semantics></math></span>
+ become:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mover accent="true"><mi>y</mi><mo>^</mo></mover><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mi>X</mi><mtext> </mtext><mover accent="true"><mi>ω</mi><mo>^</mo></mover></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mi>U</mi><mtext> </mtext><mi mathvariant="normal">Σ</mi><mtext> </mtext><msup><mrow><mo fence="true">(</mo><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mi mathvariant="normal">Σ</mi><mo>+</mo><mi>λ</mi><mi>I</mi><mo fence="true">)</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup><mtext> </mtext><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mtext> </mtext><msup><mi>U</mi><mi>T</mi></msup><mtext> </mtext><mtext mathvariant="bold">y</mtext></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mi>U</mi><mtext> </mtext><mi>D</mi><mtext> </mtext><msup><mi>U</mi><mi>T</mi></msup><mtext> </mtext><mtext mathvariant="bold">y</mtext></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\hat{y} \; &amp;= \; X \, \hat{\omega} \\
+&amp;= \; U \, \Sigma \, \left( \Sigma^{T} \Sigma  + \lambda I \right)^{-1} \, \Sigma^{T} \, U^{T} \, \textbf{y} \\
+&amp;= \; U \, D \, U^{T} \, \textbf{y}
+\end{aligned}</annotation></semantics></math></span>
+<p>As you may have learned the matrix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>U</mi></mrow><annotation encoding="application/x-tex">U</annotation></semantics></math></span>
+ is unitary so it acts a change of basis transformation and the matrix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><mi mathvariant="normal">Σ</mi><mtext> </mtext><msup><mrow><mo fence="true">(</mo><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mi mathvariant="normal">Σ</mi><mo>+</mo><mi>λ</mi><mi>I</mi><mo fence="true">)</mo></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msup><mtext> </mtext><msup><mi mathvariant="normal">Σ</mi><mi>T</mi></msup><mtext> </mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>n</mi><mo>×</mo><mi>n</mi></mrow></msup></mrow><annotation encoding="application/x-tex">D \, = \, \Sigma \, \left( \Sigma^{T} \Sigma + \lambda I \right)^{-1} \, \Sigma^{T} \, \in  \mathbb{R}^{n \times n}</annotation></semantics></math></span>
+ is a diagonal matrix that either shrinks or elongates along this new basis as shown below:</p>
+<center>
+<figure>
+<img src="https://upload.wikimedia.org/wikipedia/commons/b/bb/Singular-Value-Decomposition.svg?raw=1" width=600>
+<caption>
+From https://upload.wikimedia.org/wikipedia/commons/b/bb/Singular-Value-Decomposition.svg
+</caption>
+</figure>
+</center>
+<p>The values along the diagonal of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi></mrow><annotation encoding="application/x-tex">D</annotation></semantics></math></span>
+ take the form,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>D</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>i</mi></mrow></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><msubsup><mi>σ</mi><mi>i</mi><mn>2</mn></msubsup><mrow><msubsup><mi>σ</mi><mi>i</mi><mn>2</mn></msubsup><mo>+</mo><mi>λ</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">
+D_{i,i} \; = \; \frac{\sigma_{i}^{2}}{\sigma_{i}^{2} + \lambda}
+</annotation></semantics></math></span>
+<p>From this formulation <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi></mrow><annotation encoding="application/x-tex">D</annotation></semantics></math></span>
+ acts to shrink the influence of low frequency singular vectors (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span>
+ small) more than it does high frequency singular vector (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi></mrow><annotation encoding="application/x-tex">\sigma</annotation></semantics></math></span>
+ large)!</p>
+<p>Let&rsquo;s see how our code will look for solving the Ridge Regression problem using the SVD.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># using function annotations in Python 3 </span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># (see, https://www.python.org/dev/peps/pep-3107/)</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> scipy <span style="color:#66d9ef">as</span> sp
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">ridge_svd</span>(
+</span></span><span style="display:flex;"><span>    X         : np<span style="color:#f92672">.</span>ndarray, 
+</span></span><span style="display:flex;"><span>    y         : np<span style="color:#f92672">.</span>ndarray, 
+</span></span><span style="display:flex;"><span>    reg_param : float <span style="color:#f92672">=</span> <span style="color:#ae81ff">1.0</span>
+</span></span><span style="display:flex;"><span>) <span style="color:#f92672">-&gt;</span> np<span style="color:#f92672">.</span>ndarray:
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Solves the Ridge Regression problem using the SVD.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Params:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    -------
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    X : The matrix of features
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Y : The target vector
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    reg_param : The regularization parameter
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Returns:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    --------
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    omega : The array of coefficent for the solution
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># compute the SVD</span>
+</span></span><span style="display:flex;"><span>    U, Sig, Vt   <span style="color:#f92672">=</span> sp<span style="color:#f92672">.</span>linalg<span style="color:#f92672">.</span>svd(X, full_matrices<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># for Sigma^{T} Sigma + \lambda (this is an array)</span>
+</span></span><span style="display:flex;"><span>    Sig_plus_reg <span style="color:#f92672">=</span> Sig <span style="color:#f92672">*</span> Sig <span style="color:#f92672">+</span> reg_param
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># find z by &#34;inverting&#34; the matrix and then get omega</span>
+</span></span><span style="display:flex;"><span>    z     <span style="color:#f92672">=</span> (<span style="color:#ae81ff">1.0</span> <span style="color:#f92672">/</span> Sig_plus_reg) <span style="color:#f92672">*</span> Sig <span style="color:#f92672">*</span> U<span style="color:#f92672">.</span>T<span style="color:#f92672">.</span>dot(y)
+</span></span><span style="display:flex;"><span>    omega <span style="color:#f92672">=</span> Vt<span style="color:#f92672">.</span>T<span style="color:#f92672">.</span>dot(z)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> omega
+</span></span></code></pre></div><p>Let&rsquo;s test this with <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex">\lambda \, = \, 0</annotation></semantics></math></span>
+ which should give us the least squares regression solution:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;omega: &#34;</span>, ridge_svd(X, y, <span style="color:#ae81ff">0.0</span>))
+</span></span></code></pre></div><pre><code>omega:  [-0.2376972   0.03247505  0.01313829  1.02531297]
+</code></pre>
+<p>It does! Let&rsquo;s try adding a little regularization and see what happens.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>omega <span style="color:#f92672">=</span> ridge_svd(X, y, <span style="color:#ae81ff">0.1</span>)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;omega: </span><span style="color:#e6db74">{</span>omega<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><pre><code>omega: [0.14161464 0.07955296 0.03040791 0.78857811]
+</code></pre>
+<p>We can see that adding regulaization shrank the last feature, i.e. (<code>Site_EUI</code>) and made turned the coefficient for <code>NGI</code> positive which makes sense!  Let&rsquo;s take a look at the results:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df_test[<span style="color:#e6db74">&#34;y_ridge&#34;</span>] <span style="color:#f92672">=</span> X_test<span style="color:#f92672">.</span>dot(omega)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plot_results(df_test, <span style="color:#e6db74">&#39;y_ols&#39;</span>, <span style="color:#e6db74">&#39;y_ridge&#39;</span>)
+</span></span></code></pre></div><p><img src="/numlinalg_files/numlinalg_40_0.png" alt="png"></p>
+<p>It&rsquo;s hard to say whether least squares or ridge regression is better from these figures, but the coefficients for Ridge Regression make much more sense.  Notice that I have left out how to find the regularization parameter <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+.  That topic is out of scope for this post. However, for reference, the best value for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ is often chosen via cross-validation, see <a href="http://statweb.stanford.edu/~owen/courses/305a/Rudyregularization.pdf"  class="external-link" target="_blank" rel="noopener">these slides</a> for more information.</p>
+<h3 id="implementation-in-scikit-learn">
+  Implementation In Scikit-Learn
+  <a class="heading-link" href="#implementation-in-scikit-learn">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p><a href="https://scikit-learn.org/"  class="external-link" target="_blank" rel="noopener">Scikit-Learn</a> is the industry standard open source machine leanring library in Python. As it is open source we can easily see how the developers wrote their linear sovlers by going to the library&rsquo;s <a href="https://github.com/scikit-learn/scikit-learn"  class="external-link" target="_blank" rel="noopener">GitHub</a>.</p>
+<p>For regression, Scikit-learn mostly acts as a wrapper around Scipy which act as a wrapper to BLAS/LAPACK. The regular linear regression <a href="https://github.com/scikit-learn/scikit-learn/blob/1495f6924/sklearn/linear_model/base.py#L367"  class="external-link" target="_blank" rel="noopener">Scikit-Learn</a> implementation utilizes Scipy&rsquo;s <a href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.lstsq.html"  class="external-link" target="_blank" rel="noopener">least square solver</a>, which if the matrix is dense calls <a href="https://github.com/numpy/numpy/blob/master/numpy/linalg/umath_linalg.c.src#L3167"  class="external-link" target="_blank" rel="noopener">BLAS/LAPACK</a>.  If the matrix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span>
+ is sparse then it calls SciPy&rsquo;s <a href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.lstsq.html"  class="external-link" target="_blank" rel="noopener">sparse least squares solver</a> which uses least squres with QR factorization <a href="https://github.com/scipy/scipy/blob/v1.3.2/scipy/sparse/linalg/isolve/lsqr.py#L98-L570"  class="external-link" target="_blank" rel="noopener">LSQR</a>.  Note that while <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi><mtext> </mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>n</mi><mo>×</mo><mi>p</mi></mrow></msup></mrow><annotation encoding="application/x-tex">X \, \in \mathbb{R}^{n \times p}</annotation></semantics></math></span>
+ may be a large sparse matrix, the covariance matrix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mtext> </mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>p</mi><mo>×</mo><mi>p</mi></mrow></msup></mrow><annotation encoding="application/x-tex">S \, \in \mathbb{R}^{p \times p}</annotation></semantics></math></span>
+ is typically quite small and dense.</p>
+<p>For ridge regression, unless the user specifices the linear sovler to use then if the intercept is needed Scikit-learn solve the linear system with the <a href="https://arxiv.org/abs/1309.2388"  class="external-link" target="_blank" rel="noopener">Stochastic Average Gradient</a> method, otherwise it uses the <a href="https://github.com/scikit-learn/scikit-learn/blob/1495f6924/sklearn/linear_model/ridge.py#L134"  class="external-link" target="_blank" rel="noopener">Cholesky Decomposition</a> for dense matrices and <a href="https://github.com/scikit-learn/scikit-learn/blob/1495f6924/sklearn/linear_model/ridge.py#L37"  class="external-link" target="_blank" rel="noopener">Conjugate Gradient</a> method for sparse matrices. Although, all the algorithms are written for dense or sparse matrices. The congugate gradient method makes use of SciPy&rsquo;s <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.cg.html"  class="external-link" target="_blank" rel="noopener">Sparse CG function</a> which does not need to explicitly form the matrix, but rather only needs its action on a vector making it extremely efficient for sparse matrices.  If any of these methods fail, the least square QR solver is used.</p>
+<h2 id="a-touch-of-recommendation-systems">
+  A Touch Of Recommendation Systems
+  <a class="heading-link" href="#a-touch-of-recommendation-systems">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Recommendation systems have become very popular and are one of the best examples of Machine Learning that we interact with daily, i.e. Amazon and Netflix. One popular technique for making recommendations is called Alternating Least Squares.</p>
+<p>The idea is that we have some table of ratings of items by users as shown below:</p>
+<center>
+<figure>
+<img src="https://github.com/mdh266/NumLinearAlegebra4ML/blob/master/images/matrixfactorize.png?raw=1" width=800>
+<caption>
+From https://recsysjd.wordpress.com/2016/09/10/matrix-factorization-techniques-for-recommender-systems
+</caption>
+</figure>
+</center>
+<p>However, not all users will have rated all items and we want to predict how a user may feel about an item they have not rated.  This is how recomendations happen, through the prediction of how a user might rate an item they have not seen before!</p>
+<p>Let&rsquo;s for example take the idea of recommending movies to users of a webservice.  The idea is we want to say a given user has some preference on a movie by the perfence of the generes that make up the movie.  For simplicity let&rsquo;s say movies are a combination of the genres (so-called <a href="https://en.wikipedia.org/wiki/Latent_variable"  class="external-link" target="_blank" rel="noopener">latent factors</a> in machine learning):</p>
+<ul>
+<li>Horror</li>
+<li>Action</li>
+<li>Comedy</li>
+</ul>
+<p>Then we can write a user&rsquo;s preference as well a movie as a linear combinatin of these genres:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mtext>Sally</mtext><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mn>1</mn><mo>×</mo><mtext>Horror</mtext><mo>+</mo><mn>2</mn><mo>×</mo><mtext>Action</mtext><mo>−</mo><mn>0.2</mn><mo>×</mo><mtext>Comedy</mtext></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mtext> Weekend At Bernies</mtext><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mn>0</mn><mo>×</mo><mtext>Horror</mtext><mo>+</mo><mn>1</mn><mo>×</mo><mtext>Action</mtext><mo>+</mo><mn>5</mn><mo>×</mo><mtext>Comedy</mtext></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mtext>Sally’s Rating of Weekend At Bernies</mtext><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mn>1</mn><mo>×</mo><mn>0</mn><mo>+</mo><mn>2</mn><mo>×</mo><mn>1</mn><mo>−</mo><mn>0.2</mn><mo>×</mo><mn>5</mn></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mn>1</mn><mtext> </mtext><mtext>Star</mtext></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\text{Sally} \; &amp;= \; 1 \times \text{Horror} +  2 \times \text{Action} - 0.2 \times \text{Comedy} \\
+\ \text{Weekend At Bernies} \; &amp;= \; 0 \times \text{Horror} +  1 \times  \text{Action} + 5 \times \text{Comedy}  \\
+\text{Sally&#x27;s Rating of Weekend At Bernies}  \; &amp;= \; 1 \times 0 + 2 \times 1 - 0.2 \times 5 \\
+&amp;= \; 1 \, \text{Star}
+\end{aligned}</annotation></semantics></math></span>
+<p>The above shows how Sally would rate &ldquo;Weekend at Bernies&rdquo; given that she likes films involving Horror and Action, but dislikes action films and that &ldquo;Weekend at Bernies&rdquo; is a little bit of action and a lot of comedy. If we label <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>R</mi><mrow><mi>u</mi><mo separator="true">,</mo><mi>i</mi></mrow></msub></mrow><annotation encoding="application/x-tex">R_{u,i}</annotation></semantics></math></span>
+ as user <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi></mrow><annotation encoding="application/x-tex">u</annotation></semantics></math></span>
+&rsquo;s rating of movie <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span>
+, then the inner product of the vector of movie coefficients <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>m</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">m_{i}</annotation></semantics></math></span>
+ and user preferences <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>u</mi></msub></mrow><annotation encoding="application/x-tex">p_{u}</annotation></semantics></math></span>
+ is <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>R</mi><mrow><mi>u</mi><mo separator="true">,</mo><mi>i</mi></mrow></msub></mrow><annotation encoding="application/x-tex">R_{u,i}</annotation></semantics></math></span>
+ :</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>R</mi><mrow><mi>u</mi><mo separator="true">,</mo><mi>i</mi></mrow></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msubsup><mtext mathvariant="bold">m</mtext><mi>i</mi><mi>T</mi></msubsup><msub><mtext mathvariant="bold">p</mtext><mi>u</mi></msub></mrow><annotation encoding="application/x-tex">
+R_{u,i} \; = \; \textbf{m}_{i}^{T} \textbf{p}_{u}
+</annotation></semantics></math></span>
+<p>We can then factorize the review matrix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi></mrow><annotation encoding="application/x-tex">R</annotation></semantics></math></span>
+ into a product of movies <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span>
+ and users <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span>
+ as depicted in the diagram above,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>R</mi><mtext>  </mtext><mo>≃</mo><mtext>  </mtext><msup><mi>M</mi><mi>T</mi></msup><mi>P</mi></mrow><annotation encoding="application/x-tex">
+R \; \simeq \; M^{T} P
+</annotation></semantics></math></span>
+<p>If <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>n</mi><mo>×</mo><mi>k</mi></mrow></msup></mrow><annotation encoding="application/x-tex">R \in \mathbb{R}^{n \times k}</annotation></semantics></math></span>
+ and we have <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi></mrow><annotation encoding="application/x-tex">f</annotation></semantics></math></span>
+ latent factors that make a movie then the movie genres are <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>f</mi><mo>×</mo><mi>n</mi></mrow></msup></mrow><annotation encoding="application/x-tex">G \in \mathbb{R}^{f \times n}</annotation></semantics></math></span>
+ and user preferences are <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>f</mi><mo>×</mo><mi>k</mi></mrow></msup></mrow><annotation encoding="application/x-tex">P \in \mathbb{R}^{f \times k}</annotation></semantics></math></span>
+.  How do we find the coefficient for each user and each movies, i.e. how do we find the matrices <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span>
+?</p>
+<p>The idea is we can set up a cost function almost like Ridge Regression and minimize with respect to <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span>
+:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mrow><mi>M</mi><mo separator="true">,</mo><mi>P</mi></mrow></munder><mtext> </mtext><mi>J</mi><mo stretchy="false">(</mo><mi>M</mi><mo separator="true">,</mo><mi>P</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mn>1</mn><mn>2</mn></mfrac><mi mathvariant="normal">∥</mi><mi>R</mi><mo>−</mo><msup><mi>M</mi><mi>T</mi></msup><mi>P</mi><msubsup><mi mathvariant="normal">∥</mi><mi>F</mi><mn>2</mn></msubsup><mo>+</mo><mfrac><mi>λ</mi><mn>2</mn></mfrac><mrow><mo fence="true">(</mo><mi mathvariant="normal">∥</mi><mi>M</mi><msubsup><mi mathvariant="normal">∥</mi><mi>F</mi><mn>2</mn></msubsup><mo>+</mo><mi mathvariant="normal">∥</mi><mi>P</mi><msubsup><mi mathvariant="normal">∥</mi><mi>F</mi><mn>2</mn></msubsup><mo fence="true">)</mo></mrow><mtext> </mtext></mrow><annotation encoding="application/x-tex">
+\min_{M,P} \, J(M,P) \; = \; \frac{1}{2} \Vert R - M^{T} P \Vert^{2}_{F}  + 
+\frac{\lambda}{2} \left( \Vert M \Vert^{2}_{F} + \Vert P \Vert^{2}_{F} \right) \
+</annotation></semantics></math></span>
+<p>Where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∥</mi><mo>⋅</mo><msub><mi mathvariant="normal">∥</mi><mi>F</mi></msub></mrow><annotation encoding="application/x-tex">\Vert \cdot \Vert_{F}</annotation></semantics></math></span>
+ is the <a href="https://en.wikipedia.org/wiki/Matrix_norm#Frobenius_norm"  class="external-link" target="_blank" rel="noopener">Frobenius Norm</a>.  How do we minimize for both <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span>
+? Well one way is to:</p>
+<ol start="0">
+<li>
+<p>Randomly initialized <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span>
+ then</p>
+</li>
+<li>
+<p>Fix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span>
+ and solve for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span>
+ such that <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="normal">∇</mi><mi>P</mi></msub><mi>J</mi><mo stretchy="false">(</mo><mi>M</mi><mo separator="true">,</mo><mi>P</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex">\nabla_{P} J(M,P) \; = \; 0</annotation></semantics></math></span>
+</p>
+</li>
+<li>
+<p>Fix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span>
+ and solve for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span>
+ such that <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="normal">∇</mi><mi>M</mi></msub><mi>J</mi><mo stretchy="false">(</mo><mi>M</mi><mo separator="true">,</mo><mi>P</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex">\nabla_{M} J(M,P) \; = \; 0</annotation></semantics></math></span>
+</p>
+</li>
+<li>
+<p>Repeat steps 1 and 2 until convergence or max iterations reached</p>
+</li>
+</ol>
+<p>At each stage in 1. and 2. you are updating the choice and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span>
+ by essentially solving a Least Squares Ridge Regression problem for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span>
+. The alternating nature of this iterative algorithm gives rise to its name <a href="https://link.springer.com/chapter/10.1007%2F978-3-540-68880-8_32"  class="external-link" target="_blank" rel="noopener">Alternating Least Squares</a>! Some links to good references for Alternating Least Squares below.</p>
+<h2 id="where-to-go-from-here">
+  Where To Go From Here
+  <a class="heading-link" href="#where-to-go-from-here">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>We&rsquo;ve gone over a few topics in this blogpost and I want to supply the reader with some links for more information on the topics discussed.</p>
+<h3 id="numerical-linear-algebra">
+  Numerical Linear Algebra
+  <a class="heading-link" href="#numerical-linear-algebra">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<ul>
+<li>
+<p><a href="http://people.maths.ox.ac.uk/~trefethen/text.html"  class="external-link" target="_blank" rel="noopener">http://people.maths.ox.ac.uk/~trefethen/text.html</a></p>
+</li>
+<li>
+<p><a href="https://jhupbooks.press.jhu.edu/title/matrix-computations"  class="external-link" target="_blank" rel="noopener">https://jhupbooks.press.jhu.edu/title/matrix-computations</a></p>
+</li>
+<li>
+<p><a href="https://www.springer.com/gp/book/9783540346586"  class="external-link" target="_blank" rel="noopener">https://www.springer.com/gp/book/9783540346586</a></p>
+</li>
+</ul>
+<h3 id="regression--machine-learning">
+  Regression &amp; Machine Learning
+  <a class="heading-link" href="#regression--machine-learning">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<ul>
+<li>
+<p><a href="http://faculty.marshall.usc.edu/gareth-james/ISL/"  class="external-link" target="_blank" rel="noopener">http://faculty.marshall.usc.edu/gareth-james/ISL/</a></p>
+</li>
+<li>
+<p><a href="https://www.crcpress.com/An-Introduction-to-Generalized-Linear-Models/Dobson-Barnett/p/book/9781138741515"  class="external-link" target="_blank" rel="noopener">https://www.crcpress.com/An-Introduction-to-Generalized-Linear-Models/Dobson-Barnett/p/book/9781138741515</a></p>
+</li>
+<li>
+<p><a href="https://web.stanford.edu/~hastie/Papers/ESLII.pdf"  class="external-link" target="_blank" rel="noopener">https://web.stanford.edu/~hastie/Papers/ESLII.pdf</a></p>
+</li>
+<li>
+<p><a href="http://stanford.edu/~rezab/classes/cme323/S15/"  class="external-link" target="_blank" rel="noopener">http://stanford.edu/~rezab/classes/cme323/S15/</a></p>
+</li>
+</ul>
+<h3 id="recommendation-systems">
+  Recommendation Systems:
+  <a class="heading-link" href="#recommendation-systems">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<ul>
+<li>
+<p><a href="https://spark.apache.org/docs/latest/ml-collaborative-filtering.html"  class="external-link" target="_blank" rel="noopener">https://spark.apache.org/docs/latest/ml-collaborative-filtering.html</a></p>
+</li>
+<li>
+<p><a href="http://www.mattmoocar.me/recsys/"  class="external-link" target="_blank" rel="noopener">http://www.mattmoocar.me/recsys/</a></p>
+</li>
+<li>
+<p><a href="https://web.stanford.edu/~rezab/papers/fastals.pdf"  class="external-link" target="_blank" rel="noopener">https://web.stanford.edu/~rezab/papers/fastals.pdf</a></p>
+</li>
+<li>
+<p><a href="http://yifanhu.net/PUB/cf.pdf"  class="external-link" target="_blank" rel="noopener">http://yifanhu.net/PUB/cf.pdf</a></p>
+</li>
+</ul>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>

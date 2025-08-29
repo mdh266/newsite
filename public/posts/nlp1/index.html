@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Text Classification 1: Imbalanced Data · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+1. Introduction
+2. The Dataset: Creating, Storing and Exploring
+3. TF-IDF: Preprocessing &amp; Feature Extraction
+4. The Naive Bayes Model
+5. Imablanced Learn: Fixing Imbalanced Data
+6. Weighted Support Vector Machines 
+9. Next Steps
+
+
+  Introduction 
+  
+    
+    Link to heading
+  
+
+
+Natural language processing (NLP) is an hot topic in data science and machine learning.  While research in NLP dates back to the 1950&rsquo;s, the real revolution in this domain came in 1980&rsquo;s and 1990&rsquo;s with the introduction of statistical models and fast computing. Before this most language processing tasks made use of hand-coded rules which were generally not very robust.">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Text Classification 1: Imbalanced Data">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. The Dataset: Creating, Storing and Exploring
+3. TF-IDF: Preprocessing &amp; Feature Extraction
+4. The Naive Bayes Model
+5. Imablanced Learn: Fixing Imbalanced Data
+6. Weighted Support Vector Machines 9. Next Steps
+Introduction Link to heading Natural language processing (NLP) is an hot topic in data science and machine learning. While research in NLP dates back to the 1950’s, the real revolution in this domain came in 1980’s and 1990’s with the introduction of statistical models and fast computing. Before this most language processing tasks made use of hand-coded rules which were generally not very robust.">
+
+<meta property="og:url" content="http://localhost:1313/posts/nlp1/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Text Classification 1: Imbalanced Data">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. The Dataset: Creating, Storing and Exploring
+3. TF-IDF: Preprocessing &amp; Feature Extraction
+4. The Naive Bayes Model
+5. Imablanced Learn: Fixing Imbalanced Data
+6. Weighted Support Vector Machines 9. Next Steps
+Introduction Link to heading Natural language processing (NLP) is an hot topic in data science and machine learning. While research in NLP dates back to the 1950’s, the real revolution in this domain came in 1980’s and 1990’s with the introduction of statistical models and fast computing. Before this most language processing tasks made use of hand-coded rules which were generally not very robust.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-01-01T00:00:00+00:00">
+    <meta property="article:modified_time" content="2020-01-01T00:00:00+00:00">
+    <meta property="article:tag" content="Scikit-Learn">
+    <meta property="article:tag" content="Naive Bayes">
+    <meta property="article:tag" content="Support Vector Machines">
+    <meta property="article:tag" content="Imbalanced-Learn">
+    <meta property="article:tag" content="NLP">
+      <meta property="og:see_also" content="http://localhost:1313/posts/bert/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/jfk2/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/jfk1/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/nlp4/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/nlp3/">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/nlp1/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/nlp1/">
+              Text Classification 1: Imbalanced Data
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2020-01-01T00:00:00Z">
+                January 1, 2020
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              31-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/scikit-learn/">Scikit-Learn</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/naive-bayes/">Naive Bayes</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/support-vector-machines/">Support Vector Machines</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/imbalanced-learn/">Imbalanced-Learn</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/nlp/">NLP</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p><strong><a href="#first-bullet" >1. Introduction</a></strong></p>
+<p><strong><a href="#second-bullet" >2. The Dataset: Creating, Storing and Exploring</a></strong></p>
+<p><strong><a href="#third-bullet" >3. TF-IDF: Preprocessing &amp; Feature Extraction</a></strong></p>
+<p><strong><a href="#fourth-bullet" >4. The Naive Bayes Model</a></strong></p>
+<p><strong><a href="#fifth-bullet" >5. Imablanced Learn: Fixing Imbalanced Data</a></strong></p>
+<p><strong><a href="#sixth-bullet" >6. Weighted Support Vector Machines </a></strong></p>
+<p><strong><a href="#seventh-bullet" >9. Next Steps</a></strong></p>
+<hr>
+<h2 id="introduction">
+  Introduction <a class="anchor" id="first-bullet"></a>
+  <a class="heading-link" href="#introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Natural language processing (NLP) is an hot topic in data science and machine learning.  While research in NLP dates back to the 1950&rsquo;s, the real revolution in this domain came in 1980&rsquo;s and 1990&rsquo;s with the introduction of statistical models and fast computing. Before this most language processing tasks made use of hand-coded rules which were generally not very robust.</p>
+<p>The span of topics in Natural Language Processing is immense and I&rsquo;ll just getting to the tip of the iceberg with the topic of <a href="https://en.wikipedia.org/wiki/Document_classification"  class="external-link" target="_blank" rel="noopener">document classification</a>, also known as <a href="https://monkeylearn.com/text-classification/"  class="external-link" target="_blank" rel="noopener">text classification</a>. I will be working with the <a href="http://scikit-learn.org/">Scikit-learn</a> library and an imbalanced dataset (corpus) that I will create from summaries of papers published on <a href="https://arxiv.org"  class="external-link" target="_blank" rel="noopener">arxiv</a>. The topic of each paper is already labeled as the category therefore alleviating the need for me to label the dataset. The imbalance in the dataset will be caused by the imbalance in the number of samples in each of the categories we are trying to predict. Imbalanced data occurs quite frequently in classification problems and makes developing a good model more challenging. Often times it is too expensive or not possible to get more data on the classes that have too few samples. Developing strategies for dealing with imbalanced data is therefore paramount for creating a good classification model.  We will cover some of the basics of dealing with imbalanced data using the <a href="https://imbalanced-learn.readthedocs.io/en/stable/"  class="external-link" target="_blank" rel="noopener">Imbalance-Learn</a> library using Naive Bayes and Support Vector classifier from <a href="http://scikit-learn.org/">Scikit-learn</a>. In the next post we&rsquo;ll dive more int NLP with the Natural Language Tool Kit (<a href="https://www.nltk.org/"  class="external-link" target="_blank" rel="noopener">NLTK</a>).</p>
+<p>Let&rsquo;s dive into the data!</p>
+<h2 id="the-dataset-creating-storing-and-exploring">
+  The Dataset: Creating, Storing and Exploring<a class="anchor" id="second-bullet"></a>
+  <a class="heading-link" href="#the-dataset-creating-storing-and-exploring">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>The first thing I wanted to do was create a database to store the data between working sessions on this project. Storing the dataset means that I wouldn&rsquo;t have to re-download the data each time I run the notebook. I chose to create a <a href="https://www.mongodb.com/"  class="external-link" target="_blank" rel="noopener">MongoDB</a> database using <a href="https://hub.docker.com/_/mongo"  class="external-link" target="_blank" rel="noopener">Docker</a> and <a href="https://docs.docker.com/compose/"  class="external-link" target="_blank" rel="noopener">Docker Compose</a> since its easy to use and I have <a href="https://api.mongodb.com/python/current/"  class="external-link" target="_blank" rel="noopener">experience</a> with it and <a href="https://api.mongodb.com/python/current/"  class="external-link" target="_blank" rel="noopener">PyMongo</a>.</p>
+<p>We can create a client with pymongo and create a new database using the commands:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> pymongo
+</span></span><span style="display:flex;"><span>conn <span style="color:#f92672">=</span> pymongo<span style="color:#f92672">.</span>MongoClient(<span style="color:#e6db74">&#39;mongodb://mongodb:27017&#39;</span>)
+</span></span><span style="display:flex;"><span>db   <span style="color:#f92672">=</span> conn<span style="color:#f92672">.</span>db_arxiv
+</span></span></code></pre></div><p>Now that we have to actually collect the data.  We will use the Python library <a href="https://github.com/lukasschwab/arxiv.py"  class="external-link" target="_blank" rel="noopener">arxiv</a> to allow us to collect data from the <a href="https://arxiv.org/help/api"  class="external-link" target="_blank" rel="noopener">arxiv api</a>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> arxiv
+</span></span></code></pre></div><p>We will focus on only four sub topics of Computer Science in this blogpost:</p>
+<ul>
+<li>Artificial Intelligence</li>
+<li>Machine Learning</li>
+<li>Computer Vision</li>
+<li>Robotics</li>
+</ul>
+<p>These topics are somewhat related, but different enough that I expect there to be significant differences in the words used in the summaries of the papers. The only exception being machine learning and artifical intelligence are used somewhat interchangably and I expect there to be some overlap in there words. In all I expect pretty good performance for our future model.</p>
+<p>Let&rsquo;s query the the arxiv api and create a list of dictionaries for each topic. Each dictionary will correspond to a paper on arxiv. Each dictionary will include,</p>
+<ol>
+<li>The link to the paper</li>
+<li>The category code arxiv gave for this papers topic</li>
+<li>The label for this category</li>
+<li>The text of the summary for this paper.</li>
+</ol>
+<p>Let&rsquo;s collect 2000 articles on artificial intelligence, machine learning and computer vision as well as 300 topics on robotics:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># artificial intelligence</span>
+</span></span><span style="display:flex;"><span>ai_results <span style="color:#f92672">=</span> [{<span style="color:#e6db74">&#39;link&#39;</span>     : doc[<span style="color:#e6db74">&#39;id&#39;</span>],
+</span></span><span style="display:flex;"><span>               <span style="color:#e6db74">&#39;code&#39;</span>     : doc[<span style="color:#e6db74">&#39;arxiv_primary_category&#39;</span>][<span style="color:#e6db74">&#39;term&#39;</span>],
+</span></span><span style="display:flex;"><span>               <span style="color:#e6db74">&#39;category&#39;</span> : <span style="color:#e6db74">&#39;ai&#39;</span>,
+</span></span><span style="display:flex;"><span>               <span style="color:#e6db74">&#39;text&#39;</span>     : doc[<span style="color:#e6db74">&#39;summary&#39;</span>]}
+</span></span><span style="display:flex;"><span>             <span style="color:#66d9ef">for</span> doc <span style="color:#f92672">in</span> arxiv<span style="color:#f92672">.</span>query(query<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;cat:cs.AI&#39;</span>, max_results<span style="color:#f92672">=</span><span style="color:#ae81ff">2000</span>)]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># machine learning</span>
+</span></span><span style="display:flex;"><span>ml_results <span style="color:#f92672">=</span> [{<span style="color:#e6db74">&#39;link&#39;</span>     : doc[<span style="color:#e6db74">&#39;id&#39;</span>],
+</span></span><span style="display:flex;"><span>               <span style="color:#e6db74">&#39;code&#39;</span>     : doc[<span style="color:#e6db74">&#39;arxiv_primary_category&#39;</span>][<span style="color:#e6db74">&#39;term&#39;</span>],
+</span></span><span style="display:flex;"><span>               <span style="color:#e6db74">&#39;category&#39;</span> : <span style="color:#e6db74">&#39;ml&#39;</span>,
+</span></span><span style="display:flex;"><span>               <span style="color:#e6db74">&#39;text&#39;</span>     : doc[<span style="color:#e6db74">&#39;summary&#39;</span>]}
+</span></span><span style="display:flex;"><span>              <span style="color:#66d9ef">for</span> doc <span style="color:#f92672">in</span> arxiv<span style="color:#f92672">.</span>query(query<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;cat:cs.LG&#39;</span>, max_results<span style="color:#f92672">=</span><span style="color:#ae81ff">2000</span>)]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># computer visison</span>
+</span></span><span style="display:flex;"><span>cv_results <span style="color:#f92672">=</span> [{<span style="color:#e6db74">&#39;link&#39;</span>     : doc[<span style="color:#e6db74">&#39;id&#39;</span>],
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#39;category&#39;</span> : <span style="color:#e6db74">&#39;cv&#39;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#39;code&#39;</span>     : doc[<span style="color:#e6db74">&#39;arxiv_primary_category&#39;</span>][<span style="color:#e6db74">&#39;term&#39;</span>],
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#39;text&#39;</span>     : doc[<span style="color:#e6db74">&#39;summary&#39;</span>]}
+</span></span><span style="display:flex;"><span>              <span style="color:#66d9ef">for</span> doc <span style="color:#f92672">in</span> arxiv<span style="color:#f92672">.</span>query(query<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;cat:cs.CV&#39;</span>, max_results<span style="color:#f92672">=</span><span style="color:#ae81ff">2000</span>)]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># robotics</span>
+</span></span><span style="display:flex;"><span>ro_results <span style="color:#f92672">=</span> [{<span style="color:#e6db74">&#39;link&#39;</span>     : doc[<span style="color:#e6db74">&#39;id&#39;</span>],
+</span></span><span style="display:flex;"><span>                 <span style="color:#e6db74">&#39;category&#39;</span> : <span style="color:#e6db74">&#39;ro&#39;</span>,
+</span></span><span style="display:flex;"><span>                 <span style="color:#e6db74">&#39;code&#39;</span>     : doc[<span style="color:#e6db74">&#39;arxiv_primary_category&#39;</span>][<span style="color:#e6db74">&#39;term&#39;</span>],
+</span></span><span style="display:flex;"><span>                 <span style="color:#e6db74">&#39;text&#39;</span>  : doc[<span style="color:#e6db74">&#39;summary&#39;</span>]}
+</span></span><span style="display:flex;"><span>              <span style="color:#66d9ef">for</span> doc <span style="color:#f92672">in</span> arxiv<span style="color:#f92672">.</span>query(query<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;cat:CS.RO&#39;</span>, max_results<span style="color:#f92672">=</span><span style="color:#ae81ff">300</span>)]
+</span></span></code></pre></div><p>We can look at some the results:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cv_results[<span style="color:#ae81ff">89</span>]
+</span></span></code></pre></div><p>We can see that there are some &lsquo;\n&rsquo; sprinkled in the summary text; removing these is actually taken care of in the libraries that we use.</p>
+<h3 id="storing-the-train-and-test-set">
+  Storing The Train and Test Set
+  <a class="heading-link" href="#storing-the-train-and-test-set">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>The four topics we are trying to predict are also called the target classes or simply the classes. We refer to artifical intelligence, machine learning and computer vision as the &ldquo;majority classes&rdquo; and robotics as the &ldquo;minority class&rdquo; due to the discrepencies in the number of datapoints.  Let&rsquo;s break out data set into a 75% training and 25% testing.  We create the training set:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>maj_train <span style="color:#f92672">=</span> <span style="color:#ae81ff">1500</span>
+</span></span><span style="display:flex;"><span>min_train <span style="color:#f92672">=</span> <span style="color:#ae81ff">225</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>train <span style="color:#f92672">=</span> (ai_results[<span style="color:#ae81ff">0</span>:maj_train]  <span style="color:#f92672">+</span> ml_results[<span style="color:#ae81ff">0</span>:maj_train] <span style="color:#f92672">+</span>
+</span></span><span style="display:flex;"><span>         cv_results[<span style="color:#ae81ff">0</span>:maj_train] <span style="color:#f92672">+</span> ro_results[<span style="color:#ae81ff">0</span>:min_train])
+</span></span></code></pre></div><p>And then insert them into the MongoDB databases as the <code>training collection</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># insert them into training collection</span>
+</span></span><span style="display:flex;"><span>db<span style="color:#f92672">.</span>train_cs_papers<span style="color:#f92672">.</span>insert_many(train, ordered<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span></code></pre></div><p>We then do the same for the test set:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>test <span style="color:#f92672">=</span> (ai_results[maj_train<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span> :<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">+</span> ml_results[maj_train<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>:<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">+</span>
+</span></span><span style="display:flex;"><span>        cv_results[maj_train<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>:<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">+</span> ro_results[min_train<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>:<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># insert them into training collection</span>
+</span></span><span style="display:flex;"><span>db<span style="color:#f92672">.</span>test_cs_papers<span style="color:#f92672">.</span>insert_many(test, ordered<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span></code></pre></div><p>Now that we have stored the datasets, let&rsquo;s read them back and connvert them to a Pandas dataframe:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas <span style="color:#66d9ef">as</span> pd
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># projection for subselecting only `text` and `category` fields</span>
+</span></span><span style="display:flex;"><span>project <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;_id&#34;</span>:<span style="color:#ae81ff">0</span>,<span style="color:#e6db74">&#34;text&#34;</span>:<span style="color:#ae81ff">1</span>,<span style="color:#e6db74">&#34;category&#34;</span>:<span style="color:#ae81ff">1</span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># get the training set</span>
+</span></span><span style="display:flex;"><span>train_df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>DataFrame(db<span style="color:#f92672">.</span>train_cs_papers<span style="color:#f92672">.</span>find({},project))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># get the testing set</span>
+</span></span><span style="display:flex;"><span>test_df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>DataFrame(db<span style="color:#f92672">.</span>test_cs_papers<span style="color:#f92672">.</span>find({},project))
+</span></span></code></pre></div><p>Let&rsquo;s take a look what the dataframes look like:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>train_df<span style="color:#f92672">.</span>head()
+</span></span></code></pre></div><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>category</th>
+      <th>text</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>ai</td>
+      <td>Because of their occasional need to return to ...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>ai</td>
+      <td>Market price systems constitute a well-underst...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>ai</td>
+      <td>We describe an extensive study of search in GS...</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>ai</td>
+      <td>As real logic programmers normally use cut (!)...</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>ai</td>
+      <td>To support the goal of allowing users to recor...</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>We can see the total number of papers we have:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>train_df<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">+</span> test_df<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>] 
+</span></span></code></pre></div><pre><code>6415
+</code></pre>
+<p>In order for our model to predict the topic of each summary we need to convert the category into a number.  For that we use the Scikit-Learn <a href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html"  class="external-link" target="_blank" rel="noopener">LabelEncoder</a> class.  We append a new column to the dataframe called <code>target</code> that will be the numerical value of the class:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.preprocessing <span style="color:#f92672">import</span> LabelEncoder  
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>labeler <span style="color:#f92672">=</span> LabelEncoder()
+</span></span><span style="display:flex;"><span>train_df[<span style="color:#e6db74">&#34;target&#34;</span>] <span style="color:#f92672">=</span> labeler<span style="color:#f92672">.</span>fit_transform(train_df[<span style="color:#e6db74">&#34;category&#34;</span>])
+</span></span><span style="display:flex;"><span>test_df[<span style="color:#e6db74">&#34;target&#34;</span>]  <span style="color:#f92672">=</span> labeler<span style="color:#f92672">.</span>transform(test_df[<span style="color:#e6db74">&#34;category&#34;</span>])
+</span></span></code></pre></div><p>In order to view the human readible version of the target we create a dictionary to map the categorical variables (numbers) to labels:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mapping <span style="color:#f92672">=</span> dict(zip(labeler<span style="color:#f92672">.</span>classes_, range(len(labeler<span style="color:#f92672">.</span>classes_))))
+</span></span><span style="display:flex;"><span>print(mapping)
+</span></span></code></pre></div><pre><code>{'ai': 0, 'cv': 1, 'ml': 2, 'ro': 3}
+</code></pre>
+<p>Let&rsquo;s take a look at the number of samples in the training and test set:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>train_cts <span style="color:#f92672">=</span> train_df<span style="color:#f92672">.</span>groupby(<span style="color:#e6db74">&#34;target&#34;</span>)<span style="color:#f92672">.</span>size()
+</span></span><span style="display:flex;"><span>test_cts  <span style="color:#f92672">=</span> test_df<span style="color:#f92672">.</span>groupby(<span style="color:#e6db74">&#34;target&#34;</span>)<span style="color:#f92672">.</span>size()
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> matplotlib.pyplot <span style="color:#66d9ef">as</span> plt
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span>matplotlib inline
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>f, (ax1, ax2) <span style="color:#f92672">=</span> plt<span style="color:#f92672">.</span>subplots(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, figsize<span style="color:#f92672">=</span>(<span style="color:#ae81ff">10</span>,<span style="color:#ae81ff">5</span>), sharey<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>train_cts<span style="color:#f92672">.</span>plot(kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;bar&#39;</span>,ax<span style="color:#f92672">=</span> ax1,rot<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>test_cts<span style="color:#f92672">.</span>plot(kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;bar&#39;</span>,ax<span style="color:#f92672">=</span> ax2,rot<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>ax1<span style="color:#f92672">.</span>set_title(<span style="color:#e6db74">&#39;Train Set&#39;</span>)
+</span></span><span style="display:flex;"><span>ax2<span style="color:#f92672">.</span>set_title(<span style="color:#e6db74">&#39;Test Set&#39;</span>)
+</span></span><span style="display:flex;"><span>ax1<span style="color:#f92672">.</span>set_ylabel(<span style="color:#e6db74">&#34;Counts&#34;</span>)
+</span></span></code></pre></div><pre><code>Text(0, 0.5, 'Counts')
+</code></pre>
+<p><img src="/nlp1_files/nlp1_27_1.png" alt="png"></p>
+<p>In terms of percentages they are the exact same percentage of target classes:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>percents <span style="color:#f92672">=</span> <span style="color:#ae81ff">100</span> <span style="color:#f92672">*</span> train_df<span style="color:#f92672">.</span>groupby(<span style="color:#e6db74">&#34;target&#34;</span>)<span style="color:#f92672">.</span>size() <span style="color:#f92672">/</span> train_df<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>percents<span style="color:#f92672">.</span>plot(kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;bar&#39;</span>, title<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Target Class Distributions&#39;</span>, rot<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>ylabel(<span style="color:#e6db74">&#34;%&#34;</span>)
+</span></span><span style="display:flex;"><span>              
+</span></span></code></pre></div><pre><code>Text(0, 0.5, '%')
+</code></pre>
+<p><img src="/nlp1_files/nlp1_29_1.png" alt="png"></p>
+<p>We can see that classes 0, 1, 2 are pretty even, but class 3 is much smaller than the other, the imbalance in the number of samples in the classes is what we mean by imbalanced data.  We can look an example article summary and its target value:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Category:</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">{}</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(train_df[<span style="color:#e6db74">&#34;category&#34;</span>][<span style="color:#ae81ff">5</span>]))
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Target: </span><span style="color:#e6db74">{}</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(train_df[<span style="color:#e6db74">&#34;target&#34;</span>][<span style="color:#ae81ff">5</span>]))
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Text:</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, train_df[<span style="color:#e6db74">&#34;text&#34;</span>][<span style="color:#ae81ff">5</span>])
+</span></span></code></pre></div><pre><code>Category:
+ai
+
+Target: 0
+
+Text:
+ Terminological knowledge representation systems (TKRSs) are tools for
+designing and using knowledge bases that make use of terminological languages
+(or concept languages). We analyze from a theoretical point of view a TKRS
+whose capabilities go beyond the ones of presently available TKRSs. The new
+features studied, often required in practical applications, can be summarized
+in three main points. First, we consider a highly expressive terminological
+language, called ALCNR, including general complements of concepts, number
+restrictions and role conjunction. Second, we allow to express inclusion
+statements between general concepts, and terminological cycles as a particular
+case. Third, we prove the decidability of a number of desirable TKRS-deduction
+services (like satisfiability, subsumption and instance checking) through a
+sound, complete and terminating calculus for reasoning in ALCNR-knowledge
+bases. Our calculus extends the general technique of constraint systems. As a
+byproduct of the proof, we get also the result that inclusion statements in
+ALCNR can be simulated by terminological cycles, if descriptive semantics is
+adopted.
+</code></pre>
+<p>Now lets take a look a the most commonly used words in each target class using a <a href="https://amueller.github.io/word_cloud/"  class="external-link" target="_blank" rel="noopener">word cloud</a></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> wordcloud <span style="color:#f92672">import</span> WordCloud, STOPWORDS
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">plot_wordcloud</span>(df: pd<span style="color:#f92672">.</span>DataFrame, category: str, target: int) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>    words <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34; &#34;</span><span style="color:#f92672">.</span>join(train_df[train_df[<span style="color:#e6db74">&#34;target&#34;</span>] <span style="color:#f92672">==</span> target][<span style="color:#e6db74">&#34;text&#34;</span>]<span style="color:#f92672">.</span>values)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    plt<span style="color:#f92672">.</span>rcParams[<span style="color:#e6db74">&#39;figure.figsize&#39;</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">20</span>
+</span></span><span style="display:flex;"><span>    wordcloud <span style="color:#f92672">=</span> WordCloud(stopwords<span style="color:#f92672">=</span>STOPWORDS, 
+</span></span><span style="display:flex;"><span>                          background_color<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;white&#34;</span>,
+</span></span><span style="display:flex;"><span>                          max_words<span style="color:#f92672">=</span><span style="color:#ae81ff">1000</span>)<span style="color:#f92672">.</span>generate(words)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    plt<span style="color:#f92672">.</span>title(<span style="color:#e6db74">&#34;WordCloud For </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(category))
+</span></span><span style="display:flex;"><span>    plt<span style="color:#f92672">.</span>imshow(wordcloud)
+</span></span><span style="display:flex;"><span>    plt<span style="color:#f92672">.</span>axis(<span style="color:#e6db74">&#34;off&#34;</span>)
+</span></span><span style="display:flex;"><span>    plt<span style="color:#f92672">.</span>show()
+</span></span><span style="display:flex;"><span>    
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">for</span> category, target <span style="color:#f92672">in</span> mapping<span style="color:#f92672">.</span>items():
+</span></span><span style="display:flex;"><span>    plot_wordcloud(train_df, category, target)
+</span></span></code></pre></div><p><img src="/nlp1_files/nlp1_34_0.png" alt="png"></p>
+<p><img src="/nlp1_files/nlp1_34_1.png" alt="png"></p>
+<p><img src="/nlp1_files/nlp1_34_2.png" alt="png"></p>
+<p><img src="/nlp1_files/nlp1_34_3.png" alt="png"></p>
+<p>We can see that some of the most common words to each topic (i.e. &ldquo;problem&rdquo;, &ldquo;model&rdquo;, &ldquo;algorithm&rdquo;) are commonly occuring across topics. If we run into issues with our model performance we may consider including these common words as stop words.</p>
+<p>Now that we have an idea of what kind of data we are working with we can start to do some machine learning on it.  As with all datasets there is some required preprocessing before machine learning.  With numerical data there needs to be some cleaning and <a href="http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.scale.html">scaling</a> of the features. However, in Natural Language Processing there is much more substantial preprocessing stage that we&rsquo;ll go over next.</p>
+<h2 id="tf-idf-preprocessing--feature-extraction">
+  TF-IDF: Preprocessing &amp; Feature Extraction <a class="anchor" id="third-bullet"></a>
+  <a class="heading-link" href="#tf-idf-preprocessing--feature-extraction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>The first thing we need to go over is the concept of the <a href="https://en.wikipedia.org/wiki/Bag-of-words_model"><strong>bag of words model</strong></a>.  <em>In the bag-of-words model, a text (such as a sentence or a document) is represented as &ldquo;bag&rdquo; or list of its words, disregarding grammar and even word order, but keeping multiplicity of the words.</em>  A two document example is:</p>
+<ul>
+<li>
+<p><strong>D1:</strong>  Hi, I am Mike and I like Boston.</p>
+</li>
+<li>
+<p><strong>D2:</strong>  Boston is a city and people in Boston like the Red Sox.</p>
+</li>
+</ul>
+<p>From these two documents, a list, or &lsquo;bag-of-words&rsquo; is constructed</p>
+<pre><code>bag = ['Hi', 'I', 'am', 'Mike', 'and', 'like', 'Boston', 'is', 
+       'a', 'city, 'and', 'people', 'in', 'the', 'red', 'sox]
+</code></pre>
+<p>Notice how in our bag-of-words we have dropped repetitions of the words &lsquo;I&rsquo;, &lsquo;is&rsquo; and &lsquo;Mike&rsquo;, we will show how multiplicity of words enters into our model next.</p>
+<p>The bag-of-words model is mainly used as a tool of feature generation. After transforming the text into a &ldquo;bag of words&rdquo;, we can calculate various measures to characterize the document.  In order to do so we have to generate a vector for each document that represents the number of times each entry in the bag of words appears in the text. The order of entries in the vector corresponds to the order of the entries in the bag-of-words list.  For example, document D1 would have a vector,</p>
+<pre><code>[1, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0 ,0, 0, 0, 0, 0]
+</code></pre>
+<p>while the second document, D2, would have the vector,</p>
+<pre><code>[0, 0, 0, 0, 0, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1]
+</code></pre>
+<p>Each entry of the lists refers to frequency or count of the corresponding entry in the bag-of-words list.  When we have a stacked collection of (row) vectors, or matrix, where each row corresponds to a document (vector), and each column corresponds to a word in the bag-of-words list, then this will be known as our <strong>term-frequency (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf</mtext></mrow><annotation encoding="application/x-tex">\text{tf}</annotation></semantics></math></span>
+) <a href="https://en.wikipedia.org/wiki/Document-term_matrix"  class="external-link" target="_blank" rel="noopener">document matrix</a></strong>. The general formula for an entry in the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf</mtext></mrow><annotation encoding="application/x-tex">\text{tf}</annotation></semantics></math></span>
+ matrix is,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>tf</mtext><mo stretchy="false">(</mo><mi>d</mi><mo separator="true">,</mo><mi>t</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>=</mo><mtext> </mtext><msub><mi>f</mi><mrow><mi>t</mi><mo separator="true">,</mo><mi>d</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\text{tf}(d,t) \,  = \, f_{t,d}</annotation></semantics></math></span>
+<p>where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>f</mi><mrow><mi>t</mi><mo separator="true">,</mo><mi>d</mi></mrow></msub></mrow><annotation encoding="application/x-tex">f_{t,d}</annotation></semantics></math></span>
+ is the number of times the term <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span>
+ occurs in document <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mo>∈</mo><mi mathvariant="script">D</mi></mrow><annotation encoding="application/x-tex">d \in \mathcal{D}</annotation></semantics></math></span>
+, where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">D</mi></mrow><annotation encoding="application/x-tex">\mathcal{D}</annotation></semantics></math></span>
+ is our text corpus. We can create a term-frequency matrix for the above example using Scikit-learns <a href="http://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html#sklearn.feature_extraction.text.CountVectorizer">CountVectorizer</a> class:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.feature_extraction.text <span style="color:#f92672">import</span> CountVectorizer
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>vectorizer <span style="color:#f92672">=</span>  CountVectorizer()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>corpus     <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#34;Hi, I am Mike and I like Boston.&#34;</span>,
+</span></span><span style="display:flex;"><span>              <span style="color:#e6db74">&#34;Boston is a city and people in Boston like the Red Sox.&#34;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># get the term frequency</span>
+</span></span><span style="display:flex;"><span>tf  <span style="color:#f92672">=</span> vectorizer<span style="color:#f92672">.</span>fit_transform(corpus)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># get the words in bag-of-words</span>
+</span></span><span style="display:flex;"><span>print(vectorizer<span style="color:#f92672">.</span>get_feature_names())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># get the counts!</span>
+</span></span><span style="display:flex;"><span>print(tf<span style="color:#f92672">.</span>toarray())
+</span></span></code></pre></div><pre><code>['am', 'and', 'boston', 'city', 'hi', 'in', 'is', 'like', 'mike', 'people', 'red', 'sox', 'the']
+[[1 1 1 0 1 0 0 1 1 0 0 0 0]
+ [0 1 2 1 0 1 1 1 0 1 1 1 1]]
+</code></pre>
+<p>The order of the words is off and CountVectorizer dropped single letter words and punctutation, but the rest is the same!</p>
+<p><strong>Notice CountVectorizer converts everything to lowercase, drops single letter words and punctuation.</strong></p>
+<p>Let&rsquo;s try CountVectorizer on our dataset:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>count_vect <span style="color:#f92672">=</span> CountVectorizer()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>X_train_tf <span style="color:#f92672">=</span> count_vect<span style="color:#f92672">.</span>fit_transform(train_df[<span style="color:#e6db74">&#34;text&#34;</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Shape of term-frequency matrix:&#34;</span>, X_train_tf<span style="color:#f92672">.</span>shape)
+</span></span></code></pre></div><pre><code>Shape of term-frequency matrix: (4840, 19143)
+</code></pre>
+<p>The term-frequency is a sparse matrix where each row is a document in our training corpus (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">D</mi></mrow><annotation encoding="application/x-tex">\mathcal{D}</annotation></semantics></math></span>
+) and each column corresponds to a term/word in the bag-of-words list. This can be confirmed by comparing the number of rows in the term-frequency matrix to the number of documents in the training set:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Number of training documents: &#34;</span>, train_df<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>])
+</span></span></code></pre></div><pre><code>Number of training documents:  4840
+</code></pre>
+<p>Most often term-frequency alone is not a good measure of the importance of a word/term to a document&rsquo;s topic.  Very common words like &ldquo;the&rdquo;, &ldquo;a&rdquo;, &ldquo;to&rdquo; are almost always the terms with the highest frequency in the text. Thus, having a high raw count of the number of times a term appears in a document does not necessarily mean that the corresponding word is more important. Furtermore, longer documents could have high frequency of terms that do not correlate with the document topic, but instead occur with high numbers solely due to the length of the document.</p>
+<p>To circumvent the limination of term-frequency, we often normalize it by the <strong>inverse document frequency (idf)</strong>.  This results in the <strong>term frequency-inverse document frequency (tf-idf)</strong> matrix.  The <em>inverse document frequency is a measure of how much information the word provides, that is, whether the term is common or rare across all documents in the corpus</em>.  We can give a formal defintion of the inverse-document-frequency by letting <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">D</mi></mrow><annotation encoding="application/x-tex">\mathcal{D}</annotation></semantics></math></span>
+ be the corpus or the set of all documents and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span>
+ is the number of documents in the corpus and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>N</mi><mrow><mi>t</mi><mo separator="true">,</mo><mi>D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">N_{t,D}</annotation></semantics></math></span>
+ be the number of documents that contain the term <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span>
+ then,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>i</mi><mi>d</mi><mi>f</mi><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi mathvariant="script">D</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>=</mo><mtext> </mtext><mi>log</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><msub><mi>N</mi><mi mathvariant="script">D</mi></msub><mrow><mn>1</mn><mo>+</mo><msub><mi>N</mi><mrow><mi>t</mi><mo separator="true">,</mo><mi mathvariant="script">D</mi></mrow></msub></mrow></mfrac><mo fence="true">)</mo></mrow><mtext> </mtext><mo>=</mo><mtext> </mtext><mo>−</mo><mi>log</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>1</mn><mo>+</mo><msub><mi>N</mi><mrow><mi>t</mi><mo separator="true">,</mo><mi mathvariant="script">D</mi></mrow></msub></mrow><msub><mi>N</mi><mi mathvariant="script">D</mi></msub></mfrac><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">idf(t,\mathcal{D}) \, = \,  \log\left(\frac{N_{\mathcal{D}}}{1 + N_{t,\mathcal{D}}}\right) \, = \, -  \log\left(\frac{1 + N_{t,\mathcal{D}}}{N_{\mathcal{D}}}\right) </annotation></semantics></math></span>
+<p>The reason for the presence of the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn></mrow><annotation encoding="application/x-tex">1</annotation></semantics></math></span>
+ is for smoothing.  Without it, if the term/word did not appear in any training documents, then its inverse-document-frequency would be <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mi>d</mi><mi>f</mi><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi mathvariant="script">D</mi><mo stretchy="false">)</mo><mo>=</mo><mi mathvariant="normal">∞</mi></mrow><annotation encoding="application/x-tex">idf(t,\mathcal{D}) = \infty</annotation></semantics></math></span>
+.  However, with the presense of the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn></mrow><annotation encoding="application/x-tex">1</annotation></semantics></math></span>
+ it will now have <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mi>d</mi><mi>f</mi><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi mathvariant="script">D</mi><mo stretchy="false">)</mo><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">idf(t,\mathcal{D}) = 0</annotation></semantics></math></span>
+.</p>
+<p>Now we can formally defined the term frequnecy-inverse document frequency as a normalized version of term-frequency,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>tf-idf</mtext><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi>d</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>=</mo><mtext> </mtext><mi>t</mi><mi>f</mi><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi>d</mi><mo stretchy="false">)</mo><mo>⋅</mo><mi>i</mi><mi>d</mi><mi>f</mi><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi mathvariant="script">D</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{tf-idf}(t,d) \, = \, tf(t,d) \cdot idf(t,\mathcal{D}) </annotation></semantics></math></span>
+<p>Like the term-frequency, the term frequency-inverse document frequency is a sparse matrix, where again, each row is a document in our training corpus (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">D</mi></mrow><annotation encoding="application/x-tex">\mathcal{D}</annotation></semantics></math></span>
+) and each column corresponds to a term/word in the bag-of-words list.  The <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext></mrow><annotation encoding="application/x-tex">\text{tf-idf}</annotation></semantics></math></span>
+ matrix can be constructed using the sklearn <a href="http://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfTransformer.html">TfidfTransformer</a> class:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.feature_extraction.text <span style="color:#f92672">import</span> TfidfTransformer
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>tfidf_transformer <span style="color:#f92672">=</span> TfidfTransformer()
+</span></span><span style="display:flex;"><span>X_train_tfidf <span style="color:#f92672">=</span> tfidf_transformer<span style="color:#f92672">.</span>fit_transform(X_train_tf)
+</span></span><span style="display:flex;"><span>X_train_tfidf<span style="color:#f92672">.</span>shape
+</span></span></code></pre></div><pre><code>(4840, 19143)
+</code></pre>
+<p>We should note that the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext></mrow><annotation encoding="application/x-tex">\text{tf-idf}</annotation></semantics></math></span>
+ matrix is the same shape as the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf</mtext></mrow><annotation encoding="application/x-tex">\text{tf}</annotation></semantics></math></span>
+ matrix, but the two have different values. <strong>In either case the matrix <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext><mo>∈</mo><msup><mi>R</mi><mrow><mi>n</mi><mo>×</mo><mi>p</mi></mrow></msup></mrow><annotation encoding="application/x-tex">\text{tf-idf} \in R^{n \times p}</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf</mtext><mo>∈</mo><msup><mi>R</mi><mrow><mi>n</mi><mo>×</mo><mi>p</mi></mrow></msup></mrow><annotation encoding="application/x-tex">\text{tf} \in R^{n \times p}</annotation></semantics></math></span>
+ where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>&gt;</mo><mo>&gt;</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">p &gt;&gt; n</annotation></semantics></math></span>
+, i.e. there are more features than datapoints.  This is called a high dimenisonal problem and causes issues for classifiers as we will dicuss.</strong></p>
+<p>Now that we have built our <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext></mrow><annotation encoding="application/x-tex">\text{tf-idf}</annotation></semantics></math></span>
+ matrix we can start to look at the which terms/words are most associated with document topics and then build a predictive model to classify the documents&rsquo; topic. We visualize the most import words for each class by can taking the mean of each column in the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext></mrow><annotation encoding="application/x-tex">\text{tf-idf}</annotation></semantics></math></span>
+ matrix using the functions developed <a href="https://buhrmann.github.io/tfidf-analysis.html"  class="external-link" target="_blank" rel="noopener">here</a>. I adapted the code to be faster by using SciPy&rsquo;s built in sparse matrix methods, Scikit-Learn Pipelines (to be discussed later) and use <a href="https://plotly.com/python/"  class="external-link" target="_blank" rel="noopener">Plotly</a> instead of Matplotlib:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> utils.feature_plots <span style="color:#f92672">import</span> plot_tfidf
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.pipeline <span style="color:#f92672">import</span> Pipeline
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plot_tfidf(pipe    <span style="color:#f92672">=</span> Pipeline([(<span style="color:#e6db74">&#34;vect&#34;</span>,count_vect), (<span style="color:#e6db74">&#34;tfidf&#34;</span>,tfidf_transformer)]),
+</span></span><span style="display:flex;"><span>           labeler <span style="color:#f92672">=</span> labeler,
+</span></span><span style="display:flex;"><span>           X       <span style="color:#f92672">=</span> train_df[<span style="color:#e6db74">&#34;text&#34;</span>],
+</span></span><span style="display:flex;"><span>           y       <span style="color:#f92672">=</span> train_df[<span style="color:#e6db74">&#34;target&#34;</span>],
+</span></span><span style="display:flex;"><span>           vect    <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;vect&#34;</span>,
+</span></span><span style="display:flex;"><span>           tfidf   <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;tfidf&#34;</span>,
+</span></span><span style="display:flex;"><span>           top_n   <span style="color:#f92672">=</span> <span style="color:#ae81ff">25</span>)
+</span></span></code></pre></div><p><img src="/nlp1_files/nlp1_plotly1.png" alt="png"></p>
+<p>The length of each bar next to each word is representitive of its mean <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext></mrow><annotation encoding="application/x-tex">\text{tf-idf}</annotation></semantics></math></span>
+ score across all documents belonging that target class. We can see that the most common words like &ldquo;of&rdquo;, &ldquo;the&rdquo;, etc are the most common and have the highest <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext></mrow><annotation encoding="application/x-tex">\text{tf-idf}</annotation></semantics></math></span>
+ score. These are called <strong>stop words</strong>, for now we will leave them in our model and focus on the imbalance in the classes. We can also see that words &ldquo;image&rdquo; and &ldquo;images&rdquo; are treated as seperate words, but really refer to the same thing. This also will cause issues, but we will deal with this along with stop words in the next post.</p>
+<p>In general, there are words that occur more frequently in each class than in other classes. For instance &ldquo;object&rdquo;, &ldquo;face&rdquo;, &ldquo;images&rdquo; have high <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext></mrow><annotation encoding="application/x-tex">\text{tf-idf}</annotation></semantics></math></span>
+ scores in Computer Vision, but not in others. We want our model to be sensitive to these key words and use them for determining the correct class while being insensitive to words belonging to multiple classes.</p>
+<p>Let&rsquo;s first go over the model we will be using for prediction.</p>
+<h2 id="the-naive-bayes-model">
+  The Naive Bayes Model <a class="anchor" id="fourth-bullet"></a>
+  <a class="heading-link" href="#the-naive-bayes-model">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>One of the most basic models for text classification is the <a href="https://en.wikipedia.org/wiki/Naive_Bayes_classifier">Naive Bayes model</a>. The Naive Bayes classification model predicts the document topic, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mo>=</mo><mo stretchy="false">{</mo><msub><mi>C</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>C</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>C</mi><mi>k</mi></msub><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">y = \{C_{1},C_{2},\ldots, C_{k}\}</annotation></semantics></math></span>
+ where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">C_{k}</annotation></semantics></math></span>
+ is the class or topic based on the document feactures <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">x</mtext><mo>∈</mo><msup><mi mathvariant="double-struck">N</mi><mi>p</mi></msup></mrow><annotation encoding="application/x-tex">\textbf{x} \in \mathbb{N}^{p}</annotation></semantics></math></span>
+,  and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span>
+ is the number of terms in our bag-of-words list.  The feature vector,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext mathvariant="bold">x</mtext><mtext> </mtext><mo>=</mo><mtext> </mtext><mrow><mo fence="true">[</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>x</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>p</mi></msub><mo fence="true">]</mo></mrow></mrow><annotation encoding="application/x-tex">\textbf{x} \, = \, \left[ x_{1}, x_{2}, \ldots , x_{p} \right] </annotation></semantics></math></span>
+<p>contains counts <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">x_{i}</annotation></semantics></math></span>
+ for the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext></mrow><annotation encoding="application/x-tex">\text{tf-idf}</annotation></semantics></math></span>
+ value of the i-th term in our bag-of-words list.  Using <a href="https://en.wikipedia.org/wiki/Bayes%27_theorem">Bayes Theorem</a> we can develop a model to predict the topic class  (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">C_{k}</annotation></semantics></math></span>
+) of a document from its feature vector <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">x</mtext></mrow><annotation encoding="application/x-tex">\textbf{x}</annotation></semantics></math></span>
+,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>C</mi><mi>k</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>p</mi></msub><mo fence="true">)</mo></mrow><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mrow><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>p</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>C</mi><mi>k</mi></msub><mo fence="true">)</mo></mrow><mi>P</mi><mo stretchy="false">(</mo><msub><mi>C</mi><mi>k</mi></msub><mo stretchy="false">)</mo></mrow><mrow><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>p</mi></msub><mo fence="true">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">P\left(C_{k} \, \vert \, x_{1}, \ldots , x_{p} \right) \; = \; \frac{P\left(x_{1}, \ldots, x_{p} \, \vert \, C_{k} \right)P(C_{k})}{P\left(x_{1}, \ldots, x_{p} \right)}</annotation></semantics></math></span>
+<p>The Naive Bayes model makes the &ldquo;Naive&rdquo; assumption the probability of each term&rsquo;s <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext></mrow><annotation encoding="application/x-tex">\text{tf-idf}</annotation></semantics></math></span>
+ is <strong>conditionally independent</strong> of every other term.  This reduces our <strong>conditional probability function</strong> to the product,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>p</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>C</mi><mi>k</mi></msub><mo fence="true">)</mo></mrow><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msubsup><mi mathvariant="normal">Π</mi><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></msubsup><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>x</mi><mi>i</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>C</mi><mi>k</mi></msub><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex"> P\left(x_{1}, \ldots, x_{p} \, \vert \, C_{k} \right) \; = \; \Pi_{i=1}^{p} P\left(x_{i} \, \vert \, C_{k} \right)</annotation></semantics></math></span>
+<p>Subsequently Bayes&rsquo; theorem for our classification problem becomes,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>C</mi><mi>k</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>p</mi></msub><mo fence="true">)</mo></mrow><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mrow><mi>P</mi><mo stretchy="false">(</mo><msub><mi>C</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mtext> </mtext><msubsup><mi mathvariant="normal">Π</mi><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></msubsup><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>x</mi><mi>i</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>C</mi><mi>k</mi></msub><mo fence="true">)</mo></mrow></mrow><mrow><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>p</mi></msub><mo fence="true">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">P\left(C_{k} \, \vert \, x_{1}, \ldots , x_{p} \right) \; = \; \frac{ P(C_{k}) \, \Pi_{i=1}^{p} P\left(x_{i} \, \vert \, C_{k} \right)}{P\left(x_{1}, \ldots, x_{p} \right)}</annotation></semantics></math></span>
+<p>Since the denominator is independent of the class (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">C_{k}</annotation></semantics></math></span>
+) we can use a <a href="https://en.wikipedia.org/wiki/Maximum_a_posteriori">Maxmimum A Posteriori</a> method to estimate the document topic ,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mover accent="true"><mi>y</mi><mo>^</mo></mover><mtext> </mtext><mo>=</mo><mtext> </mtext><msub><mtext>arg max</mtext><mi>k</mi></msub><mtext>  </mtext><mi>P</mi><mo stretchy="false">(</mo><msub><mi>C</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mtext> </mtext><msubsup><mi mathvariant="normal">Π</mi><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></msubsup><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>x</mi><mi>i</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>C</mi><mi>k</mi></msub><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex"> \hat{y} \, = \, \text{arg max}_{k}\;  P(C_{k}) \,  \Pi_{i=1}^{p} P\left(x_{i} \, \vert \, C_{k} \right)</annotation></semantics></math></span>
+<p>The <strong>prior</strong>, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><msub><mi>C</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mo separator="true">,</mo></mrow><annotation encoding="application/x-tex">P(C_{k}),</annotation></semantics></math></span>
+ is often taken to be the relative frequency of the class in the training corpus, while the form of the conditional distribution <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>x</mi><mi>i</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>C</mi><mi>k</mi></msub><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">P\left(x_{i} \, \vert \, C_{k} \right)</annotation></semantics></math></span>
+ is a choice of the modeler and determines the type of Naive Bayes classifier.</p>
+<p>We will use a <a href="http://scikit-learn.org/stable/modules/generated/sklearn.naive_bayes.MultinomialNB.html#sklearn.naive_bayes.MultinomialNB">multinomial Naive Bayes</a> model which works well when our features are discrete variables such as those in our <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext></mrow><annotation encoding="application/x-tex">\text{tf-idf}</annotation></semantics></math></span>
+ matrix.  In the multinomial Naive Bayes model the conditional probability takes the form,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>p</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>C</mi><mi>k</mi></msub><mo fence="true">)</mo></mrow><mtext> </mtext><mo>=</mo><mtext> </mtext><mfrac><mrow><mrow><mo fence="true">(</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></munderover><msub><mi>x</mi><mi>i</mi></msub><mo fence="true">)</mo></mrow><mo stretchy="false">!</mo></mrow><mrow><msubsup><mi mathvariant="normal">Π</mi><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></msubsup><msub><mi>x</mi><mi>i</mi></msub><mo stretchy="false">!</mo></mrow></mfrac><msubsup><mi mathvariant="normal">Π</mi><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></msubsup><msubsup><mi>p</mi><mrow><mi>k</mi><mo separator="true">,</mo><mi>i</mi></mrow><msub><mi>x</mi><mi>i</mi></msub></msubsup></mrow><annotation encoding="application/x-tex"> P\left(x_{1}, \ldots, x_{p} \, \vert \, C_{k} \right) \, = \, \frac{\left(\sum_{i=1}^{p} x_{i}\right)!}{\Pi_{i=1}^{p} x_{i}!}  \Pi_{i=1}^{p} p_{k,i}^{x_{i}}</annotation></semantics></math></span>
+<p>where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mrow><mi>k</mi><mo separator="true">,</mo><mi>i</mi></mrow></msub></mrow><annotation encoding="application/x-tex">p_{k,i}</annotation></semantics></math></span>
+ is the probability that the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span>
+-th class will have the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span>
+-th bag-of-words term in its feature vector. This leads to our <strong>posterior distribution</strong> having the functional form,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>C</mi><mi>k</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>p</mi></msub><mo fence="true">)</mo></mrow><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mrow><mi>P</mi><mo stretchy="false">(</mo><msub><mi>C</mi><mi>k</mi></msub><mo stretchy="false">)</mo></mrow><mrow><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>p</mi></msub><mo fence="true">)</mo></mrow></mrow></mfrac><mtext> </mtext><mfrac><mrow><mrow><mo fence="true">(</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></munderover><msub><mi>x</mi><mi>i</mi></msub><mo fence="true">)</mo></mrow><mo stretchy="false">!</mo></mrow><mrow><msubsup><mi mathvariant="normal">Π</mi><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></msubsup><msub><mi>x</mi><mi>i</mi></msub><mo stretchy="false">!</mo></mrow></mfrac><msubsup><mi mathvariant="normal">Π</mi><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></msubsup><msubsup><mi>p</mi><mrow><mi>k</mi><mo separator="true">,</mo><mi>i</mi></mrow><msub><mi>x</mi><mi>i</mi></msub></msubsup></mrow><annotation encoding="application/x-tex">P\left(C_{k} \, \vert \, x_{1}, \ldots , x_{p} \right) \; = \; \frac{ P(C_{k})}{P\left(x_{1}, \ldots, x_{p} \right)} \, \frac{\left(\sum_{i=1}^{p} x_{i}\right)!}{\Pi_{i=1}^{p} x_{i}!}  \Pi_{i=1}^{p} p_{k,i}^{x_{i}}</annotation></semantics></math></span>
+<p>The Naive Bayes classifier can be fast compared to more sophisticated methods due to the decoupling of the class conditional feature distributions, i.e.</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>p</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>C</mi><mi>k</mi></msub><mo fence="true">)</mo></mrow><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msubsup><mi mathvariant="normal">Π</mi><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>p</mi></msubsup><mi>P</mi><mrow><mo fence="true">(</mo><msub><mi>x</mi><mi>i</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>C</mi><mi>k</mi></msub><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex"> P\left(x_{1}, \ldots, x_{p} \, \vert \, C_{k} \right) \; = \; \Pi_{i=1}^{p} P\left(x_{i} \, \vert \, C_{k} \right)</annotation></semantics></math></span>
+<p><strong>The decoupling of the class conditional distributions allows for each distribution to be independently estimated as a one dimensional distribution and helps to alleviate problems with the curse of dimensionality.</strong></p>
+<p>We can instantiate a multinomial Naive Bayes classifier using the Scikit-learn library and fit it to our  <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext></mrow><annotation encoding="application/x-tex">\text{tf-idf}</annotation></semantics></math></span>
+ matrix using the commands,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.naive_bayes <span style="color:#f92672">import</span> MultinomialNB
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.metrics <span style="color:#f92672">import</span> accuracy_score
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>model <span style="color:#f92672">=</span> MultinomialNB()
+</span></span><span style="display:flex;"><span>model<span style="color:#f92672">.</span>fit(X_train_tfidf, train_df[<span style="color:#e6db74">&#34;target&#34;</span>])
+</span></span></code></pre></div><pre><code>MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
+</code></pre>
+<p>The term <code>alpha=1</code> means we are using <a href="https://en.wikipedia.org/wiki/Laplace_smoothing">Laplace smoothing</a>. We can now look at the accuracy of our classifier using Scikit-learns <a href="http://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html">accuracy_score</a> function:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>X_test_tf <span style="color:#f92672">=</span> count_vect<span style="color:#f92672">.</span>transform(test_df[<span style="color:#e6db74">&#34;text&#34;</span>])
+</span></span><span style="display:flex;"><span>X_test_tfidf <span style="color:#f92672">=</span> tfidf_transformer<span style="color:#f92672">.</span>transform(X_test_tf)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>predicted <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>predict(X_test_tfidf)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Accuracy:&#34;</span>, accuracy_score(test_df[<span style="color:#e6db74">&#34;target&#34;</span>], predicted))
+</span></span></code></pre></div><pre><code>Accuracy: 0.8495238095238096
+</code></pre>
+<p>About 85% which is very good!  We can get more a detailed view of the performance of our classifier by using the Scikit-learn library&rsquo;s <a href="http://scikit-learn.org/stable/modules/generated/sklearn.metrics.classification_report.html">classification report</a> function,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.metrics <span style="color:#f92672">import</span> classification_report
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(classification_report(test_df[<span style="color:#e6db74">&#34;target&#34;</span>],
+</span></span><span style="display:flex;"><span>                            predicted, 
+</span></span><span style="display:flex;"><span>                            target_names<span style="color:#f92672">=</span>mapping))
+</span></span></code></pre></div><pre><code>              precision    recall  f1-score   support
+
+          ai       0.90      0.84      0.87       500
+          cv       0.87      0.92      0.89       500
+          ml       0.79      0.91      0.85       500
+          ro       0.00      0.00      0.00        75
+
+    accuracy                           0.85      1575
+   macro avg       0.64      0.67      0.65      1575
+weighted avg       0.81      0.85      0.83      1575
+
+
+
+/opt/conda/lib/python3.7/site-packages/sklearn/metrics/_classification.py:1268: UndefinedMetricWarning:
+
+Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+</code></pre>
+<p>Whoa our precision and recall for robotics is terrible!</p>
+<p>At 85% our accuracy is fairly high even though we are failing at classifying robotics at all. This is because accuracy is not a good measure for a classifiers performance when the data is imbalanced! Let&rsquo;s look at the <a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic"  class="external-link" target="_blank" rel="noopener">Reciever Operator Characteristic (ROC) Curve</a> and <a href="https://machinelearningmastery.com/roc-curves-and-precision-recall-curves-for-imbalanced-classification/"  class="external-link" target="_blank" rel="noopener">precision recall curve</a> to get a visual representation of our model&rsquo;s performance.</p>
+<p>Note that in order to do so we need to convert the labels for our model using the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.label_binarize.html"  class="external-link" target="_blank" rel="noopener">label_binarize</a> function:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.preprocessing <span style="color:#f92672">import</span> label_binarize
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># get the number of classes</span>
+</span></span><span style="display:flex;"><span>n_classes <span style="color:#f92672">=</span> len(train_df[<span style="color:#e6db74">&#34;target&#34;</span>]<span style="color:#f92672">.</span>unique())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># classes = [0,1,2,3]</span>
+</span></span><span style="display:flex;"><span>classes   <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>sort(train_df[<span style="color:#e6db74">&#34;target&#34;</span>]<span style="color:#f92672">.</span>unique())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># relabel the test set</span>
+</span></span><span style="display:flex;"><span>y_test <span style="color:#f92672">=</span> label_binarize(test_df[<span style="color:#e6db74">&#34;target&#34;</span>], 
+</span></span><span style="display:flex;"><span>                        classes<span style="color:#f92672">=</span>classes)
+</span></span></code></pre></div><p>We can take a look a the first few entries of the newly labeled data:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>y_test
+</span></span></code></pre></div><pre><code>array([[1, 0, 0, 0],
+       [1, 0, 0, 0],
+       [1, 0, 0, 0],
+       ...,
+       [0, 0, 0, 1],
+       [0, 0, 0, 1],
+       [0, 0, 0, 1]])
+</code></pre>
+<p>We then get the probabilities of belonging to each class for the text documents:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>y_pred <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>predict_proba(X_test_tfidf)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>y_pred[:<span style="color:#ae81ff">2</span>]
+</span></span></code></pre></div><pre><code>array([[9.22761039e-01, 2.12354187e-02, 5.59435199e-02, 6.00223848e-05],
+       [8.88369175e-01, 2.90992775e-02, 8.25227400e-02, 8.80773869e-06]])
+</code></pre>
+<p>Since class 0 has the highest probabilies, the model will predict the first two texts are artificial intelligence which is correct! Adapting the code from scikit-learn (ROC <a href="https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html"  class="external-link" target="_blank" rel="noopener">here</a>) and (precision/recall <a href="https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html"  class="external-link" target="_blank" rel="noopener">here</a>) I wrote the function <code>plot_roc_pr</code> to plot both of these in the same figure:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> utils.Plot_ROC_PR_Curve <span style="color:#f92672">import</span> plot_roc_pr
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plot_roc_pr(y_pred <span style="color:#f92672">=</span> y_pred, y_test <span style="color:#f92672">=</span> y_test)
+</span></span></code></pre></div><p><img src="/nlp1_files/nlp1_61_0.png" alt="png"></p>
+<p>We can see the ROC curve for robotics (class 3) isnt quite so bad, but the precision recall is terrible. This is due to the imbalance in our dataset and shows how important the precision recall curve is!  We can get better idea of how well our model is performing using the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html"  class="external-link" target="_blank" rel="noopener">balanced_accuracy_score</a>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.metrics <span style="color:#f92672">import</span> balanced_accuracy_score
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;balanced_accuracy&#34;</span>, balanced_accuracy_score(test_df[<span style="color:#e6db74">&#34;target&#34;</span>], 
+</span></span><span style="display:flex;"><span>                                                   predicted))
+</span></span></code></pre></div><pre><code>balanced_accuracy 0.669
+</code></pre>
+<p>This seems more true to what we are seeing from the classification report.  We can also use the <a href="https://en.wikipedia.org/wiki/F1_score"  class="external-link" target="_blank" rel="noopener">f1 score</a> which is balances the precision and recall into one score.  This makes sense to use as we want to increase both precision and recall, albiet for different classes.  Since the classes are imbalanced we will use the weighted f1 score:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.metrics <span style="color:#f92672">import</span> f1_score
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;weighted f1 score:&#34;</span>, f1_score(test_df[<span style="color:#e6db74">&#34;target&#34;</span>], 
+</span></span><span style="display:flex;"><span>                                     predicted, 
+</span></span><span style="display:flex;"><span>                                     average<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;weighted&#34;</span>))
+</span></span></code></pre></div><pre><code>weighted f1 score: 0.8290537171887488
+</code></pre>
+<p>We can see that the balanced accuracy is much better representation of how our model is performing than plain accuracy!  We&rsquo;ll try to improve our models performance using some more advanced preprocessing techniques.  This will be made much easier by using the concept of Scikit-learn&rsquo;s <a href="http://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html">pipeline</a> utility.</p>
+<h3 id="scikit-learn-pipelines">
+  Scikit-learn Pipelines
+  <a class="heading-link" href="#scikit-learn-pipelines">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<hr>
+<p>In Scitkit-learn pipelines are a sequence of transformations followed by a final estimator. Intermediate steps within the pipeline must be ‘transform’ methods, that is, they must implement fit and transform methods. The <code>CountVectorizer</code> and <code>TfidfTransformer</code> are used as transformers in our above example.  The final estimator of a pipeline only needs to implement the fit method.  We can see the simplicity of pipelines by using it to re-implement our above analysis using the Naive Bayes model:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.pipeline <span style="color:#f92672">import</span> Pipeline
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>nb_pipe1 <span style="color:#f92672">=</span> Pipeline([(<span style="color:#e6db74">&#39;vect&#39;</span>, CountVectorizer()),
+</span></span><span style="display:flex;"><span>                    (<span style="color:#e6db74">&#39;tfidf&#39;</span>, TfidfTransformer()),
+</span></span><span style="display:flex;"><span>                    (<span style="color:#e6db74">&#39;model&#39;</span>, MultinomialNB())])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>model <span style="color:#f92672">=</span> nb_pipe1<span style="color:#f92672">.</span>fit(train_df[<span style="color:#e6db74">&#34;text&#34;</span>], train_df[<span style="color:#e6db74">&#34;target&#34;</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>pred  <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>predict(test_df[<span style="color:#e6db74">&#34;text&#34;</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(classification_report(test_df[<span style="color:#e6db74">&#34;target&#34;</span>],
+</span></span><span style="display:flex;"><span>                            pred, 
+</span></span><span style="display:flex;"><span>                            target_names<span style="color:#f92672">=</span>mapping))
+</span></span></code></pre></div><pre><code>              precision    recall  f1-score   support
+
+          ai       0.90      0.84      0.87       500
+          cv       0.87      0.92      0.89       500
+          ml       0.79      0.91      0.85       500
+          ro       0.00      0.00      0.00        75
+
+    accuracy                           0.85      1575
+   macro avg       0.64      0.67      0.65      1575
+weighted avg       0.81      0.85      0.83      1575
+
+
+
+/opt/conda/lib/python3.7/site-packages/sklearn/metrics/_classification.py:1268: UndefinedMetricWarning:
+
+Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+</code></pre>
+<p>Notice how when using pipelines we passed <code>train_df</code> and <code>test_df</code> into the <code>fit</code> and predict methods instead of the <code>X_train_tfidf</code> and <code>X_test_tfidf</code> objects as we did in the previous section. The transformations occur under-the-hood using the Scikit-learn pipeline functionality.</p>
+<h2 id="imbalanced-learn-fixing-imbalanced-data">
+  Imbalanced Learn: Fixing Imbalanced Data <a class="anchor" id="fifth-bullet"></a>
+  <a class="heading-link" href="#imbalanced-learn-fixing-imbalanced-data">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Class imbalance of our data causes our model to underperform and there is not one clear answer on how to address the issue.  There are two ways to address this issue:</p>
+<ol>
+<li>Alter the data</li>
+<li>Alter the algorithm</li>
+</ol>
+<p>At the data level we&rsquo;ll try &ldquo;upsampling the minority class&rdquo; and &ldquo;downsampling the majority class&rdquo;, however, we have more than one majority class, that we will refer to all of them as the &ldquo;majority classes.&rdquo;  At the algorithm level we&rsquo;ll use a support vector machine with class weights and alter the scoring metric in the optimization of the model when tunning hyperparameters. Some other techniques are dicussed <a href="https://www.svds.com/learning-imbalanced-classes/"  class="external-link" target="_blank" rel="noopener">here</a>.  In oversampling the minority class we <a href="https://en.wikipedia.org/wiki/Bootstrapping_%28statistics%29"  class="external-link" target="_blank" rel="noopener">bootstrap</a> the minority class, repeating samples to make the class sizes similar. In downsampling the majority class we bootstrap the majority class, but reduce the number of samples until all the classes have similar size. This process is depicted below:</p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: center"><img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/under_over_sampling.png?raw=1" /></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: center"><em>From <a href="https://towardsdatascience.com/having-an-imbalanced-dataset-here-is-how-you-can-solve-it-1640568947eb"  class="external-link" target="_blank" rel="noopener">https://towardsdatascience.com/having-an-imbalanced-dataset-here-is-how-you-can-solve-it-1640568947eb</a></em></td>
+      </tr>
+  </tbody>
+</table>
+<p>There are pitfalls to both these strategies; <strong>upsampling the minority class can bias our model to overemphasize certain words, while downsampling the majority class can also add bias to our model as well.</strong>  Oversampling has traditionally been used in dealing with imbalanced classes so we will start out with that first using the <a href="https://imbalanced-learn.org/stable/"  class="external-link" target="_blank" rel="noopener">Imbalanced Learn</a> library which has its own Pipelines class that naturally integrates with Scikit-learn.</p>
+<p>Let&rsquo;s first perform Undersampling of the minority class and take the cross validated average of the balanced accuracy. <strong>Note we now have to use imbalance learn&rsquo;s Pipeline.</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> imblearn.pipeline       <span style="color:#f92672">import</span> Pipeline 
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.model_selection <span style="color:#f92672">import</span> cross_validate
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> imblearn.over_sampling  <span style="color:#f92672">import</span> RandomOverSampler
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.metrics <span style="color:#f92672">import</span> precision_score
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>nb_pipe2  <span style="color:#f92672">=</span> Pipeline([(<span style="color:#e6db74">&#39;vect&#39;</span>,    CountVectorizer()),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#39;tfidf&#39;</span>,   TfidfTransformer()),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#39;sampler&#39;</span>, RandomOverSampler(<span style="color:#e6db74">&#39;minority&#39;</span>,random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">42</span>)),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#39;model&#39;</span>,   MultinomialNB())])
+</span></span></code></pre></div><p>Lets get a classification report on the test set. Since we will be doing the same process of evaluating the model pipeline on the same test set let&rsquo;s make a function to do this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">evaluate_model</span>(
+</span></span><span style="display:flex;"><span>    train_df : pd<span style="color:#f92672">.</span>DataFrame,
+</span></span><span style="display:flex;"><span>    test_df  : pd<span style="color:#f92672">.</span>DataFrame,
+</span></span><span style="display:flex;"><span>    mapping  : dict,
+</span></span><span style="display:flex;"><span>    pipe     : Pipeline,
+</span></span><span style="display:flex;"><span>) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    model <span style="color:#f92672">=</span> pipe<span style="color:#f92672">.</span>fit(train_df[<span style="color:#e6db74">&#34;text&#34;</span>], 
+</span></span><span style="display:flex;"><span>                     train_df[<span style="color:#e6db74">&#34;target&#34;</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    pred  <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>predict(test_df[<span style="color:#e6db74">&#34;text&#34;</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    print(classification_report(test_df[<span style="color:#e6db74">&#34;target&#34;</span>],
+</span></span><span style="display:flex;"><span>                                pred, 
+</span></span><span style="display:flex;"><span>                                target_names<span style="color:#f92672">=</span>mapping))
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    print()
+</span></span><span style="display:flex;"><span>    print(<span style="color:#e6db74">&#34;balanced_accuracy&#34;</span>, balanced_accuracy_score(test_df[<span style="color:#e6db74">&#34;target&#34;</span>], 
+</span></span><span style="display:flex;"><span>                                                       pred))
+</span></span></code></pre></div><p>And then use <a href="https://docs.python.org/2/library/functools.html"  class="external-link" target="_blank" rel="noopener">partial</a> so that we only have to feed in the different pipeline each time we want to call it:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> functools <span style="color:#f92672">import</span> partial
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>evaluate_pipeline <span style="color:#f92672">=</span> partial(evaluate_model,
+</span></span><span style="display:flex;"><span>                            train_df,
+</span></span><span style="display:flex;"><span>                            test_df,
+</span></span><span style="display:flex;"><span>                            mapping)
+</span></span></code></pre></div><p>Now we can evaluate the oversampling model pipeline,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>evaluate_pipeline(nb_pipe2)
+</span></span></code></pre></div><pre><code>              precision    recall  f1-score   support
+
+          ai       0.95      0.83      0.89       500
+          cv       0.92      0.92      0.92       500
+          ml       0.81      0.91      0.86       500
+          ro       0.81      0.80      0.81        75
+
+    accuracy                           0.88      1575
+   macro avg       0.87      0.87      0.87      1575
+weighted avg       0.89      0.88      0.88      1575
+
+
+balanced_accuracy 0.8654999999999999
+</code></pre>
+<p>We see an increase in artificial intelligence&rsquo;s precision and recall!  We can take a look at the ROC and precision/Recall curve too!</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>y_pred <span style="color:#f92672">=</span> nb_pipe2<span style="color:#f92672">.</span>predict_proba(test_df[<span style="color:#e6db74">&#34;text&#34;</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plot_roc_pr(y_pred <span style="color:#f92672">=</span> y_pred, y_test <span style="color:#f92672">=</span> y_test)
+</span></span></code></pre></div><p><img src="/nlp1_files/nlp1_79_0.png" alt="png"></p>
+<p>Interestingly the ROC curve for class 3 is now better than class 2 while the opposite is true about the precision/recall curve!</p>
+<p>Let&rsquo;s try downsampling the majority classes:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> imblearn.under_sampling <span style="color:#f92672">import</span> RandomUnderSampler
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>nb_pipe3 <span style="color:#f92672">=</span> Pipeline([(<span style="color:#e6db74">&#39;vect&#39;</span>,    CountVectorizer()),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#39;tfidf&#39;</span>,   TfidfTransformer()),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#39;sampler&#39;</span>, RandomUnderSampler(<span style="color:#e6db74">&#39;majority&#39;</span>,random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">42</span>)),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#39;model&#39;</span>,   MultinomialNB())])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>evaluate_pipeline(nb_pipe3)
+</span></span></code></pre></div><pre><code>              precision    recall  f1-score   support
+
+          ai       0.00      0.00      0.00       500
+          cv       0.80      0.93      0.86       500
+          ml       0.47      0.94      0.63       500
+          ro       0.00      0.00      0.00        75
+
+    accuracy                           0.59      1575
+   macro avg       0.32      0.47      0.37      1575
+weighted avg       0.40      0.59      0.47      1575
+
+
+balanced_accuracy 0.4665
+
+
+/opt/conda/lib/python3.7/site-packages/sklearn/metrics/_classification.py:1268: UndefinedMetricWarning:
+
+Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+</code></pre>
+<p>Downsampling the majority class made the situation worse, so won&rsquo;t focus on it anymore. Imbalance-Learn is quite powerful and has other methods for working with imbalanced data.  Instead let&rsquo;s look at the algorithmic level.</p>
+<h2 id="weighted-support-vector-machines">
+  Weighted Support Vector Machines <a class="anchor" id="sixth-bullet"></a>
+  <a class="heading-link" href="#weighted-support-vector-machines">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Support vector machines are examples of <strong>discriminant functions</strong>, i.e. functions that do not give us conditional probabilities. They are frequently used for solving problems in NLP as they handle cases of high dimensions quite well (more features than data points) through the use of kernels as well discuss later. <strong>They also have the benefit of being robust to outliers.</strong> Support vector classifiers do not generalize well beyond the binary classification and use a &ldquo;one-vs-rest&rdquo; technique for multi-class classification problems. However, in our mathematical discussion we will therefore focus on binary classification as a direct subset that matters most. However, even with binary classification we need to reformulate our target variable as <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mo>∈</mo><mo stretchy="false">{</mo><mo>−</mo><mn>1</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">y \in \{-1, 1 \}</annotation></semantics></math></span>
+ instead of the traditional <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mo>∈</mo><mo stretchy="false">{</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">y \in \{0, 1 \}</annotation></semantics></math></span>
+.</p>
+<p>We define the <strong>separating hyperplane</strong> written as <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><mtext mathvariant="bold">x</mtext><mo>+</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">\textbf{w}^{T} \textbf{x} + b </annotation></semantics></math></span>
+ to be the plane that best separates our classes in feature space.  The vector <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">w</mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mi>p</mi></msup></mrow><annotation encoding="application/x-tex">\textbf{w} \in \mathbb{R}^{p}</annotation></semantics></math></span>
+ is coefficients of unknowns along with <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span>
+, called the bias.   The discriminant function then classifies if the point belongs to class (+1) or class (-1) based on which side of the seperating hyperplane the point is:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><msub><mi>h</mi><mrow><mtext mathvariant="bold">w</mtext><mo separator="true">,</mo><mi>b</mi></mrow></msub><mo stretchy="false">(</mo><mtext mathvariant="bold">x</mtext><mo stretchy="false">)</mo><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mi>g</mi><mo stretchy="false">(</mo><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><mi>x</mi><mo>+</mo><mi>b</mi><mo stretchy="false">)</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mrow><mo fence="true">{</mo><mtable rowspacing="0.16em" columnalign="right left" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mn>1</mn><mo separator="true">,</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mtext>if</mtext><mtext>  </mtext><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>+</mo><mi>b</mi><mo>&gt;</mo><mn>0</mn></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mo>−</mo><mn>1</mn></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mtext>if</mtext><mtext>  </mtext><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>+</mo><mi>b</mi><mo>&lt;</mo><mn>0</mn></mrow></mstyle></mtd></mtr></mtable></mrow></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">
+\begin{aligned}
+h_{\textbf{w}, b} (\textbf{x}) \; &amp;= \; g(\textbf{w}^T {x} + b) \\
+&amp;= 
+ \left\{
+ \begin{array}{rl}
+ 1, &amp; \text{if} \;  \textbf{w}^T \textbf{x}_i + b  &gt; 0 \\
+-1 &amp; \text{if} \;  \textbf{w}^T \textbf{x}_i + b &lt; 0
+\end{array}
+\right.
+\end{aligned}
+</annotation></semantics></math></span>
+<p>Each point <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">x_{i}</annotation></semantics></math></span>
+, if classified correctly, should then satisfy the following,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><mo stretchy="false">(</mo><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>+</mo><mi>b</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>&gt;</mo><mtext>  </mtext><mn>0</mn><mo separator="true">,</mo><mspace width="2em"/><mi mathvariant="normal">∀</mi><mi>i</mi><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>n</mi></mrow><annotation encoding="application/x-tex"> y_{i} \, (\textbf{w}^{T} \textbf{x}_i + b ) \; &gt; \; 0, \qquad \forall i = 1, \ldots, n</annotation></semantics></math></span>
+<p>The <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">margin</mtext></mrow><annotation encoding="application/x-tex">\textbf{margin}</annotation></semantics></math></span>
+, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>M</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">M_{i}</annotation></semantics></math></span>
+, for a point, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\textbf{x}_{i}</annotation></semantics></math></span>
+, is defined as the distance from the the point to closest point on the plane.  See the image below:</p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: center"><img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/svm.png?raw=1" /></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: center"><em>From <a href="https://fderyckel.github.io/machinelearningwithr/svm.html"  class="external-link" target="_blank" rel="noopener">https://fderyckel.github.io/machinelearningwithr/svm.html</a></em></td>
+      </tr>
+  </tbody>
+</table>
+<p>From this defintion we see that each point <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\textbf{x}_{i}</annotation></semantics></math></span>
+ should satisfy the equation,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><mo stretchy="false">(</mo><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>+</mo><mi>b</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><msub><mi>M</mi><mi>i</mi></msub><mtext>  </mtext><mo>&gt;</mo><mtext>  </mtext><mn>0</mn><mo separator="true">,</mo><mspace width="2em"/><mi mathvariant="normal">∀</mi><mi>i</mi><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>n</mi></mrow><annotation encoding="application/x-tex"> y_{i} \, (\textbf{w}^{T} \textbf{x}_i + b ) \; = M_{i} \; &gt; \; 0, \qquad \forall i = 1, \ldots, n</annotation></semantics></math></span>
+<p>The <strong>geometric margin</strong> is then <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><mi>min</mi><mo>⁡</mo><mo stretchy="false">(</mo><msub><mi>M</mi><mi>i</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">M \, = \, \min(M_i)</annotation></semantics></math></span>
+. If we force <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∥</mi><mtext mathvariant="bold">w</mtext><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup><mtext> </mtext><mo>=</mo><mtext> </mtext><mn>1</mn></mrow><annotation encoding="application/x-tex">\Vert \textbf{w} \Vert^{2} \, = \, 1</annotation></semantics></math></span>
+ then maximizing <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span>
+ we ensure that we are classifying correctly. This is called the <strong>hard max classifier</strong> algorithm and summarized as,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mrow><mi>max</mi><mo>⁡</mo></mrow><mrow><mtext mathvariant="bold">w</mtext><mo separator="true">,</mo><mi>b</mi></mrow></munder><mi>M</mi><mspace width="1em"/><mtext>s.t.</mtext><mspace width="1em"/><mi mathvariant="normal">∥</mi><mtext mathvariant="bold">w</mtext><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mtext>  </mtext><mtext> and </mtext><mtext>  </mtext><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><mo stretchy="false">(</mo><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>+</mo><mi>b</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>≥</mo><mtext> </mtext><mi>M</mi><mo separator="true">,</mo><mspace width="2em"/><mi mathvariant="normal">∀</mi><mi>i</mi><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>n</mi></mrow><annotation encoding="application/x-tex"> \max_{\textbf{w},b} M \quad \text{s.t.} \quad \Vert \textbf{w} \Vert^{2} = 1, \; \text{ and } \; y_{i} \, (\textbf{w}^{T} \textbf{x}_i + b )  \, \geq \, M, \qquad \forall i = 1, \ldots, n</annotation></semantics></math></span>
+<p>This is a tricky optimization problem and there is often no solution, however, if we allow for some misclassification then this gives us more robustness in our model.  We introduce a slack variable <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ξ</mi><mi>i</mi></msub><mo>∈</mo><mo stretchy="false">{</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">\xi_{i} \in \{0,1\}</annotation></semantics></math></span>
+ that is 0 if we classify correctly and 1 if we misclassify the point.  The hard max classification problem is then rewritten as a <strong>soft max problem</strong>:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mrow><mi>max</mi><mo>⁡</mo></mrow><mrow><mtext mathvariant="bold">w</mtext><mo separator="true">,</mo><mi>b</mi></mrow></munder><mi>M</mi><mspace width="1em"/><mtext>s.t.</mtext><mspace width="1em"/><mi mathvariant="normal">∥</mi><mtext mathvariant="bold">w</mtext><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mtext>  </mtext><mtext> and </mtext><mtext>  </mtext><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><mo stretchy="false">(</mo><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>+</mo><mi>b</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>≥</mo><mtext> </mtext><mi>M</mi><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>ξ</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="1em"/><mi mathvariant="normal">∀</mi><mi>i</mi><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>n</mi><mspace width="1em"/><mtext>and</mtext><mtext> </mtext><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>ξ</mi><mi>i</mi></msub><mtext> </mtext><mo>≤</mo><mtext> </mtext><mi>C</mi></mrow><annotation encoding="application/x-tex"> 
+\max_{\textbf{w},b} M \quad \text{s.t.} \quad \Vert \textbf{w} \Vert^{2} = 1 , \; \text{ and } \;  y_{i} \, (\textbf{w}^{T} \textbf{x}_i + b ) \, \geq \, M(1- \xi_{i}) , \quad \forall i = 1, \ldots, n \quad \text{and} \, \sum_{i=1}^{n} \xi_{i} \, \leq \, C
+</annotation></semantics></math></span>
+<p>where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi></mrow><annotation encoding="application/x-tex">C</annotation></semantics></math></span>
+ is our tolerance for missclassification. Dividing by <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span>
+, this becomes the same as minimizing <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∥</mi><mtext mathvariant="bold">w</mtext><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex"> \Vert \textbf{w} \Vert^{2}</annotation></semantics></math></span>
+ (i.e. maximizing <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span>
+ is the same as minimizing <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mi>M</mi></mrow><annotation encoding="application/x-tex">1/M</annotation></semantics></math></span>
+) as well as minimizing <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi><msubsup><mo>∑</mo><mi>i</mi><mi>n</mi></msubsup><msub><mi>ξ</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">C \sum_{i}^{n} \xi_i</annotation></semantics></math></span>
+ (we recycled the term <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi></mrow><annotation encoding="application/x-tex">C</annotation></semantics></math></span>
+ since its just a constant). Rearranging terms leads to the equation,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mrow><mtext mathvariant="bold">w</mtext><mo separator="true">,</mo><mi>b</mi></mrow></munder><mtext> </mtext><mfrac><mn>1</mn><mn>2</mn></mfrac><mi mathvariant="normal">∥</mi><mtext mathvariant="bold">w</mtext><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup><mo>+</mo><mi>C</mi><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>ξ</mi><mi>i</mi></msub><mo separator="true">,</mo><mspace width="1em"/><mtext>s.t.</mtext><mspace width="1em"/><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><mo stretchy="false">(</mo><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>+</mo><mi>b</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>≥</mo><mtext> </mtext><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>ξ</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mspace width="1em"/><mtext>and</mtext><mspace width="1em"/><msub><mi>ξ</mi><mi>i</mi></msub><mtext> </mtext><mo>≥</mo><mtext> </mtext><mn>0</mn><mspace width="2em"/><mi mathvariant="normal">∀</mi><mi>i</mi><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>n</mi></mrow><annotation encoding="application/x-tex"> \min_{\textbf{w},b} \, \frac{1}{2} \Vert \textbf{w} \Vert^{2} + C \sum_{i=1}^{n} \xi_i , \quad  \text{s.t.} \quad y_{i} \, (\textbf{w}^{T} \textbf{x}_i + b ) \, \geq \, (1- \xi_{i}) \quad \text{and} \quad \xi_{i} \, \geq \, 0 \qquad \forall i = 1, \ldots, n</annotation></semantics></math></span>
+<p>To handle imbalance with support vector machines we can introduce weights <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Q</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">Q_i</annotation></semantics></math></span>
+ into our formulation such that the problem we want to optimize is</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mrow><mtext mathvariant="bold">w</mtext><mo separator="true">,</mo><mi>b</mi></mrow></munder><mtext> </mtext><mfrac><mn>1</mn><mn>2</mn></mfrac><mi mathvariant="normal">∥</mi><mtext mathvariant="bold">w</mtext><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup><mo>+</mo><mi>C</mi><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>Q</mi><mi>i</mi></msub><mtext> </mtext><msub><mi>ξ</mi><mi>i</mi></msub><mo separator="true">,</mo><mspace width="1em"/><mtext>s.t.</mtext><mspace width="1em"/><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><mo stretchy="false">(</mo><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>+</mo><mi>b</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>≥</mo><mtext> </mtext><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>ξ</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mspace width="1em"/><mtext>and</mtext><mspace width="1em"/><msub><mi>ξ</mi><mi>i</mi></msub><mtext> </mtext><mo>≥</mo><mtext> </mtext><mn>0</mn><mspace width="2em"/><mi mathvariant="normal">∀</mi><mi>i</mi><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>n</mi></mrow><annotation encoding="application/x-tex"> \min_{\textbf{w},b} \, \frac{1}{2} \Vert \textbf{w} \Vert^{2} + C \sum_{i=1}^{n} Q_i \, \xi_i , \quad  \text{s.t.} \quad y_{i} \, (\textbf{w}^{T} \textbf{x}_i + b ) \, \geq \, (1- \xi_{i}) \quad \text{and} \quad \xi_{i} \, \geq \, 0 \qquad \forall i = 1, \ldots, n</annotation></semantics></math></span>
+<p>The values for the weights, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Q</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">Q_i</annotation></semantics></math></span>
+, will then be inversely proprotional to the class size. This adds an additional &ldquo;cost&rdquo; to being wrong for the missifying a minority as a majority class. See this <a href="https://www.researchgate.net/publication/4202393_Weighted_support_vector_machine_for_data_classification"  class="external-link" target="_blank" rel="noopener">article</a> for more details. I suspect that this will force the model to have much higher precision, as the number of false positives is minimized. To sovle the above optimization problem we introduce Lagrange multiplies <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\lambda_i</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>α</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\alpha_i</annotation></semantics></math></span>
+ to form the Lagrangian:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mrow><mtext mathvariant="bold">w</mtext><mo separator="true">,</mo><mi>b</mi></mrow></munder><munder><mrow><mi>max</mi><mo>⁡</mo></mrow><mrow><msub><mi>λ</mi><mi>i</mi></msub><mo separator="true">,</mo><mtext> </mtext><msub><mi>α</mi><mi>i</mi></msub></mrow></munder><mi mathvariant="script">L</mi><mo stretchy="false">(</mo><mi mathvariant="bold-italic">λ</mi><mo separator="true">,</mo><mtext mathvariant="bold">w</mtext><mo separator="true">,</mo><mi>b</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mn>1</mn><mn>2</mn></mfrac><mi mathvariant="normal">∥</mi><mtext mathvariant="bold">w</mtext><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup><mtext> </mtext><mo>+</mo><mtext> </mtext><mi>C</mi><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>Q</mi><mi>i</mi></msub><mtext> </mtext><msub><mi>ξ</mi><mi>i</mi></msub><mtext> </mtext><mo>−</mo><mtext> </mtext><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>λ</mi><mi>i</mi></msub><mtext> </mtext><mrow><mo fence="true">[</mo><munder><munder><mrow><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><mo stretchy="false">(</mo><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>+</mo><mi>b</mi><mo stretchy="false">)</mo><mo>−</mo><mn>1</mn><mo>+</mo><msub><mi>ξ</mi><mi>i</mi></msub></mrow><mo stretchy="true">⏟</mo></munder><mrow><mo>≥</mo><mn>0</mn><mtext> when classified correctly</mtext></mrow></munder><mo fence="true">]</mo></mrow><mtext> </mtext><mo>−</mo><mtext> </mtext><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>α</mi><mi>i</mi></msub><mtext> </mtext><msub><mi>ξ</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">
+\min_{\textbf{w},b} \max_{\lambda_{i},\, \alpha_i} \mathcal{L}(\boldsymbol \lambda, \textbf{w}, b) \; = \;
+\frac{1}{2} \Vert \textbf{w} \Vert^{2} \, + \, C \sum_{i=1}^{n} Q_i \, \xi_i \, - \, \sum_{i=1}^{n}  \lambda_i \, \left[  \underbrace{y_{i} \, (\textbf{w}^{T} \textbf{x}_i + b ) - 1 + \xi_i}_{\geq 0 \text{ when classified correctly} } \right] \, - \, \sum_{i=1}^{n} \alpha_i \, \xi_i 
+</annotation></semantics></math></span>
+<p>Setting the dertivatives for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">w</mtext></mrow><annotation encoding="application/x-tex">\textbf{w}</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span>
+ equal to zero yields:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mfrac><mrow><mi mathvariant="normal">∂</mi><mi mathvariant="script">L</mi></mrow><mrow><mi mathvariant="normal">∂</mi><mtext mathvariant="bold">w</mtext></mrow></mfrac><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn><mspace width="1em"/></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>→</mo><mspace width="1em"/><mtext mathvariant="bold">w</mtext><mtext> </mtext><mo>=</mo><mtext> </mtext><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>λ</mi><mi>i</mi></msub><mtext> </mtext><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mfrac><mrow><mi mathvariant="normal">∂</mi><mi mathvariant="script">L</mi></mrow><mrow><mi mathvariant="normal">∂</mi><mtext mathvariant="bold">b</mtext></mrow></mfrac><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn><mspace width="1em"/></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>→</mo><mspace width="1em"/><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>λ</mi><mi>i</mi></msub><mtext> </mtext><msub><mi>y</mi><mi>i</mi></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">
+\begin{aligned}
+\frac{\partial \mathcal{L}}{\partial \textbf{w}}  \; = \; 0 \quad &amp;\rightarrow \quad  \textbf{w} \, = \, \sum_{i=1}^{n} \lambda_{i} \, y_i \, \textbf{x}_i  \\
+\frac{\partial \mathcal{L}}{\partial \textbf{b}}  \; = \; 0 \quad &amp;\rightarrow \quad \sum_{i=1}^{n} \lambda_{i} \, y_i  \; = \; 0
+\end{aligned}
+</annotation></semantics></math></span>
+<p>Plugging these back in we get the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">Dual</mtext><mtext> </mtext><mtext mathvariant="bold">Representation</mtext></mrow><annotation encoding="application/x-tex">\textbf{Dual Representation}</annotation></semantics></math></span>
+ (see <a href="http://cs229.stanford.edu/notes/cs229-notes3.pdf"  class="external-link" target="_blank" rel="noopener">here</a> for more details):</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mrow><mi>max</mi><mo>⁡</mo></mrow><mi mathvariant="bold-italic">λ</mi></munder><mtext>  </mtext><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>λ</mi><mi>i</mi></msub><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo separator="true">,</mo><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><msub><mi>y</mi><mi>j</mi></msub><mtext> </mtext><msub><mi>λ</mi><mi>i</mi></msub><msub><mi>λ</mi><mi>j</mi></msub><mtext> </mtext><mi>K</mi><mo stretchy="false">(</mo><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo separator="true">,</mo><mtext> </mtext><msub><mtext mathvariant="bold">x</mtext><mi>j</mi></msub><mo stretchy="false">)</mo><mspace width="1em"/><mtext>s.t.</mtext><mspace width="1em"/><mn>0</mn><mo>≤</mo><msub><mi>λ</mi><mi>i</mi></msub><mo>≤</mo><msub><mi>Q</mi><mi>i</mi></msub><mtext> </mtext><mi>C</mi><mo separator="true">,</mo><mspace width="1em"/><mi mathvariant="normal">∀</mi><mi>i</mi><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>n</mi><mo separator="true">,</mo><mtext>  </mtext><mtext>and</mtext><mtext>  </mtext><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>λ</mi><mi>i</mi></msub><mtext> </mtext><msub><mi>y</mi><mi>i</mi></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex">
+\max_{\boldsymbol \lambda} \; \sum_{i=1}^{n} \lambda_i - \frac{1}{2} \sum_{i,j=1}^{n} y_{i} \, y_{j}  \, \lambda_{i} \lambda_{j} \, K(\textbf{x}_{i}, \, \textbf{x}_{j}) \quad \text{s.t.} \quad  0 \leq \lambda_{i} \leq Q_i \, C, \quad  \forall i = 1, \ldots, n, \; \text{and} \; \sum_{i=1}^{n} \lambda_{i} \, y_i  \; = \; 0
+</annotation></semantics></math></span>
+<p>Where the kernel <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo stretchy="false">(</mo><mtext mathvariant="bold">x</mtext><mo separator="true">,</mo><mtext mathvariant="bold">y</mtext><mo stretchy="false">)</mo><mtext> </mtext><mo>=</mo><mtext> </mtext><msup><mtext mathvariant="bold">x</mtext><mi>T</mi></msup><mtext mathvariant="bold">y</mtext></mrow><annotation encoding="application/x-tex">K(\textbf{x}, \textbf{y}) \, = \, \textbf{x}^{T} \textbf{y}</annotation></semantics></math></span>
+ is fast to compute. <strong>Note that while our problem might be high dimensional, i.e. the number of features <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span>
+ is larger than the number of data points <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span>
+, this is taken care of by the kernel&rsquo;s inner product and we never see this problem!</strong></p>
+<p>Using <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">w</mtext><mtext> </mtext><mo>=</mo><mtext> </mtext><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></msubsup><msub><mi>λ</mi><mi>i</mi></msub><mtext> </mtext><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\textbf{w} \, = \, \sum_{i=1}^{n} \lambda_{i} \, y_i \, \textbf{x}_i</annotation></semantics></math></span>
+ we can rewrite the discriminant prediction function as,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><msub><mi>h</mi><mrow><mtext mathvariant="bold">w</mtext><mo separator="true">,</mo><mi>b</mi></mrow></msub><mo stretchy="false">(</mo><mtext mathvariant="bold">x</mtext><mo stretchy="false">)</mo><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><mtext mathvariant="bold">x</mtext><mo>+</mo><mi>b</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><munder><mo>∑</mo><mrow><mi>i</mi><mo>∈</mo><mi mathvariant="script">S</mi></mrow></munder><msub><mi>λ</mi><mi>i</mi></msub><mtext> </mtext><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><mi>K</mi><mo stretchy="false">(</mo><mtext mathvariant="bold">x</mtext><mo separator="true">,</mo><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo stretchy="false">)</mo><mo>+</mo><mi>b</mi></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">
+\begin{aligned}
+h_{\textbf{w}, b} (\textbf{x}) \; &amp;= \; \textbf{w}^{T}\textbf{x} + b \\
+&amp;= \sum_{i \in \mathcal{S}} \lambda_i \, y_i \, K(\textbf{x}, \textbf{x}_i) + b 
+\end{aligned}
+</annotation></semantics></math></span>
+<p>Where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">S</mi></mrow><annotation encoding="application/x-tex">\mathcal{S}</annotation></semantics></math></span>
+ are the <strong>support vectors</strong>, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mtext> </mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mi>p</mi></msup></mrow><annotation encoding="application/x-tex">\textbf{x}_{i} \, \in \mathbb{R}^{p}</annotation></semantics></math></span>
+ that satisfy <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><mo stretchy="false">(</mo><msup><mtext mathvariant="bold">w</mtext><mi>T</mi></msup><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>+</mo><mi>b</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>=</mo><mtext> </mtext><mn>1</mn></mrow><annotation encoding="application/x-tex">y_{i} \, (\textbf{w}^{T} \textbf{x}_i + b ) \, = \, 1</annotation></semantics></math></span>
+.</p>
+<p>For the purposes of this post we&rsquo;ll use the linear support vector classifier <a href="https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html"  class="external-link" target="_blank" rel="noopener">LinearSVC</a> as it is fast, automatically adjusts class wieghts and uses one vs rest for handling multi-class problems:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.svm <span style="color:#f92672">import</span> LinearSVC
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>svm_pipe1 <span style="color:#f92672">=</span> Pipeline([(<span style="color:#e6db74">&#39;vect&#39;</span>,    CountVectorizer()),
+</span></span><span style="display:flex;"><span>                      (<span style="color:#e6db74">&#39;tfidf&#39;</span>,   TfidfTransformer()),
+</span></span><span style="display:flex;"><span>                      (<span style="color:#e6db74">&#39;model&#39;</span>,   LinearSVC(random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">50</span>))])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>evaluate_pipeline(svm_pipe1)
+</span></span></code></pre></div><pre><code>              precision    recall  f1-score   support
+
+          ai       0.88      0.91      0.90       500
+          cv       0.94      0.92      0.93       500
+          ml       0.86      0.89      0.87       500
+          ro       0.91      0.71      0.80        75
+
+    accuracy                           0.89      1575
+   macro avg       0.90      0.85      0.87      1575
+weighted avg       0.89      0.89      0.89      1575
+
+
+balanced_accuracy 0.8541666666666666
+</code></pre>
+<p>Straight out of the box, SVM preforms MUCH better than Naive Bayes does. Let&rsquo;s see if oversampling the minority class helps with performance:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>svm_pipe2 <span style="color:#f92672">=</span> Pipeline([(<span style="color:#e6db74">&#39;vect&#39;</span>,   CountVectorizer()),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#39;tfidf&#39;</span>,   TfidfTransformer()),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#39;sampler&#39;</span>, RandomOverSampler(<span style="color:#e6db74">&#39;minority&#39;</span>,random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">42</span>)),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#39;model&#39;</span>,   LinearSVC(random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">50</span>))])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>evaluate_pipeline(svm_pipe2)
+</span></span></code></pre></div><pre><code>              precision    recall  f1-score   support
+
+          ai       0.88      0.90      0.89       500
+          cv       0.93      0.91      0.92       500
+          ml       0.86      0.88      0.87       500
+          ro       0.89      0.75      0.81        75
+
+    accuracy                           0.89      1575
+   macro avg       0.89      0.86      0.87      1575
+weighted avg       0.89      0.89      0.89      1575
+
+
+balanced_accuracy 0.8611666666666666
+</code></pre>
+<p>A slight improvement in performance, let&rsquo;s try using weights to overcome the challenge of imbalance.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>svm_pipe3 <span style="color:#f92672">=</span> Pipeline([(<span style="color:#e6db74">&#39;vect&#39;</span>,    CountVectorizer()),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#39;tfidf&#39;</span>,   TfidfTransformer()),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#39;model&#39;</span>,   LinearSVC(class_weight<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;balanced&#39;</span>,
+</span></span><span style="display:flex;"><span>                                           random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">50</span>))])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>evaluate_pipeline(svm_pipe3)
+</span></span></code></pre></div><pre><code>              precision    recall  f1-score   support
+
+          ai       0.88      0.91      0.89       500
+          cv       0.94      0.92      0.93       500
+          ml       0.87      0.89      0.88       500
+          ro       0.89      0.75      0.81        75
+
+    accuracy                           0.90      1575
+   macro avg       0.89      0.86      0.88      1575
+weighted avg       0.90      0.90      0.90      1575
+
+
+balanced_accuracy 0.8636666666666667
+</code></pre>
+<p>Over all sligtly better results. The same performance for the Robotics class, but better performance in the other classes.  Why is this happening? Let&rsquo;s take at the Robotics model and the words that are most predictive of a document being about and those words which are most predict of a document not being about Robotics. Since the multiclass SVM uses 1-vs-rest classification, we can do this! Let&rsquo;s make use of the function created <a href="https://medium.com/@aneesha/visualising-top-features-in-linear-svm-with-scikit-learn-and-matplotlib-3454ab18a14d"  class="external-link" target="_blank" rel="noopener">here</a>, but adapt it to use Scikit-Learn and Plotly again.  Below, the top 10 words that are most predictive Robitics are in blue, while the top 10 words that are most predictive of not being Robtics are displayed below for each of the 3 SVM models.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> utils.feature_plots <span style="color:#f92672">import</span> plot_coefficients
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plot_coefficients(
+</span></span><span style="display:flex;"><span>    pipe       <span style="color:#f92672">=</span> svm_pipe1,
+</span></span><span style="display:flex;"><span>    tf_name    <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;vect&#39;</span>,
+</span></span><span style="display:flex;"><span>    model_name <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;model&#39;</span>,
+</span></span><span style="display:flex;"><span>    ovr_num    <span style="color:#f92672">=</span> mapping[<span style="color:#e6db74">&#34;ro&#34;</span>],
+</span></span><span style="display:flex;"><span>    title      <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;SVM&#34;</span>,
+</span></span><span style="display:flex;"><span>    top_n      <span style="color:#f92672">=</span> <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plot_coefficients(
+</span></span><span style="display:flex;"><span>    pipe       <span style="color:#f92672">=</span> svm_pipe2,
+</span></span><span style="display:flex;"><span>    tf_name    <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;vect&#39;</span>,
+</span></span><span style="display:flex;"><span>    model_name <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;model&#39;</span>,
+</span></span><span style="display:flex;"><span>    ovr_num    <span style="color:#f92672">=</span> mapping[<span style="color:#e6db74">&#34;ro&#34;</span>],
+</span></span><span style="display:flex;"><span>    title      <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Oversampled SVM&#34;</span>,
+</span></span><span style="display:flex;"><span>    top_n      <span style="color:#f92672">=</span> <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plot_coefficients(
+</span></span><span style="display:flex;"><span>    pipe       <span style="color:#f92672">=</span> svm_pipe3,
+</span></span><span style="display:flex;"><span>    tf_name    <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;vect&#39;</span>,
+</span></span><span style="display:flex;"><span>    model_name <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;model&#39;</span>,
+</span></span><span style="display:flex;"><span>    ovr_num    <span style="color:#f92672">=</span> mapping[<span style="color:#e6db74">&#34;ro&#34;</span>],
+</span></span><span style="display:flex;"><span>    title      <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Weighted SVM&#34;</span>,
+</span></span><span style="display:flex;"><span>    top_n      <span style="color:#f92672">=</span> <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p><img src="/nlp1_files/nlp1_plotly2.png" alt="png">
+<img src="/nlp1_files/nlp1_plotly3.png" alt="png"></p>
+<p>The upsampled and weighte SVM both focus more on the word &ldquo;robotics&rdquo; when compared to out of the box SVM.  There is little differencein the blue between weighted and upsampled SVM. In the weighted SVM there is more of an emphasis on the word &ldquo;recognition&rdquo; to imply a document is not about robotics, which makes sense. The changes in which words are most predictive in the 1-vs-rest modesl are the reason we have the changes in precision and recal
+in the models.</p>
+<p>We could do the same analysis rest of the models, but instead let&rsquo;s instead finish by looking at the final model&rsquo;s ROC/PR curves:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>y_pred <span style="color:#f92672">=</span> svm_pipe3<span style="color:#f92672">.</span>decision_function(test_df[<span style="color:#e6db74">&#34;text&#34;</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plot_roc_pr(y_pred <span style="color:#f92672">=</span> y_pred, y_test <span style="color:#f92672">=</span> y_test)
+</span></span></code></pre></div><p><img src="/nlp1_files/nlp1_93_0.png" alt="png"></p>
+<p>Not bad!</p>
+<h2 id="next-steps">
+  Next Steps <a class="anchor" id="seventh-bullet"></a>
+  <a class="heading-link" href="#next-steps">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this blogpost we covered text classification using Scikit-learn and Imbalance-learn on summaries of papers from arxiv.org.  We went over the basics of term frequency-inverse document frequency, pipelines, Naive Bayes and support vector classifier. We additionally went over the topic of handling imbalanced data both the data level and the algorithm level. In the next post we&rsquo;ll pick up where we left off and cover uses of the NLTK and hyper parameter tunning. &ndash;&gt;</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+      <h3 id="see-also-in-nlp">
+        See also in NLP
+        <a class="heading-link" href="#see-also-in-nlp">
+          <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+          <span class="sr-only">Link to heading</span>
+        </a>
+      </h3>
+      <nav>
+        <ul>
+        
+        
+          
+            <li>
+              <a href="/posts/bert/">Text Classification 5: Fine Tuning BERT With HuggingFace</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/jfk2/">Creating An AI-Based JFK Speech Writer: Part 2</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/jfk1/">Creating An AI-Based JFK Speech Writer: Part 1</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/nlp4/">Text Classification 4: Deep Learning With Tensorflow &amp; Optuna</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/nlp3/">Text Classification 3: A Machine Learning Powered Web App</a>
+            </li>
+          
+        
+          
+        
+        </ul>
+      </nav>
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>
