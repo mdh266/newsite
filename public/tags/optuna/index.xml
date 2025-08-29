@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Optuna on Mike Harmon</title>
+    <link>http://localhost:1313/tags/optuna/</link>
+    <description>Recent content in Optuna on Mike Harmon</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Tue, 22 Nov 2022 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/optuna/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Text Classification 4: Deep Learning With Tensorflow &amp; Optuna</title>
+      <link>http://localhost:1313/posts/nlp4/</link>
+      <pubDate>Tue, 22 Nov 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/posts/nlp4/</guid>
+      <description>&lt;h2 id=&#34;contents&#34;&gt;&#xA;  Contents&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#contents&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#first-bullet&#34; &gt;1. Introduction&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#second-bullet&#34; &gt;2. Vectorizing Text&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#third-bullet&#34; &gt;3. Handling Imbalance In The Data&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#fourth-bullet&#34; &gt;4. Building A Convolutional Neural Network With Keras&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#fifth-bullet&#34; &gt;5. Hyperparameter Tuning with Optuna&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#sixth-bullet&#34; &gt;6. Next Steps&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;h2 id=&#34;introduction&#34;&gt;&#xA;  Introduction &lt;a class=&#34;anchor&#34; id=&#34;first-bullet&#34;&gt;&lt;/a&gt;&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#introduction&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;In this post I want to extend on the last &lt;a href=&#34;http://michael-harmon.com/blog/NLP2.html&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;model&lt;/a&gt; in my blog series on text classification where I used a SVM to predict the topic of papers in arxiv based on their abstract. For reference the topics were &amp;ldquo;Machine Learning&amp;rdquo;, &amp;ldquo;Computer Vision&amp;rdquo;, &amp;ldquo;Artifical Intelligence&amp;rdquo; and &amp;ldquo;Robotics&amp;rdquo; and there was imbalance in the classes.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

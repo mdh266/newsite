@@ -54,7 +54,7 @@ maxSeeAlsoItems = 10
 # Custom CSS
 customCSS = []
 # Custom SCSS, file path is relative to Hugo's asset folder (default: {your project root}/assets)
-customSCSS = []
+customSCSS = ["scss/coder.scss","scss/coder-dark.scss"]
 
 # Custom JS
 customJS = []
@@ -65,7 +65,7 @@ customRemoteJS = []
 [caches]
   [caches.images]
     dir = ':cacheDir/images'
-    
+
 [taxonomies]
 category = "categories"
 series = "series"

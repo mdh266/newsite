@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  SQL Wars: Comparing Relational Databases · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+1. Introduction
+2. Preliminary Ideas
+3. C.R.U.D. with SQLite
+4. C.R.U.D. with PostgreSQL
+5. Conclusion
+
+
+  Introduction
+  
+    
+    Link to heading
+  
+
+
+Coming from a computational science/applied mathematics background many of the ideas of data science/machine learning are second nature to me. One thing that was very new to me was creating and manipulating databases. In computational science we don&rsquo;t really deal with databases and I/O is something to avoid as much as possible because it limits performance.  Therefore, in this blog post I&rsquo;ll be going what I have learned about SQL databases, i.e. what they are, how to set them up, and how to use them.">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="SQL Wars: Comparing Relational Databases">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. Preliminary Ideas
+3. C.R.U.D. with SQLite
+4. C.R.U.D. with PostgreSQL
+5. Conclusion
+Introduction Link to heading Coming from a computational science/applied mathematics background many of the ideas of data science/machine learning are second nature to me. One thing that was very new to me was creating and manipulating databases. In computational science we don’t really deal with databases and I/O is something to avoid as much as possible because it limits performance. Therefore, in this blog post I’ll be going what I have learned about SQL databases, i.e. what they are, how to set them up, and how to use them.">
+
+<meta property="og:url" content="http://localhost:1313/posts/sqlwars/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="SQL Wars: Comparing Relational Databases">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. Preliminary Ideas
+3. C.R.U.D. with SQLite
+4. C.R.U.D. with PostgreSQL
+5. Conclusion
+Introduction Link to heading Coming from a computational science/applied mathematics background many of the ideas of data science/machine learning are second nature to me. One thing that was very new to me was creating and manipulating databases. In computational science we don’t really deal with databases and I/O is something to avoid as much as possible because it limits performance. Therefore, in this blog post I’ll be going what I have learned about SQL databases, i.e. what they are, how to set them up, and how to use them.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2017-04-13T00:00:00+00:00">
+    <meta property="article:modified_time" content="2017-04-13T00:00:00+00:00">
+    <meta property="article:tag" content="SQL">
+    <meta property="article:tag" content="SQLite">
+    <meta property="article:tag" content="Postgres">
+      <meta property="og:see_also" content="http://localhost:1313/posts/polarsduckdb/">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/sqlwars/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/sqlwars/">
+              SQL Wars: Comparing Relational Databases
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2017-04-13T00:00:00Z">
+                April 13, 2017
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              17-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/sql/">SQL</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/sqlite/">SQLite</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/postgres/">Postgres</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#Introduction" >1. Introduction</a></strong></p>
+<p><strong><a href="#Preliminaries" >2. Preliminary Ideas</a></strong></p>
+<p><strong><a href="#SQLite" >3. C.R.U.D. with SQLite</a></strong></p>
+<p><strong><a href="#PostgreSQL" >4. C.R.U.D. with PostgreSQL</a></strong></p>
+<p><strong><a href="#Conclusion" >5. Conclusion</a></strong></p>
+<hr>
+<h2 id="introduction">
+  Introduction
+  <a class="heading-link" href="#introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Coming from a computational science/applied mathematics background many of the ideas of data science/machine learning are second nature to me. One thing that was very new to me was creating and manipulating databases. In computational science we don&rsquo;t really deal with databases and I/O is something to avoid as much as possible because it limits performance.  Therefore, in this blog post I&rsquo;ll be going what I have learned about SQL databases, i.e. what they are, how to set them up, and how to use them.</p>
+<p>In this post I&rsquo;ll be focusing on two SQL implementations,</p>
+<ul>
+<li><a href="https://www.sqlite.org/">SQLite</a> and Python&rsquo;s interface to it <a href="https://docs.python.org/2/library/sqlite3.html">sqlite3</a>.</li>
+</ul>
+<p>and</p>
+<ul>
+<li><a href="https://www.postgresql.org/">PostgreSQL</a> and Python&rsquo;s interface to it <a href="https://www.sqlalchemy.org/">sqlalchemy</a> and <a href="http://initd.org/psycopg/">psycopg2</a>.</li>
+</ul>
+<p>Another option, and probably the most popular option, is <a href="https://www.mysql.com/">MySQL</a>.  However, I wont be talking about MySQL in this post. Let&rsquo;s first start out discussing SQL, relational databases and the client-server model for databases.</p>
+<hr>
+<h2 id="preliminaries">
+  Preliminaries
+  <a class="heading-link" href="#preliminaries">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<h3 id="sql">
+  SQL
+  <a class="heading-link" href="#sql">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>SQL stands for <strong>Structured Query Language</strong>. It is a domain specific language used in programming to deal with data that is stored in a <strong><a href="https://en.wikipedia.org/wiki/Relational_database">relational database</a></strong>.  SQL is designed for a specific purpose: to query data contained in a relational database.  There are plently of good references on how to learn SQL query commands, two that I used were,</p>
+<ol>
+<li><a href="http://sqlzoo.net/">SQLZOO</a></li>
+<li><a href="https://www.w3schools.com/sql/">w3schools.com</a></li>
+</ol>
+<p>However, SQL queries are not not what I intend to cover in this post.  Instead, I would like to look at how one can create and interact with different implementations of SQL databases.  And specifically how to do this using Python.  There are many different implementations of SQL: SQLite, Oracle, MySQL, PostgreSQL, etc.  The basic operations on SQL databases that are common to all the implementations are described in the acronym, <strong>C.R.U.D.</strong>:</p>
+<ul>
+<li>
+<p><strong>Create</strong>: How to create a database and tables.</p>
+</li>
+<li>
+<p><strong>Read</strong>: How read from a table in a database.</p>
+</li>
+<li>
+<p><strong>Update</strong>: How to update the values in a table in the database.</p>
+</li>
+<li>
+<p><strong>Delete</strong>: How to delete rows from a table in the database.</p>
+</li>
+</ul>
+<p>A sequence of database operations that satisfies the <strong>A.C.I.D</strong> properties can be perceived as single logical operation on the data, is called a <strong>transaction.</strong>  A.C.I.D is an acronym for set of properties relating to database transcations.  The properties are,</p>
+<ul>
+<li>
+<p><strong>Atomicity</strong>: The requirement that each transaction be &ldquo;all or nothing.&rdquo; This means that if one part of the transaction fails, then the entire transaction fails, and the database state is left unchanged.</p>
+</li>
+<li>
+<p><strong>Consistency</strong>: Consistency ensures that any transaction will bring the database from one valid state to another and that changes that have affected data were only completed in allowed ways. Consistency does not however, guarantee the correctness of the transcation.</p>
+</li>
+<li>
+<p><strong>Isolation</strong>: This property ensures that the concurrent execution of transactions results in a system state that would be obtained if transactions were executed sequentially, i.e., one after the other</p>
+</li>
+<li>
+<p><strong>Durability</strong>: Durability ensures that once a transaction has been committed, it will remain so, even in the event of power loss, crashes, or errors.</p>
+</li>
+</ul>
+<p>As we will see, most of the differences between working with the two implementations will be in how we create the databases.  The queries will be relatively the same, but the libaries we use to interact with the databases will be different depending on the SQL implementation. Let&rsquo;s now talk about the relational database model.</p>
+<h3 id="relational-database-model">
+  Relational Database Model
+  <a class="heading-link" href="#relational-database-model">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>This model organizes data into one or more tables (or &ldquo;relations&rdquo;) of columns and rows, with a unique key identifying each row. Rows in a table can be linked to rows in other tables by adding a column for the unique key of the linked row (such columns are known as <strong>foreign keys</strong>). Most physical implementations have a unique <strong>primary key</strong> (PK) for each table. When a new row is written to the table, a new unique value for the primary key is generated; this is the key that the system uses primarily for accessing the table.</p>
+<p>The primary keys within a database are used to define the relationships among the tables. When a primary key migrates to another table, it becomes a foreign key in the other table. This can be seen below where the primary key, <code>ID</code>, in the <code>School Table</code> becomes the foriegn key, <code>School ID</code>, in the <code>Student Table</code>:</p>
+<img src="https://github.com/mdh266/SQLWars/blob/master/images/Primary-Foriegn.png?raw=1">
+<p>When each cell can contain only one value and the primary key migrates into a regular entity table, this design pattern can represent either a one-to-one or one-to-many relationship. A <strong>one-to-one relationship</strong> exists when one row in a table may be linked with only one row in another table and vice versa. A <strong>one-to-many relationship</strong> exists when one row in table A may be linked with many rows in table B, but one row in table B is linked to only one row in table A. The above diagram of relationship between the <code>School Table</code> and the <code>Student Table</code> is an example of a one-to-many relationship.  There is also a <strong>many-to-many relationship</strong>, but this is more complicated and we won&rsquo;t discuss it further. The example I will work below will involve a one-to-many relationship.</p>
+<h3 id="client-server-model-for-databases">
+  Client-Server Model For Databases
+  <a class="heading-link" href="#client-server-model-for-databases">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>The <strong>client-server model</strong> is a distributed application structure that partitions tasks or workloads between the providers of a resource or service, called servers, and service requesters, called clients.  The resource/service in the case of a database is the data stored in it. Often clients and servers communicate over a computer network on separate hardware, but both client and server may reside in the same system. A server host runs one or more server programs which share their resources with clients. A client does not share any of its resources, but requests a server&rsquo;s content or service function. Clients therefore initiate communication sessions with servers which await incoming requests.</p>
+<img src="https://github.com/mdh266/SQLWars/blob/master/images/Client-server-model.png?raw=1">
+<p>Now that we got that basic information under our belt let&rsquo;s get started with SQLite first!</p>
+<hr>
+<h2 id="sqlite">
+  SQLite
+  <a class="heading-link" href="#sqlite">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><a href="https://www.sqlite.org/">SQLite</a> was the first relational database that I learned.  It&rsquo;s fast, lightweight and filebased. In contrast to many other database management systems, SQLite is not a client–server database engine. Rather, it is embedded into the end program.  <em>SQLite stores the entire database (definitions, tables, indices, and the data itself) as a single cross-platform file on a host machine.</em>  SQLite is also embedded into Python naturally with <a href="https://docs.python.org/2/library/sqlite3.html">sqlite3</a> which we will be covering in this post.</p>
+<p>Let&rsquo;s get started with C.R.U.D. for SQLite with Python:</p>
+<h3 id="creating-a-sqlite-database">
+  Creating A SQLite Database
+  <a class="heading-link" href="#creating-a-sqlite-database">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>First thing we need to do is import sqlite3:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> sqlite3
+</span></span></code></pre></div><p>Then we need to connect to our database using the command,</p>
+<pre><code>conn = sqlite3.connect(&quot;database_name&quot;)
+</code></pre>
+<p>Let&rsquo;s do this below, calling the database <code>MyFirstDatabase.db</code>,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>conn <span style="color:#f92672">=</span> sqlite3<span style="color:#f92672">.</span>connect(<span style="color:#e6db74">&#34;MyFirstDatabase.db&#34;</span>)
+</span></span></code></pre></div><p>The <code>connect</code> function acts to make a &ldquo;connection&rdquo; to the database stored in the file <code>MyFirstDatabase.db</code>.  If the file does not exist, then it will be created automatically.  It may seem a little silly to &ldquo;connect&rdquo; to a file that is on our computer, but sometimes the database can reside on a different computer and the phase makes more sense.  We then use the <code>cursor()</code> function to &ldquo;open&rdquo; the database:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cur <span style="color:#f92672">=</span> conn<span style="color:#f92672">.</span>cursor()
+</span></span></code></pre></div><p>Every interaction we make with our database through python will now occur through the cursor object <code>cur</code>.</p>
+<p>Say, we now wish to create a table within the database called <code>Person</code> which contains the <code>name</code>, <code>id</code>, and <code>salary</code> of all employees with our company.  We note that <code>name</code> will be of type <code>TEXT</code>, which is SQLite&rsquo;s version of a string, while <code>id</code> and <code>salary</code> will be of type <code>INTEGER</code>.  Since each person will be uniquely identified with their <code>id</code> we make this the <code>PRIMARY KEY</code>.</p>
+<p>The SQLite command to create this table if it doesn&rsquo;t already exist is,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>create_table <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;CREATE TABLE IF NOT EXISTS Person
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                (
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    name TEXT, 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    id INTEGER PRIMARY KEY, 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    salary INTEGER
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                )&#34;&#34;&#34;</span>
+</span></span></code></pre></div><p>We excute this command on the SQLite database using the sqlite3 function <code>execute()</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cur<span style="color:#f92672">.</span>execute(create_table)
+</span></span></code></pre></div><pre><code>&lt;sqlite3.Cursor at 0x1044a6420&gt;
+</code></pre>
+<p><strong>Note:</strong> We can write SQL commands using single qoutation marks (&rsquo;&hellip;&rsquo;), double qoutation marks (&quot;&hellip;&quot;) or as above with three double qoutation marks(&quot;&quot;&quot;&hellip;&quot;&quot;&quot;).  The latter is perferable for SQL commands for two reasons:</p>
+<ul>
+<li>
+<p>We can continue the command onto another line without the need for a backslash.</p>
+</li>
+<li>
+<p>When using single quotation marks we would have to write a SQL string using backslashes before the single qoutations, for example:
+&rsquo;name = 'Bob' '
+This isn&rsquo;t necessary with double quotation marks or three double qoutation marks.</p>
+</li>
+</ul>
+<p>Now we&rsquo;ll create another table called <code>Emails</code> which contains all the employee emails.  The table will contain <code>employee_id</code> which is an <code>INTEGER</code>, <code>email</code> which is of type <code>TEXT</code> and <code>email_id</code> which is an <code>INTEGER</code>.  The <code>email_id</code> will be our <code>PRIMARY KEY</code> since it is an integer that uniquely identifies each row. The <code>FORIEGN KEY</code> in this table is then <code>employee_id</code> since it is the <code>PRIMARY KEY</code> in the <code>Person</code> table. Since employees can have more than one email address this is an example of a one-to-many relationship. The command to create the <code>Emails</code> table is then,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>create_table <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;CREATE TABLE IF NOT EXISTS Emails 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                (
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                     email_id INTEGER PRIMARY KEY,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                     employee_id INTEGER FORIEGN KEY REFERENCES Person(id), 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                     email TEXT
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                 )&#34;&#34;&#34;</span>
+</span></span></code></pre></div><p>Notice how after we declare our foriegn key we have to say what the primary key in which table it references. Now we can execute the command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cur<span style="color:#f92672">.</span>execute(create_table)
+</span></span></code></pre></div><pre><code>&lt;sqlite3.Cursor at 0x1044a6420&gt;
+</code></pre>
+<p>Now that we have created the tables can start to insert values into them. We use the SQL command <code>INSERT</code> to insert a new row of data into the database.  The general procedure is:</p>
+<pre><code>curr.execute(&quot;&quot;&quot;INERT INTO Table_Name 
+             (col_name_1, col_name_2, ... ) 
+             VALUES (?, ?, ... )&quot;&quot;&quot;,
+             (col_1_value, col_2_value, ...) )
+</code></pre>
+<p>Where the tupple of column names <code>(col_name_1, col_name_2, &hellip; )</code> of the table are followed with a <code>VALUES</code> and then followed by another tupple of &lsquo;?&rsquo;.  The actual column values for the row are then entered in as a separate tupple <code>(col_1_value, col_2_value, &hellip;)</code>.</p>
+<p>We do this first for the <code>Person</code> table:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># create dictionary of values</span>
+</span></span><span style="display:flex;"><span>names <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;Bob&#39;</span>, <span style="color:#e6db74">&#39;Sally&#39;</span>, <span style="color:#e6db74">&#39;Wendy&#39;</span>, <span style="color:#e6db74">&#39;Joe&#39;</span>]
+</span></span><span style="display:flex;"><span>employee_ids <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">4</span>]
+</span></span><span style="display:flex;"><span>salaries <span style="color:#f92672">=</span> [<span style="color:#ae81ff">50</span>, <span style="color:#ae81ff">30</span>, <span style="color:#ae81ff">70</span>, <span style="color:#ae81ff">20</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># loop over all the entries in the dictionary and insert them into the table</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">4</span>):
+</span></span><span style="display:flex;"><span>    cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;INSERT INTO Person 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                (name, id, salary) 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                VALUES (?, ?, ?)&#34;&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>                (names[i], employee_ids[i], salaries[i]) )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># commit the changes to disk</span>
+</span></span><span style="display:flex;"><span>conn<span style="color:#f92672">.</span>commit()
+</span></span></code></pre></div><p>The <code>commit()</code> function forces the executed SQL command to occur on the database on disk.  I&rsquo;ll show what happens if you don&rsquo;t do this in a moment, but for now let&rsquo;s do the same thing for the <code>Emails</code> table:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># create dictionary of values</span>
+</span></span><span style="display:flex;"><span>employee_ids <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">4</span>]
+</span></span><span style="display:flex;"><span>emails <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;bob@a.com&#39;</span>, <span style="color:#e6db74">&#39;bob@b.com&#39;</span>, <span style="color:#e6db74">&#39;sally@a.com&#39;</span>, <span style="color:#e6db74">&#39;wendy@a.com&#39;</span>, <span style="color:#e6db74">&#39;joe@a.com&#39;</span>]
+</span></span><span style="display:flex;"><span>email_ids <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">5</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># loop over all the entries in the dictionary and insert them into the table</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">5</span>):
+</span></span><span style="display:flex;"><span>    cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;INSERT INTO Emails 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                (email_id, employee_id, email) 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                VALUES (?, ?, ?)&#34;&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>                (email_ids[i], employee_ids[i], emails[i]) )
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># commit the changes to disk</span>
+</span></span><span style="display:flex;"><span>conn<span style="color:#f92672">.</span>commit()
+</span></span></code></pre></div><h3 id="reading-from-the-database">
+  Reading From The Database
+  <a class="heading-link" href="#reading-from-the-database">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Reading from the SQLite database is rather straightforward. The following command will return a <code>sqlite.cursor</code> object:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>rows <span style="color:#f92672">=</span> cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;SELECT * FROM Person&#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>print type(rows)
+</span></span></code></pre></div><pre><code>&lt;type 'sqlite3.Cursor'&gt;
+</code></pre>
+<p><strong>Note:</strong> If was a large database we probably dont want to read in all the rows and instead can limit to the first 100 using the command:</p>
+<pre><code>SELECT * FROM Person LIMIT 100
+</code></pre>
+<p>The returned <code>sqlite.cursor</code> object will contain all the rows that were returned by the SQL query.  We can now loop over all the rows in the table and print them out with the command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">for</span> row <span style="color:#f92672">in</span> rows:
+</span></span><span style="display:flex;"><span>    print row
+</span></span></code></pre></div><pre><code>(u'Bob', 1, 50)
+(u'Sally', 2, 30)
+(u'Wendy', 3, 70)
+(u'Joe', 4, 20)
+</code></pre>
+<p>Notice how the names of the employees are not of tpe <code>str</code>, but are rather unicode! We can also do more advanced queries like this left join:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sql_querry <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;SELECT name, salary, email 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">              FROM Person 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">              LEFT JOIN Emails
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">              ON (Person.id = emails.employee_id)&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>joined_rows <span style="color:#f92672">=</span> cur<span style="color:#f92672">.</span>execute(sql_querry)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># print the rows in the table</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> row <span style="color:#f92672">in</span> joined_rows:
+</span></span><span style="display:flex;"><span>    print row
+</span></span></code></pre></div><pre><code>(u'Bob', 50, u'bob@a.com')
+(u'Bob', 50, u'bob@b.com')
+(u'Sally', 30, u'sally@a.com')
+(u'Wendy', 70, u'wendy@a.com')
+(u'Joe', 20, u'joe@a.com')
+</code></pre>
+<h3 id="updating-values-in-the-database">
+  Updating Values In The Database
+  <a class="heading-link" href="#updating-values-in-the-database">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Updaing the values in a SQLite database is rather straight forward as well. In order to do so,  we update a row&rsquo;s <code>column_name1</code> value by specifying another columns value to identify that row. We&rsquo;ll call this other column to identify the row <code>column_name2</code>.  The general comamand is,</p>
+<pre><code>UPDATE table_name SET column_name1 = val1 WHERE column_name2 = val2
+</code></pre>
+<p>Let&rsquo;s say Sally gets a raise and now her income changes from 30 to 40, we can do this with the SQLite command,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># Update Sally&#39;s salary</span>
+</span></span><span style="display:flex;"><span>cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;UPDATE Person SET salary = 40 WHERE name = &#39;Sally&#39; &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># read in the table and print out the rows</span>
+</span></span><span style="display:flex;"><span>rows <span style="color:#f92672">=</span> cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;SELECT * FROM Person&#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> row <span style="color:#f92672">in</span> rows:
+</span></span><span style="display:flex;"><span>    print row
+</span></span></code></pre></div><pre><code>(u'Bob', 1, 50)
+(u'Sally', 2, 40)
+(u'Wendy', 3, 70)
+(u'Joe', 4, 20)
+</code></pre>
+<p>But this only changes the local version of the table and does not persist to the database on disk.  We can observe this firsthand if we close the connection to the database, then reconnect again and print out the values:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># close the connection and reopen it.</span>
+</span></span><span style="display:flex;"><span>conn<span style="color:#f92672">.</span>close()
+</span></span><span style="display:flex;"><span>conn <span style="color:#f92672">=</span> sqlite3<span style="color:#f92672">.</span>connect(<span style="color:#e6db74">&#34;MyFirstDatabase.db&#34;</span>)
+</span></span><span style="display:flex;"><span>cur <span style="color:#f92672">=</span> conn<span style="color:#f92672">.</span>cursor()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># read in the table and print out the rows</span>
+</span></span><span style="display:flex;"><span>rows <span style="color:#f92672">=</span> cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;SELECT * FROM Person&#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> row <span style="color:#f92672">in</span> rows:
+</span></span><span style="display:flex;"><span>    print row
+</span></span></code></pre></div><pre><code>(u'Bob', 1, 50)
+(u'Sally', 2, 30)
+(u'Wendy', 3, 70)
+(u'Joe', 4, 20)
+</code></pre>
+<p>Now we will commit the update to the database on disk and close the connection. Then we will re-connect to it and print out the data to make sure that it has changed:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># update the row in the table and commit the change to disk</span>
+</span></span><span style="display:flex;"><span>cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;UPDATE Person SET salary = 40 WHERE name = &#39;Sally&#39; &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>conn<span style="color:#f92672">.</span>commit()
+</span></span><span style="display:flex;"><span>conn<span style="color:#f92672">.</span>close()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># reopen the connection and print the rows in the table</span>
+</span></span><span style="display:flex;"><span>conn <span style="color:#f92672">=</span> sqlite3<span style="color:#f92672">.</span>connect(<span style="color:#e6db74">&#34;MyFirstDatabase.db&#34;</span>)
+</span></span><span style="display:flex;"><span>cur <span style="color:#f92672">=</span> conn<span style="color:#f92672">.</span>cursor()
+</span></span><span style="display:flex;"><span>rows <span style="color:#f92672">=</span> cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;SELECT * FROM Person&#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> row <span style="color:#f92672">in</span> rows:
+</span></span><span style="display:flex;"><span>    print row
+</span></span></code></pre></div><pre><code>(u'Bob', 1, 50)
+(u'Sally', 2, 40)
+(u'Wendy', 3, 70)
+(u'Joe', 4, 20)
+</code></pre>
+<p>Now we can see that database has been updated!</p>
+<h3 id="deleting-rows-from-the-database">
+  Deleting Rows From The Database
+  <a class="heading-link" href="#deleting-rows-from-the-database">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>To delete a row from a table in a SQLite database we have to identify the row by one of its column values.  The general command is,</p>
+<pre><code>DELETE FROM table_name WHERE column_name = val
+</code></pre>
+<p>We can delete Bob from the <code>Person</code> table with the following command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># delete the row</span>
+</span></span><span style="display:flex;"><span>cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;DELETE FROM Person WHERE name = &#39;Bob&#39; &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># print the rows in the table</span>
+</span></span><span style="display:flex;"><span>rows <span style="color:#f92672">=</span> cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;SELECT * FROM Person&#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> row <span style="color:#f92672">in</span> rows:
+</span></span><span style="display:flex;"><span>    print row
+</span></span></code></pre></div><pre><code>(u'Sally', 2, 40)
+(u'Wendy', 3, 70)
+(u'Joe', 4, 20)
+</code></pre>
+<p>Now that we have covered the basic C.R.U.D commands in SQLite let&rsquo;s move on to PostgreSQL!</p>
+<hr>
+<h2 id="postgresql">
+  PostgreSQL
+  <a class="heading-link" href="#postgresql">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>While SQLite is fast and easy, it can&rsquo;t handle many concurrent writes. It is also not great for large databases since everything must fit in one file on disk.  PostgreSQL is another great option for a relation database that is powerful and open source.  PostgreSQL databases are not limited in size and can handle multiple concurrent writes.  PostgreSQL manages concurrency through a system known as <strong>multiversion concurrency control (MVCC)</strong>, which gives each transaction a &ldquo;snapshot&rdquo; of the database, allowing changes to be made without being visible to other transactions until the changes are committed. This largely eliminates the need for read locks, and ensures the database maintains the ACID (atomicity, consistency, isolation, durability) principles in an efficient manner. The one draw back to PostgreSQL is that is a little harder to set up, which is what I will be focusing on below.</p>
+<h3 id="creating-a-database">
+  Creating A Database
+  <a class="heading-link" href="#creating-a-database">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>The first thing we will need to do is import the libraries to interact with SQL in Python.  These are <a href="https://www.sqlalchemy.org/">sqlalchemy</a> and <a href="https://sqlalchemy-utils.readthedocs.io/en/latest/">sqlalchemy_utils</a>. We import them in below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sqlalchemy <span style="color:#f92672">import</span> create_engine
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sqlalchemy_utils <span style="color:#f92672">import</span> database_exists, create_database
+</span></span></code></pre></div><pre><code>dialect+driver://username:password@host:port/database
+</code></pre>
+<p>Above we see the general command for how to create a SQL database using Python.  The dialect in our case will be <code>postgresql</code> and the driver will be <code>psycopg2</code>. We import the <a href="http://initd.org/psycopg/">psycopg2</a> library here,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> psycopg2
+</span></span></code></pre></div><p>Now we define our user name, <code>username</code>, and database name, <code>dbname</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>dbname <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;AnotherDatabase&#39;</span>
+</span></span><span style="display:flex;"><span>username <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;Mike&#39;</span>
+</span></span></code></pre></div><p>Then we create the database engine using the above command with the values filled in. Notice below how we do not include the password since we don&rsquo;t want to use one.  We also make the host to be <code>localhost</code> since we are going to have the database local on our machine.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>engine <span style="color:#f92672">=</span> create_engine(<span style="color:#e6db74">&#39;postgresql+psycopg2://</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">@localhost/</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#39;</span><span style="color:#f92672">%</span>(username,dbname))
+</span></span><span style="display:flex;"><span>print engine<span style="color:#f92672">.</span>url
+</span></span></code></pre></div><pre><code>postgresql+psycopg2://Mike@localhost/AnotherDatabase
+</code></pre>
+<p>Now create the database, if it doesn&rsquo;t already exist:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> database_exists(engine<span style="color:#f92672">.</span>url):
+</span></span><span style="display:flex;"><span>    create_database(engine<span style="color:#f92672">.</span>url)
+</span></span><span style="display:flex;"><span>print(database_exists(engine<span style="color:#f92672">.</span>url))
+</span></span></code></pre></div><pre><code>True
+</code></pre>
+<p>We connect to our database, <code>dbname</code> with the psycopg2 library using the command :</p>
+<pre><code>psycopg2.connect(database = dbname, user = username, password = user_password)
+</code></pre>
+<p>where <code>user_password</code> is our password. To connect to our newly created PostgreSQL database we then type,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>conn <span style="color:#f92672">=</span> psycopg2<span style="color:#f92672">.</span>connect(database <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;AnotherDatabase&#39;</span>, user <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;Mike&#39;</span>)
+</span></span></code></pre></div><p>We now get our cursor object:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cur <span style="color:#f92672">=</span> conn<span style="color:#f92672">.</span>cursor()
+</span></span></code></pre></div><p>And we can create the same <code>Person</code> table as before, except this time instead of <code>name</code> being of type <code>TEXT</code> it is of type <code>VARCHAR</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>create_table <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;CREATE TABLE IF NOT EXISTS Person 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                (
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    name VARCHAR, 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    id INTEGER PRIMARY KEY, 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    salary INTEGER
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                )
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>cur<span style="color:#f92672">.</span>execute(create_table)
+</span></span></code></pre></div><p>Inserting the data with PostgresSQL is almost exactly the same as with SQLite except instead of the command using &lsquo;?&rsquo; in the tupple after <code>VALUES</code> we use &lsquo;%s&rsquo;.</p>
+<p>We fill in the values for the <code>Person</code> table below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>names <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;Bob&#39;</span>, <span style="color:#e6db74">&#39;Sally&#39;</span>, <span style="color:#e6db74">&#39;Wendy&#39;</span>, <span style="color:#e6db74">&#39;Joe&#39;</span>]
+</span></span><span style="display:flex;"><span>employee_ids <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">4</span>]
+</span></span><span style="display:flex;"><span>salaries <span style="color:#f92672">=</span> [<span style="color:#ae81ff">50</span>, <span style="color:#ae81ff">30</span>, <span style="color:#ae81ff">70</span>, <span style="color:#ae81ff">20</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">4</span>):
+</span></span><span style="display:flex;"><span>    cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;INSERT INTO Person 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                (name, id, salary) 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                VALUES (</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">, </span><span style="color:#e6db74">%s</span><span style="color:#e6db74">, </span><span style="color:#e6db74">%s</span><span style="color:#e6db74">);&#34;&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>                (names[i], employee_ids[i], salaries[i]) )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>conn<span style="color:#f92672">.</span>commit()
+</span></span></code></pre></div><p>We repeat the same process for the <code>Email</code> table, except with PostgreSQL we don&rsquo;t have to explicitly state that <code>employee_id</code> is the <code>FOREIGN KEY</code>, but we do still have to say what <code>PRIMARY KEY</code> it references:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># create the table</span>
+</span></span><span style="display:flex;"><span>create_table <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;CREATE TABLE IF NOT EXISTS Emails 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                (
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                     email_id INTEGER PRIMARY KEY,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                     employee_id INTEGER REFERENCES Person(id), 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                     email VARCHAR
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                 )&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>cur<span style="color:#f92672">.</span>execute(create_table)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># fill in the table</span>
+</span></span><span style="display:flex;"><span>employee_ids <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">4</span>]
+</span></span><span style="display:flex;"><span>email_ids <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">5</span>]
+</span></span><span style="display:flex;"><span>emails <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;bob@a.com&#39;</span>, <span style="color:#e6db74">&#39;bob@b.com&#39;</span>, <span style="color:#e6db74">&#39;sally@a.com&#39;</span>, <span style="color:#e6db74">&#39;wendy@a.com&#39;</span>, <span style="color:#e6db74">&#39;joe@a.com&#39;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">5</span>):
+</span></span><span style="display:flex;"><span>    cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;INSERT INTO Emails 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                (email_id, employee_id, email) 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                VALUES (</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">, </span><span style="color:#e6db74">%s</span><span style="color:#e6db74">, </span><span style="color:#e6db74">%s</span><span style="color:#e6db74">)&#34;&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>                (email_ids[i], employee_ids[i], emails[i]) )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>conn<span style="color:#f92672">.</span>commit()
+</span></span><span style="display:flex;"><span>conn<span style="color:#f92672">.</span>close()
+</span></span></code></pre></div><h3 id="reading-from-the-database-1">
+  Reading From The Database
+  <a class="heading-link" href="#reading-from-the-database-1">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Now we want to read data in from the table in the database.  We first have to connect with the database again and then set the cursor object:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>conn <span style="color:#f92672">=</span> psycopg2<span style="color:#f92672">.</span>connect(database <span style="color:#f92672">=</span> dbname, user <span style="color:#f92672">=</span> username)
+</span></span><span style="display:flex;"><span>cur <span style="color:#f92672">=</span> conn<span style="color:#f92672">.</span>cursor()
+</span></span></code></pre></div><p>Now the command to select the rows from the table are exactly the same as with SQLite.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cur<span style="color:#f92672">.</span>execute(<span style="color:#e6db74">&#34;&#34;&#34;SELECT * FROM Person&#34;&#34;&#34;</span>)
+</span></span></code></pre></div><p>However, now the way we view the rows in the table using PostgreSQL is different from SQLite.  The command above does not return an object of the rows as it did with sqlite3.  Instead, now we get the rows in the table by using one of the following commands on cur:</p>
+<pre><code>cur.fetchone() 
+
+cur.fetchmany() 
+    
+cur.fetchall()
+</code></pre>
+<p>For information on these commands see <a href="http://stackoverflow.com/questions/5189997/python-db-api-fetchone-vs-fetchmany-vs-fetchall">this</a> Stack Overflow post. Since our table is so small we&rsquo;ll fetch all the rows:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cur<span style="color:#f92672">.</span>fetchall()
+</span></span></code></pre></div><pre><code>[('Bob', 1, 50), ('Sally', 2, 30), ('Wendy', 3, 70), ('Joe', 4, 20)]
+</code></pre>
+<p>We can also do the same left join as before:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sql_querry <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;SELECT name, salary, email 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">              FROM Person 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">              LEFT JOIN Emails
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">              ON (Person.id = emails.employee_id)&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>cur<span style="color:#f92672">.</span>execute(sql_querry)
+</span></span><span style="display:flex;"><span>cur<span style="color:#f92672">.</span>fetchall()
+</span></span></code></pre></div><pre><code>[('Bob', 50, 'bob@a.com'),
+ ('Bob', 50, 'bob@b.com'),
+ ('Sally', 30, 'sally@a.com'),
+ ('Wendy', 70, 'wendy@a.com'),
+ ('Joe', 20, 'joe@a.com')]
+</code></pre>
+<h3 id="updating-and-deleting-rows-in-the-database">
+  Updating And Deleting Rows In The Database
+  <a class="heading-link" href="#updating-and-deleting-rows-in-the-database">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Updating values and deleting rows in PostgreSQL is exactly the same as in SQLite and don&rsquo;t go into here.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>conn<span style="color:#f92672">.</span>close()
+</span></span></code></pre></div><hr>
+<h2 id="conclusion">
+  Conclusion
+  <a class="heading-link" href="#conclusion">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>I&rsquo;ll be upating this more as time goes on, but for now we can summarize some of the highlights of SQLite and PostgreSQL are:</p>
+<h3 id="sqlite-1">
+  SQLite
+  <a class="heading-link" href="#sqlite-1">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>SQLite Is probably best for mobile apps or personal projects or where the dataset is not too big and can be stored locally on the machine.</p>
+<p><strong>PROS:</strong> Requires less configuration than client-server based database. Easy to use, fast, lightweight and has native bindings to Python.</p>
+<p><strong>CONS:</strong> Cannot handle concurrent writes, instead writes must be performed sequentially.  SQLite can handle concurrent reads, but not too many.</p>
+<h3 id="postgresql-1">
+  PostgreSQL
+  <a class="heading-link" href="#postgresql-1">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>PostgreSQL is the best bet for a large scale open-source databases that will have heavy user traffic.</p>
+<p><strong>PROS:</strong> Advanced open-source database that scales to large datasets. Can handle multiple concurrent write and reads.</p>
+<p><strong>CONS:</strong> Can be more complex to set up.</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+      <h3 id="see-also-in-sql">
+        See also in SQL
+        <a class="heading-link" href="#see-also-in-sql">
+          <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+          <span class="sr-only">Link to heading</span>
+        </a>
+      </h3>
+      <nav>
+        <ul>
+        
+        
+          
+            <li>
+              <a href="/posts/polarsduckdb/">Polars &amp; DuckDB: DataFrames and SQL For Python Without Pandas</a>
+            </li>
+          
+        
+          
+        
+        </ul>
+      </nav>
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>

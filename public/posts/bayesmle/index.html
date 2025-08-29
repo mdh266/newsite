@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Frequentist &amp; Bayesian Statistics With Py4J &amp; PyMC3 · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+1. Introduction
+2. Sampling A Distribution Written In Scala Using Py4J
+3. The Maximum Likelihood Estimator
+4. Confidence Intervals From Fisher Information
+5. Bayesian Esimatators &amp; Credible Intervals With PyMC3
+6. Connecting The Two Methods
+7. Conclusions
+
+  1. Introduction 
+  
+    
+    Link to heading
+  
+
+
+In this post I want to go back to the basics of statistics, but with an advanced spin on things. By &ldquo;advanced spin&rdquo; I mean, both from in terms of mathematics and computational techniques. The topic I&rsquo;ll dive into is:">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Frequentist & Bayesian Statistics With Py4J & PyMC3">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. Sampling A Distribution Written In Scala Using Py4J
+3. The Maximum Likelihood Estimator
+4. Confidence Intervals From Fisher Information
+5. Bayesian Esimatators &amp; Credible Intervals With PyMC3
+6. Connecting The Two Methods
+7. Conclusions
+1. Introduction Link to heading In this post I want to go back to the basics of statistics, but with an advanced spin on things. By “advanced spin” I mean, both from in terms of mathematics and computational techniques. The topic I’ll dive into is:">
+
+<meta property="og:url" content="http://localhost:1313/posts/bayesmle/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Frequentist & Bayesian Statistics With Py4J & PyMC3">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. Sampling A Distribution Written In Scala Using Py4J
+3. The Maximum Likelihood Estimator
+4. Confidence Intervals From Fisher Information
+5. Bayesian Esimatators &amp; Credible Intervals With PyMC3
+6. Connecting The Two Methods
+7. Conclusions
+1. Introduction Link to heading In this post I want to go back to the basics of statistics, but with an advanced spin on things. By “advanced spin” I mean, both from in terms of mathematics and computational techniques. The topic I’ll dive into is:">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2021-05-04T00:00:00+00:00">
+    <meta property="article:modified_time" content="2021-05-04T00:00:00+00:00">
+    <meta property="article:tag" content="Scala">
+    <meta property="article:tag" content="Py4J">
+    <meta property="article:tag" content="PyMC3">
+    <meta property="article:tag" content="Bayesian Methods">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/bayesmle/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/bayesmle/">
+              Frequentist &amp; Bayesian Statistics With Py4J &amp; PyMC3
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2021-05-04T00:00:00Z">
+                May 4, 2021
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              25-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/scala/">Scala</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/py4j/">Py4J</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/pymc3/">PyMC3</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/bayesian-methods/">Bayesian Methods</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#first-bullet" >1. Introduction</a></strong></p>
+<p><strong><a href="#second-bullet" >2. Sampling A Distribution Written In Scala Using Py4J</a></strong></p>
+<p><strong><a href="#third-bullet" >3. The Maximum Likelihood Estimator</a></strong></p>
+<p><strong><a href="#fourth-bullet" >4. Confidence Intervals From Fisher Information</a></strong></p>
+<p><strong><a href="#fifth-bullet" >5. Bayesian Esimatators &amp; Credible Intervals With PyMC3</a></strong></p>
+<p><strong><a href="#sixth-bullet" >6. Connecting The Two Methods</a></strong></p>
+<p><strong><a href="#seventh-bullet" >7. Conclusions</a></strong></p>
+<h2 id="1-introduction">
+  1. Introduction <a class="anchor" id="first-bullet"></a>
+  <a class="heading-link" href="#1-introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this post I want to go back to the basics of statistics, but with an advanced spin on things. By &ldquo;advanced spin&rdquo; I mean, both from in terms of mathematics and computational techniques. The topic I&rsquo;ll dive into is:</p>
+<pre><code>Estimating a single parameter value from a distribution and then quantifying the uncertantity in the estimate.
+</code></pre>
+<p>In general I will take two approaches to quantitfying the uncertainity in the estimate, the first of which is <a href="https://en.wikipedia.org/wiki/Frequentist_inference"  class="external-link" target="_blank" rel="noopener">frequentist</a> and second that is <a href="https://en.wikipedia.org/wiki/Bayesian_statistics"  class="external-link" target="_blank" rel="noopener">Bayesian</a>. I was originally inspired by <a href="http://jakevdp.github.io/blog/2014/03/11/frequentism-and-bayesianism-a-practical-intro/"  class="external-link" target="_blank" rel="noopener">Jake VanderPlas&rsquo; post</a> and admit that I am not very seasoned with Bayesian methods. That&rsquo;s why I&rsquo;ll be sticking to a simple example of estimating the mean rate or 𝜆 in a <a href="https://en.wikipedia.org/wiki/Poisson_distribution#"  class="external-link" target="_blank" rel="noopener">Poisson distribution</a> from sampled data.</p>
+<p>From the computational perspective, I wanted to do something different and decided to write the probability distribution for generating the data in <a href="https://www.scala-lang.org/"  class="external-link" target="_blank" rel="noopener">Scala</a>, but then use it with Python. Why did I do this? Well, I like Scala and enjoyed the challenge of writing a Poisson distribution using a functional approach. I also wanted to learn more about how to use <a href="https://www.py4j.org/"  class="external-link" target="_blank" rel="noopener">Py4J</a> which can be used to work with functions and objects in the <a href="https://en.wikipedia.org/wiki/Java_virtual_machine"  class="external-link" target="_blank" rel="noopener">JVM</a> from Python. <a href="https://spark.apache.org/"  class="external-link" target="_blank" rel="noopener">Apache Spark</a> actually uses Py4J in PySpark to write Python wrappers for their Scala API. I&rsquo;ve used both PySpark and Spark in Scala extensively in the past and doing this project gave me an opportunity to understand how PySpark works better.</p>
+<p>The source code for this project can be found <a href="https://github.com/mdh266/BayesMLE"  class="external-link" target="_blank" rel="noopener">here</a>.</p>
+<p>Let&rsquo;s get into how I wrote the Poisson distribution in Scala and used it from Python to sample data.</p>
+<h2 id="2-sampling-a-distribution-written-in-scala-using-py4j">
+  2. Sampling A Distribution Written In Scala Using Py4J <a class="anchor" id="second-bullet"></a>
+  <a class="heading-link" href="#2-sampling-a-distribution-written-in-scala-using-py4j">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>I wrote a <a href="https://github.com/mdh266/BayesMLE/blob/main/src/main/scala/PoissonDistribution.scala"  class="external-link" target="_blank" rel="noopener">Poisson distribution in Scala</a> so that I could sample data from it to estimate the mean rate <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ of that distribution. The Poisson distribution is a probability distribution for a random variable <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mtext> </mtext><mo>∈</mo><mtext> </mtext><msup><mi mathvariant="double-struck">Z</mi><mo lspace="0em" rspace="0em">+</mo></msup></mrow><annotation encoding="application/x-tex">y \, \in \, \mathbb{Z}^{+}</annotation></semantics></math></span>
+ that represents some count phenomena, i.e. a number of non-negative integer occurences in some fixed time frame.  For example the number of trains passing through a station per day or the number of customers that visit a website per hour can be modeled with Poisson distribution. The mathematical form of the distribution is,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>p</mi><mo stretchy="false">(</mo><mi>y</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><mi>k</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mrow><msup><mi>λ</mi><mi>k</mi></msup><msup><mi>e</mi><mrow><mo>−</mo><mi>λ</mi></mrow></msup></mrow><mrow><mi>k</mi><mo stretchy="false">!</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex"> p(y \, = \, k)  \; = \; \frac{\lambda^{k} e^{-\lambda} }{k!} </annotation></semantics></math></span>
+<p>The parameter <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mtext> </mtext><mo>∈</mo><mtext> </mtext><msup><mi mathvariant="double-struck">R</mi><mo lspace="0em" rspace="0em">+</mo></msup></mrow><annotation encoding="application/x-tex">\lambda \, \in \, \mathbb{R}^{+}</annotation></semantics></math></span>
+ is the rate variable, i.e. the true number of customers that visit the website per hour and can be any non-negative real valued number.</p>
+<p>The first step in this project was to create the Poisson class. I did this in a previous <a href="https://github.com/mdh266/PoissonDistributionInScala"  class="external-link" target="_blank" rel="noopener">project</a>, however, one key difference is for that Py4J the return value of any public function in Scala/Java needs to be a Java object. Specifically for me the <a href="https://github.com/mdh266/BayesBootstrapMLE/blob/main/src/main/scala/Poisson.scala"  class="external-link" target="_blank" rel="noopener">sample</a> method needs to return a Java List  of integers (<a href="https://www.javatpoint.com/java-list"  class="external-link" target="_blank" rel="noopener">java.util.List[Int]</a>). I originally tried returning a <a href="https://www.scala-lang.org/api/current/scala/collection/immutable/List.html"  class="external-link" target="_blank" rel="noopener">Scala List</a> which worked fine in pure Scala, but when returning the list to Python I got a generic &ldquo;Java Object&rdquo; and realized Py4J was only able to serialize specific datatypes between Python and the JVM.</p>
+<p>In order to use <a href="https://github.com/mdh266/BayesMLE/blob/main/src/main/scala/PoissonDistribution.scala"  class="external-link" target="_blank" rel="noopener">this class</a> from Python with Py4J I needed to do three things:</p>
+<ol>
+<li>Create a <a href="https://github.com/mdh266/BayesMLE/blob/main/src/main/scala/Main.scala"  class="external-link" target="_blank" rel="noopener">Gateway Server</a></li>
+<li>Create a <a href="https://github.com/mdh266/BayesMLE/blob/main/src/main/scala/PoissonEntryPoint.scala"  class="external-link" target="_blank" rel="noopener">class entrypoint</a> to allow for setting the Poisson attributes</li>
+<li>Package the code as a jar using a build tool such as <a href="https://maven.apache.org/"  class="external-link" target="_blank" rel="noopener">Maven</a> or <a href="https://www.scala-sbt.org/"  class="external-link" target="_blank" rel="noopener">SBT</a></li>
+</ol>
+<p>The first step is pretty straight forward to from the <a href="https://www.py4j.org/getting_started.html"  class="external-link" target="_blank" rel="noopener">Py4J Documentation</a> and is in the <a href="https://github.com/mdh266/BayesBootstrapMLE/blob/main/src/main/scala/Main.scala"  class="external-link" target="_blank" rel="noopener">Main.Scala</a> object. However, in order to accommodate the use of <a href="" >Docker</a> I had to adapt the address for the <a href="https://www.py4j.org/_static/javadoc/index.html?py4j/GatewayServer.html"  class="external-link" target="_blank" rel="noopener">GatewayServer</a> based on this <a href="https://github.com/bartdag/py4j/issues/360"  class="external-link" target="_blank" rel="noopener">discussion on GitHub</a>:</p>
+<pre><code>import java.net.InetAddress
+import py4j.GatewayServer
+
+object Main {
+    def main(args: Array[String]) = {
+        System.setProperty(&quot;java.net.preferIPv4Stack&quot;, &quot;true&quot;);
+        val addr = InetAddress.getByName(&quot;0.0.0.0&quot;)
+        val app = new PoissonEntryPoint()
+        val builder = new GatewayServer.GatewayServerBuilder(app)
+        builder.javaAddress(addr);
+        val server = builder.build();
+        server.start()
+        println(&quot;Gateway Server Started&quot;)
+    }
+}
+</code></pre>
+<p>The <a href="https://www.py4j.org/_static/javadoc/py4j/GatewayServer.html"  class="external-link" target="_blank" rel="noopener">GatewayServer</a> in the author&rsquo;s own words <em>it allows Python programs to communicate with the JVM through a local network socket.</em>  The GatewayServer takes an <em>entrypoint</em> as a parameter which can be any object (see <a href="https://www.py4j.org/getting_started.html#writing-the-python-program"  class="external-link" target="_blank" rel="noopener">here</a> for more info). However, the entrypoint doesn&rsquo;t really offer a way for us to pass the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ value from <a href="https://www.py4j.org/getting_started.html#writing-the-python-program"  class="external-link" target="_blank" rel="noopener">Python</a> to the Poisson constructor in Scala. To get around this issue I created a <a href="https://github.com/mdh266/BayesBootstrapMLE/blob/main/src/main/scala/PoissonEntryPoint.scala"  class="external-link" target="_blank" rel="noopener">PoissonEntryPoint</a> case class:</p>
+<pre><code>case class PoissonEntryPoint() {
+
+    def Poisson(lambda : Double) : PoissonDistribution = {
+        new PoissonDistribution(lambda)
+    }
+}
+</code></pre>
+<p>This case class really just acts a <a href="https://docs.scala-lang.org/tour/singleton-objects.html"  class="external-link" target="_blank" rel="noopener">Singleton</a>, but is a class instead of an object. The point of the <code>PoissonEntryPoint</code> class is simply to be able to create a Poisson class with a specific <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ value after starting the GatewayServer.</p>
+<p>Now let&rsquo;s talk about how the project is structured and how to package it for use.  The project structure is:</p>
+<pre><code>src/
+   main/
+       scala/
+           Main.scala
+           PoissonDistribution.scala
+           PoissonEntryPoint.scala
+pom.xml
+</code></pre>
+<p>The <code>pom.xml</code> file is called the <a href="https://maven.apache.org/guides/introduction/introduction-to-the-pom.html"  class="external-link" target="_blank" rel="noopener">project object model</a> and is a file that contains all the instructions for <a href="https://maven.apache.org/"  class="external-link" target="_blank" rel="noopener">Maven</a>. I won&rsquo;t go into the details here, but I will say that Maven is a Java build tool to compile and package code and <a href="https://www.scala-sbt.org/"  class="external-link" target="_blank" rel="noopener">SBT</a> is the Scala equivalent build tool. Since Scala is a <a href="https://en.wikipedia.org/wiki/List_of_JVM_languages"  class="external-link" target="_blank" rel="noopener">JVM language</a> we can use either build tool and I went with Maven since I&rsquo;m more familiar with it and because it was much easier to find examples with Py4J using Maven than with SBT.</p>
+<p>To package the code into a <a href="https://stackoverflow.com/questions/11947037/what-is-an-uber-jar"  class="external-link" target="_blank" rel="noopener">uber jar</a>, use the command:</p>
+<pre><code>mvn package 
+</code></pre>
+<p>Then we can start our our Py4J Web server with the command:</p>
+<pre><code>java -jar target/poisson-1.0-jar-with-dependencies.jar
+</code></pre>
+<p>We can test that the server is running on the default port 25333 on your local machine with the command,</p>
+<pre><code>nc -vz 0.0.0.0 25333
+</code></pre>
+<p>and you should see,</p>
+<pre><code>Connection to 0.0.0.0 port 25333 [tcp/*] succeeded!
+</code></pre>
+<p>Now we can start up our Jupyter notebook and connect Python to the JVM with the following code taken directly from <a href="https://www.py4j.org/index.html#"  class="external-link" target="_blank" rel="noopener">Py4J&rsquo;s</a> home page. This involves setting up the <a href="https://www.py4j.org/py4j_java_gateway.html"  class="external-link" target="_blank" rel="noopener">JavaGatway</a> which is the <em>main interaction point between a Python VM and a JVM</em>. When running on your local machine this is simple, however, in order to use the my Poisson Distribution and Jupyter Lab within <a href="https://docs.docker.com/compose/"  class="external-link" target="_blank" rel="noopener">Docker Compose</a> I had to pass the appropriate <a href="https://www.py4j.org/py4j_java_gateway.html#py4j.java_gateway.GatewayParameters"  class="external-link" target="_blank" rel="noopener">GatewayParameters</a> which specify the address for the Scala <a href="https://www.py4j.org/_static/javadoc/py4j/GatewayServer.html"  class="external-link" target="_blank" rel="noopener">GatewayServer</a> (the <code>py4jserver</code> service in Docker compose) and the port it uses. In addition, I had to pass the <a href="https://www.py4j.org/py4j_java_gateway.html#py4j.java_gateway.CallbackServerParameters"  class="external-link" target="_blank" rel="noopener">CallbackServerParameters</a> which specify the address for this notebook (the <code>jupyter</code> service in Docker compose) as well as the port it uses.</p>
+<p>The callback server allows the JVM to call back Python objects as discussed <a href="https://www.py4j.org/advanced_topics.html#implementing-java-interfaces-from-python-callback"  class="external-link" target="_blank" rel="noopener">here</a>.  I definitely had to have a friend that knows DevOps to help figure this one out, but it doesnt add too much complexity to the basic Py4J example:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> py4j.java_gateway <span style="color:#f92672">import</span> JavaGateway, GatewayParameters, CallbackServerParameters
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>gateway <span style="color:#f92672">=</span> JavaGateway(
+</span></span><span style="display:flex;"><span>    gateway_parameters<span style="color:#f92672">=</span>GatewayParameters(address<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;py4jserver&#39;</span>, port<span style="color:#f92672">=</span><span style="color:#ae81ff">25333</span>),
+</span></span><span style="display:flex;"><span>    callback_server_parameters<span style="color:#f92672">=</span>CallbackServerParameters(address<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;jupyter&#39;</span>, port<span style="color:#f92672">=</span><span style="color:#ae81ff">25334</span>)
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>app <span style="color:#f92672">=</span> gateway<span style="color:#f92672">.</span>entry_point
+</span></span></code></pre></div><p>The app is now the instantiated <a href="https://github.com/mdh266/BayesMLE/blob/main/src/main/scala/PoissonEntryPoint.scala"  class="external-link" target="_blank" rel="noopener">PoissonEntryPoint</a> class.  We can see the class type in Python</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>type(app)
+</span></span></code></pre></div><pre><code>py4j.java_gateway.JavaObject
+</code></pre>
+<p>As well as looking at the methods for the class:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>dir(app)
+</span></span></code></pre></div><pre><code>['Poisson',
+ 'apply',
+ 'canEqual',
+ 'copy',
+ 'equals',
+ 'getClass',
+ 'hashCode',
+ 'notify',
+ 'notifyAll',
+ 'productArity',
+ 'productElement',
+ 'productIterator',
+ 'productPrefix',
+ 'toString',
+ 'unapply',
+ 'wait']
+</code></pre>
+<p>We can see <code>Poisson</code> class method! Since PoissonEntryPoint is a <a href="https://docs.scala-lang.org/tour/case-classes.html"  class="external-link" target="_blank" rel="noopener">case class</a> it comes with a number of default methods just like a <a href="https://realpython.com/python-data-classes/"  class="external-link" target="_blank" rel="noopener">data class</a> in Python.</p>
+<p>We can then create a Poisson class instance and see that the value of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ is 1.0:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>p1 <span style="color:#f92672">=</span> app<span style="color:#f92672">.</span>Poisson(<span style="color:#ae81ff">1.0</span>)
+</span></span></code></pre></div><p>We can then instantiate another Poisson object:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>p2 <span style="color:#f92672">=</span> app<span style="color:#f92672">.</span>Poisson(<span style="color:#ae81ff">3.0</span>)
+</span></span></code></pre></div><p>Note that the <a href="https://github.com/mdh266/BayesBootstrapMLE/blob/main/src/main/scala/PoissonEntryPoint.scala"  class="external-link" target="_blank" rel="noopener">PoissonEntryPoint</a> class has a function <code>Poisson</code> that returns a specific <a href="https://github.com/mdh266/BayesBootstrapMLE/blob/main/src/main/scala/PoissonDistribution.scala"  class="external-link" target="_blank" rel="noopener">PoissonDistribution</a> object that was initailized with the value <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+. It is important that <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ is not an attribute of the <a href="https://github.com/mdh266/BayesBootstrapMLE/blob/main/src/main/scala/PoissonEntryPoint.scala"  class="external-link" target="_blank" rel="noopener">PoissonEntryPoint</a> othwerwise we would not get the seperate values of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+&rsquo;s:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>p1<span style="color:#f92672">.</span>getLambda()
+</span></span></code></pre></div><pre><code>1.0
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>p2<span style="color:#f92672">.</span>getLambda()
+</span></span></code></pre></div><pre><code>3.0
+</code></pre>
+<p>The really nice thing about Py4J <em>is that you can treat objects in the JVM as if they are Python objects.</em> For instance we can see the methods in the object:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>dir(p1)
+</span></span></code></pre></div><pre><code>['$anonfun$cdf$1',
+ '$anonfun$getSum$1',
+ '$anonfun$invCDF$1',
+ '$anonfun$invCDF$2',
+ '$anonfun$invCDF$3',
+ '$anonfun$invCDF$4',
+ '$anonfun$sample$1',
+ '$anonfun$uniform$1',
+ '$lessinit$greater$default$1',
+ 'cdf',
+ 'equals',
+ 'getClass',
+ 'getLambda',
+ 'getSum',
+ 'hashCode',
+ 'invCDF',
+ 'notify',
+ 'notifyAll',
+ 'prob',
+ 'sample',
+ 'setLambda',
+ 'toString',
+ 'uniform',
+ 'wait']
+</code></pre>
+<p>We can then just use the methods in the <a href="https://github.com/mdh266/BayesBootstrapMLE/blob/main/src/main/scala/PoissonDistribution.scala"  class="external-link" target="_blank" rel="noopener">PoissonDistribution</a> object just like they would be used directly in Scala. For instance we can get the probability of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">y=1</annotation></semantics></math></span>
+ when <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\lambda = 1</annotation></semantics></math></span>
+:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>p1<span style="color:#f92672">.</span>prob(<span style="color:#ae81ff">1</span>)
+</span></span></code></pre></div><pre><code>0.36787944117144233
+</code></pre>
+<p>Now let&rsquo;s generate a random samle from the Poisson object:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sample <span style="color:#f92672">=</span> p1<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">1000</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sample[:<span style="color:#ae81ff">3</span>]
+</span></span></code></pre></div><pre><code>[2, 1, 1]
+</code></pre>
+<p>It looks like Py4J returns a Python list while the <a href="https://github.com/mdh266/BayesBootstrapMLE/blob/main/src/main/scala/PoissonDistribution.scala"  class="external-link" target="_blank" rel="noopener">PoissonDistribution class</a> returns a  <code>java.util.List[Int]</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>type(sample)
+</span></span></code></pre></div><pre><code>py4j.java_collections.JavaList
+</code></pre>
+<p>We can then convert it to a Python list</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>type(list(sample))
+</span></span></code></pre></div><pre><code>list
+</code></pre>
+<p>As mentioned previously, Py4J can only serialize specific Java objects back to Python, but I think that&rsquo;s still awesome!  This is also why I needed to convert to from a Scala <code>List[Int]</code> to a <code>java.util.List[Int]</code>; without it the returned object would just be a generic <code>Java Object</code> and I wouldnt be able to access its contents.</p>
+<p>Now let&rsquo;s visualize the Poission distribution for different values of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas <span style="color:#66d9ef">as</span> pd
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> seaborn <span style="color:#66d9ef">as</span> sns
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>melt(
+</span></span><span style="display:flex;"><span>        pd<span style="color:#f92672">.</span>DataFrame({
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#39;1&#39;</span>:list(app<span style="color:#f92672">.</span>Poisson(<span style="color:#ae81ff">1.0</span>)<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">100</span>)),
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#39;2&#39;</span>:list(app<span style="color:#f92672">.</span>Poisson(<span style="color:#ae81ff">2.0</span>)<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">100</span>)),
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#39;3&#39;</span>:list(app<span style="color:#f92672">.</span>Poisson(<span style="color:#ae81ff">3.0</span>)<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">100</span>)),
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#39;4&#39;</span>:list(app<span style="color:#f92672">.</span>Poisson(<span style="color:#ae81ff">4.0</span>)<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">100</span>)),
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#39;5&#39;</span>:list(app<span style="color:#f92672">.</span>Poisson(<span style="color:#ae81ff">5.0</span>)<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">100</span>)),
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#39;6&#39;</span>:list(app<span style="color:#f92672">.</span>Poisson(<span style="color:#ae81ff">6.0</span>)<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">100</span>))
+</span></span><span style="display:flex;"><span>        }),
+</span></span><span style="display:flex;"><span>        var_name<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#34;lambda&#34;</span>]
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>displot(df, x<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;value&#34;</span>, hue<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;lambda&#34;</span>, kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;kde&#39;</span>, height<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>)
+</span></span></code></pre></div><pre><code>&lt;seaborn.axisgrid.FacetGrid at 0x7fb35e47ef90&gt;
+</code></pre>
+<p><img src="/bayesmle_files/bayesmle_25_1.png" alt="png"></p>
+<p>Note that the negative values are not real, but an artifact caused by interpolation with <a href="https://en.wikipedia.org/wiki/Kernel_density_estimation"  class="external-link" target="_blank" rel="noopener">Kernel Density Esimation</a>. The same is true with the wiggles in the distribution.</p>
+<p>We can verify this the former,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df<span style="color:#f92672">.</span>query(<span style="color:#e6db74">&#34;value &lt; 0&#34;</span>)
+</span></span></code></pre></div><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>lambda</th>
+      <th>value</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+</div>
+<p>Now let&rsquo;s get into the Maximum Likelihood Estimator for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ using the distribution <code>p1</code>.</p>
+<h2 id="3-the-maximum-likelihood-estimator">
+  3. The Maximum Likelihood Estimator <a class="anchor" id="third-bullet"></a>
+  <a class="heading-link" href="#3-the-maximum-likelihood-estimator">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>First what is the difference between a statistic and an estimator?  A <strong>statistic</strong> is any function of a sample.  An <strong>estimator</strong> is any function of a sample that is used to estimate a population parameter.  The <strong>maximum likelihood estimator</strong> is the value of a population distribution <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ that maximizes the probability of observing the sample.</p>
+<p>We can find the MLE from a independent, identically distributed sample <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mtext> </mtext><mo>…</mo><mtext> </mtext><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">y_1, y_2, \, \ldots \,, y_{n}</annotation></semantics></math></span>
+ from <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>y</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><mi>λ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(y \, \vert \, \lambda)</annotation></semantics></math></span>
+ by defining the <strong>likelihood function</strong>,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>L</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><mtext> </mtext><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mtext> </mtext><mo>…</mo><mo separator="true">,</mo><mtext> </mtext><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><munderover><mo>∏</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>f</mi><mo stretchy="false">(</mo><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><mi>λ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> L(\lambda  \, \vert \, y_1, \, y_2, \, \ldots, \, y_n)  \; = \; \prod_{i=1}^{n}f(y_{i} \, \vert \, \lambda) </annotation></semantics></math></span>
+<p>Then we can find the MLE <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>λ</mi><mo stretchy="true">^</mo></mover></mrow><annotation encoding="application/x-tex">\widehat{\lambda}</annotation></semantics></math></span>
+ such that,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mover accent="true"><mi>λ</mi><mo>^</mo></mover><mi>n</mi></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><munder><mrow><mi>max</mi><mo>⁡</mo></mrow><mi>λ</mi></munder><mtext> </mtext><mi>L</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mtext> </mtext><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> 
+\hat{\lambda}_{n} \; = \; \max_{\lambda} \, L(\lambda \, \vert \, y_1, y_2, \ldots, \, y_n)
+</annotation></semantics></math></span>
+<p>From calculus we know that we can find the maximum (or minimum) of any function by solving,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mrow><mi mathvariant="normal">∂</mi><mi>L</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo></mrow><mrow><mi mathvariant="normal">∂</mi><mi>λ</mi></mrow></mfrac><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex"> 
+\frac{\partial L(\lambda \, \vert y_1, y_2, \ldots, y_n)}{\partial \lambda}  \; = \; 0 
+</annotation></semantics></math></span>
+<p>for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+.  The MLE has many important properties, the most important in my mind are some are,</p>
+<ol>
+<li>It is a consistent estimator.</li>
+<li>It is invariant, so that if <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>λ</mi><mo stretchy="true">^</mo></mover></mrow><annotation encoding="application/x-tex">\widehat{\lambda}</annotation></semantics></math></span>
+ is the MLE for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+, then for any function <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>τ</mi><mo stretchy="false">(</mo><mi>λ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\tau(\lambda)</annotation></semantics></math></span>
+, the MLE for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>τ</mi><mo stretchy="false">(</mo><mi>λ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\tau(\lambda)</annotation></semantics></math></span>
+ is <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>τ</mi><mo stretchy="false">(</mo><mover accent="true"><mi>λ</mi><mo stretchy="true">^</mo></mover><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\tau(\widehat{\lambda})</annotation></semantics></math></span>
+.</li>
+<li>The MLE is an asymptotically normal estimator.  That is <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>λ</mi><mo stretchy="true">^</mo></mover><mtext>  </mtext><mo>∼</mo><mtext>  </mtext><mi>N</mi><mo stretchy="false">(</mo><mi>λ</mi><mo separator="true">,</mo><mtext> </mtext><msup><mi mathvariant="script">I</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\widehat{\lambda} \; \sim \; N(\lambda, \, \mathcal{I}^{-1})</annotation></semantics></math></span>
+.</li>
+</ol>
+<p>To explain the first property we, must note that since an estimator is a function of the sample space, it is also a <a href="https://en.wikipedia.org/wiki/Random_variable"  class="external-link" target="_blank" rel="noopener">random variable</a>.  Let <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mn>1</mn></msub><mo separator="true">,</mo><mtext> </mtext><mo>…</mo><mo separator="true">,</mo><mtext> </mtext><msub><mi>X</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">X_1, \, \ldots, \, X_n</annotation></semantics></math></span>
+ be a sequence of random variables then <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mi>i</mi></msub><mtext>  </mtext><mover><mo stretchy="true" minsize="3.0em">→</mo><mpadded width="+0.6em" lspace="0.3em"><mi mathvariant="script">P</mi></mpadded></mover><mtext>  </mtext><mi>X</mi></mrow><annotation encoding="application/x-tex">X_{i} \; \xrightarrow{\mathcal{P}} \; X</annotation></semantics></math></span>
+ if,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="normal">∀</mi><mi>ϵ</mi><mo>&gt;</mo><mn>0</mn><mo separator="true">,</mo><mtext>  </mtext><munder><mrow><mi>lim</mi><mo>⁡</mo></mrow><mrow><mi>n</mi><mo>→</mo><mi mathvariant="normal">∞</mi></mrow></munder><mi>P</mi><mo stretchy="false">(</mo><mi mathvariant="normal">∣</mi><msub><mi>X</mi><mi>i</mi></msub><mo>−</mo><mi>X</mi><mi mathvariant="normal">∣</mi><mo>&gt;</mo><mi>ϵ</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex">\forall \epsilon &gt; 0, \; \lim\limits_{n \rightarrow \infty} P(\vert X_i - X \vert &gt; \epsilon ) \; = \; 0</annotation></semantics></math></span>
+<p>then we say the random variable <a href="https://en.wikipedia.org/wiki/Convergence_of_random_variables"  class="external-link" target="_blank" rel="noopener">converges in probability</a>. For an estimator this property of convergence is called <strong>consistency</strong>. Consistency is a necessary condition of any estimator in statistics and basically signifies that estimator eventually settles down to constant or some distribution of values.</p>
+<p>The second property of the MLE allows us to transform our likelihood function into one that is often easier to calculate the MLE with, i.e. the log-likelihood function. That is the MLE, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>λ</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat{\lambda}</annotation></semantics></math></span>
+ will satisfy,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mrow><mi mathvariant="normal">∂</mi><mi>log</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>L</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><mtext> </mtext><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow><mrow><mi mathvariant="normal">∂</mi><mi>λ</mi></mrow></mfrac><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex"> \frac{\partial \log(L(\lambda \, \vert y_1, \, \ldots, y_n ))}{\partial \lambda}  \; = \; 0 </annotation></semantics></math></span>
+<p>The third property of the MLE, of asymptotic normality, is helpful in modeling since your standardized residuals are normal. Hence the sum of squares of the residuals are <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>χ</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\chi^2</annotation></semantics></math></span>
+ distributed.  This allows us to define confidence intervals around of estimates. The term <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">I</mi></mrow><annotation encoding="application/x-tex">\mathcal{I}</annotation></semantics></math></span>
+ is the <a href="https://en.wikipedia.org/wiki/Fisher_information"  class="external-link" target="_blank" rel="noopener">Fisher Information</a> and will be discussed in the next section.</p>
+<p>For the Poisson distribution the likelihood function is,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd class ="mtr-glue"></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>L</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><mtext> </mtext><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mtext> </mtext><mo>…</mo><mo separator="true">,</mo><mtext> </mtext><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><munderover><mo>∏</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mfrac><mrow><msup><mi>e</mi><mrow><mo>−</mo><mi>λ</mi></mrow></msup><mtext> </mtext><msup><mi>λ</mi><msub><mi>y</mi><mi>i</mi></msub></msup></mrow><mrow><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false">!</mo></mrow></mfrac></mrow></mstyle></mtd><mtd class ="mtr-glue"></mtd><mtd class ="mml-eqn-num"></mtd></mtr><mtr><mtd class ="mtr-glue"></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><msup><mi>e</mi><mrow><mo>−</mo><mi>n</mi><mtext> </mtext><mi>λ</mi></mrow></msup><msup><mi>λ</mi><mrow><mi>n</mi><mtext> </mtext><msub><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover><mi>n</mi></msub></mrow></msup><mfrac><mn>1</mn><mrow><munderover><mo>∏</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>y</mi><mi>i</mi></msub><mo stretchy="false">!</mo></mrow></mfrac></mrow></mstyle></mtd><mtd class ="mtr-glue"></mtd><mtd class ="mml-eqn-num"></mtd></mtr></mtable><annotation encoding="application/x-tex">
+\begin{align} L(\lambda  \, \vert y_1, \, y_2, \, \ldots, \, y_n)  
+\; &amp;= \; 
+\prod_{i=1}^{n} \frac{e^{-\lambda} \, \lambda^{y_i}} {y_i!} \newline
+&amp;= \; 
+e^{-n \, \lambda} \lambda^{n \, \bar{y}_{n}}  \frac{1} {\prod_{i=1}^{n} y_i!}
+\end{align}
+</annotation></semantics></math></span>
+<p>We take the log of both sides and then setting the derivative equal to zero we find</p>
+<p>$$</p>
+<ul>
+<li>n  ,  + , \frac{n , \bar{y}_{n}}{\widehat{\lambda}} , = , 0
+$$</li>
+</ul>
+<p>Then solving for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>λ</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat{\lambda}</annotation></semantics></math></span>
+ we find the MLE is,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mover accent="true"><mi>λ</mi><mo stretchy="true">^</mo></mover><mtext> </mtext><mo>=</mo><mtext> </mtext><msub><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover><mi>n</mi></msub></mrow><annotation encoding="application/x-tex"> \widehat{\lambda} \, = \, \bar{y}_{n} </annotation></semantics></math></span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> typing <span style="color:#f92672">import</span> List
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">mle</span>(sample: List[int]) <span style="color:#f92672">-&gt;</span> float:
+</span></span><span style="display:flex;"><span>    converted <span style="color:#f92672">=</span> list(sample)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> sum(converted) <span style="color:#f92672">/</span> len(converted)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>lam <span style="color:#f92672">=</span> mle(p2<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">1000</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;lambda = </span><span style="color:#e6db74">{</span>lam<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>) 
+</span></span></code></pre></div><pre><code>lambda = 2.97
+</code></pre>
+<p>Our estimate for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ is pretty close to the true value of 3 which is correct for <code>p2</code>!</p>
+<p>Now, since the maximum likelihood estimator is the mean we know it satifies the <a href="https://en.wikipedia.org/wiki/Central_limit_theorem"  class="external-link" target="_blank" rel="noopener">Central Limit Theorem</a>,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mover accent="true"><mi>λ</mi><mo>^</mo></mover><mi>n</mi></msub><mtext> </mtext><mo>=</mo><mtext> </mtext><msub><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover><mi>n</mi></msub><mtext>  </mtext><mover><mo stretchy="true" minsize="3.0em">→</mo><mpadded width="+0.6em" lspace="0.3em"><mi mathvariant="script">D</mi></mpadded></mover><mtext>  </mtext><mi>N</mi><mo stretchy="false">(</mo><mi>λ</mi><mo separator="true">,</mo><mi>λ</mi><mi mathvariant="normal">/</mi><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> \hat{\lambda} _{n}\, = \, \bar{y}_{n} \; \xrightarrow{\mathcal{D}} \; N(\lambda,\lambda/n) </annotation></semantics></math></span>
+<p>Hence we can repeatedly sample <code>p2</code> and compute the distribution of the MLE for various values of sample size <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span>
+ to show how the MLE converges in distribution.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># sample the MLE 100 times for each n = 10, 50, 100, 500, 1000</span>
+</span></span><span style="display:flex;"><span>samples <span style="color:#f92672">=</span> [ [ mle(p2<span style="color:#f92672">.</span>sample(n)) <span style="color:#66d9ef">for</span> k <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">100</span>)] <span style="color:#66d9ef">for</span> n <span style="color:#f92672">in</span> [<span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">20</span>, <span style="color:#ae81ff">50</span>, <span style="color:#ae81ff">100</span>, <span style="color:#ae81ff">200</span>, <span style="color:#ae81ff">500</span>, <span style="color:#ae81ff">1000</span>]]
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sample_df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>melt(
+</span></span><span style="display:flex;"><span>                pd<span style="color:#f92672">.</span>DataFrame(np<span style="color:#f92672">.</span>array(samples)<span style="color:#f92672">.</span>T, 
+</span></span><span style="display:flex;"><span>                             columns<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;10&#39;</span>, <span style="color:#e6db74">&#39;20&#39;</span>, <span style="color:#e6db74">&#39;50&#39;</span>,<span style="color:#e6db74">&#39;100&#39;</span>, <span style="color:#e6db74">&#39;200&#39;</span>, <span style="color:#e6db74">&#39;500&#39;</span>, <span style="color:#e6db74">&#39;1000&#39;</span>]),
+</span></span><span style="display:flex;"><span>                var_name<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#34;n&#34;</span>]
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># # plot the MLE for various value of sample size</span>
+</span></span><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>displot(sample_df, x<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;value&#34;</span>, hue<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;n&#34;</span>, kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;kde&#34;</span>, height<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>,)
+</span></span></code></pre></div><pre><code>&lt;seaborn.axisgrid.FacetGrid at 0x7ff00dba4090&gt;
+</code></pre>
+<p><img src="/bayesmle_files/bayesmle_34_1.png" alt="png"></p>
+<p>As <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>→</mo><mi mathvariant="normal">∞</mi></mrow><annotation encoding="application/x-tex">n \rightarrow \infty</annotation></semantics></math></span>
+ we see the MLE <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\bar{y}_{n}</annotation></semantics></math></span>
+ has a distribution that is more sharply peaked around <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn></mrow><annotation encoding="application/x-tex">3</annotation></semantics></math></span>
+ and hence shows that the esimator is converging to the true value!</p>
+<p>We have seen that the MLE <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover accent="true"><mi>λ</mi><mo>^</mo></mover><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\hat{\lambda}_{n}</annotation></semantics></math></span>
+ converges to the true value of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+, but for any finite value of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span>
+ the esimator can be incorrect.  How do we measure our confidence in our estimae <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover accent="true"><mi>λ</mi><mo>^</mo></mover><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\hat{\lambda}_{n}</annotation></semantics></math></span>
+?  The answer is using <a href="https://en.wikipedia.org/wiki/Confidence_interval"  class="external-link" target="_blank" rel="noopener">confidence intervals</a>.</p>
+<h2 id="4-confidence-intervals-from-fisher-information">
+  4. Confidence Intervals From Fisher Information <a class="anchor" id="fourth-bullet"></a>
+  <a class="heading-link" href="#4-confidence-intervals-from-fisher-information">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Given a distribution <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><mo>∼</mo><mtext> </mtext><mi>f</mi><mo stretchy="false">(</mo><mi>y</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><mi>α</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">y_{i} \, \sim \, f(y \, \vert \, \alpha)</annotation></semantics></math></span>
+ for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><mn>1</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">i \, = \, 1, \ldots , n</annotation></semantics></math></span>
+ and the likelihood function,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>L</mi><mo stretchy="false">(</mo><mi>α</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><munderover><mo>∏</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mtext> </mtext><mi>f</mi><mo stretchy="false">(</mo><msub><mi>y</mi><mi>i</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><mi>α</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> L(\alpha \, \vert \, y_1, y_2, \ldots, y_n) \; = \; \prod_{i=1}^{n} \,  f(y_i \, \vert \, \alpha) </annotation></semantics></math></span>
+<p>We define the <a href="https://en.wikipedia.org/wiki/Score_%28statistics%29"  class="external-link" target="_blank" rel="noopener">score statistic</a> <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mo stretchy="false">(</mo><mi>α</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">S(\alpha)</annotation></semantics></math></span>
+ to be,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>S</mi><mo stretchy="false">(</mo><mi>α</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mrow><mi>d</mi><mi>log</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mi>L</mi><mo stretchy="false">(</mo><mi>α</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo><mo fence="true">)</mo></mrow></mrow><mrow><mi>d</mi><mi>α</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">
+S(\alpha) \; = \; \frac{d\log \left(L(\alpha \, \vert  \, y_1, y_2, \ldots, y_n) \right)}{d\alpha} 
+</annotation></semantics></math></span>
+<p>For a distribution from the <a href="https://en.wikipedia.org/wiki/Exponential_family"  class="external-link" target="_blank" rel="noopener">exponential family</a> the score function satisfies,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>E</mi><mi>y</mi></msub><mo stretchy="false">[</mo><mi>S</mi><mo stretchy="false">]</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex">
+E_{y}[S] \; = \; 0
+</annotation></semantics></math></span>
+<p>Another important property of the score statistic is that it satisfies,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>S</mi><mo stretchy="false">(</mo><mover accent="true"><mi>α</mi><mo stretchy="true">^</mo></mover><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mn>0</mn></mrow><annotation encoding="application/x-tex"> S(\widehat{\alpha})  \; = \; 0</annotation></semantics></math></span>
+<p>for the MLE <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>α</mi><mo stretchy="true">^</mo></mover></mrow><annotation encoding="application/x-tex">\widehat{\alpha}</annotation></semantics></math></span>
+.  This property can be used to compute the MLE using the so-called <a href="https://en.wikipedia.org/wiki/Scoring_algorithm"  class="external-link" target="_blank" rel="noopener">scoring algorithm</a> which is equivalent to <a href="https://en.wikipedia.org/wiki/Newton%27s_method"  class="external-link" target="_blank" rel="noopener">Newton–Raphson method</a>. The later method is more frequently used in calculations as it is a general optimization method and has many efficient implmentations.</p>
+<p>The <a href="https://en.wikipedia.org/wiki/Fisher_information"  class="external-link" target="_blank" rel="noopener">Fisher information</a> is defined as,</p>
+<p>\begin{align}
+\mathcal{I} ; &amp;= ; \text{Cov}[S] \
+&amp; = ; \text{Var}[ S S^{T}] \
+&amp; = ; E_y[ - S&rsquo;] \
+&amp;= ; - E_{y} \left[ \frac{d^{2}\log \left(L(\alpha , | , y_1, y_2, \ldots, y_n) \right)}{d\alpha^{2}}  \right]
+\end{align}</p>
+<p>One can show that the standard error for the maximum likelihood estimate <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mover accent="true"><mi>α</mi><mo stretchy="true">^</mo></mover><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(\widehat{\alpha})</annotation></semantics></math></span>
+ will then be,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>S.E.</mtext><mo stretchy="false">(</mo><mover accent="true"><mi>α</mi><mo stretchy="true">^</mo></mover><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msup><mi mathvariant="script">I</mi><mrow><mo>−</mo><mn>1</mn><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msup></mrow><annotation encoding="application/x-tex"> \text{S.E.}(\widehat{\alpha}) \; = \; \mathcal{I}^{-1/2}</annotation></semantics></math></span>
+<p>The curvature of the log-likelihood at the MLE is dictated by the Fisher information. If <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span>
+ flat at the MLE then the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">I</mi></mrow><annotation encoding="application/x-tex">\mathcal{I}</annotation></semantics></math></span>
+ is small and the MLE is not stable or well-defined. Higher Fisher information at the MLE means the distribution is highly peaked and implies the MLE is well defined and stable.</p>
+<p>As previously mentioned the MLE asymptotically normal which tells us mathematically that,</p>
+<p>\begin{equation}
+\widehat{\alpha} ; \sim ; N(\alpha, , \mathcal{I}^{-1})
+\end{equation}</p>
+<p>These facts can be used to calculate confidence intervals for the MLE,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mtext>CI</mtext><mi>α</mi></msub><mtext> </mtext><mo>=</mo><mtext> </mtext><mo stretchy="false">[</mo><mover accent="true"><mi>α</mi><mo stretchy="true">^</mo></mover><mo>−</mo><msub><mi>Z</mi><mrow><mi>α</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msub><mtext> </mtext><msup><mi mathvariant="script">I</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mi mathvariant="normal">/</mi><msqrt><mi>n</mi></msqrt><mo separator="true">,</mo><mtext> </mtext><mover accent="true"><mi>α</mi><mo stretchy="true">^</mo></mover><mo>+</mo><msub><mi>Z</mi><mrow><mi>α</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msub><mtext> </mtext><msup><mi mathvariant="script">I</mi><mrow><mo>−</mo><mn>1</mn></mrow></msup><mi mathvariant="normal">/</mi><msqrt><mi>n</mi></msqrt><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">\text{CI}_{\alpha} \, = \, [ \widehat{\alpha} - Z_{\alpha/2} \, \mathcal{I}^{-1}/\sqrt{n}, \, \widehat{\alpha} + Z_{\alpha/2} \, \mathcal{I}^{-1} /\sqrt{n}]</annotation></semantics></math></span>
+<p>The Fisher information for a Poisson distribution is,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="script">I</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><mn>1</mn><mi mathvariant="normal">/</mi><mi>λ</mi></mrow><annotation encoding="application/x-tex"> \mathcal{I} \, = \, 1/\lambda </annotation></semantics></math></span>
+<p>This means for our MLE of the Poisson distribution the confidence interval will be:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mtext>CI</mtext><mover accent="true"><mi>λ</mi><mo>^</mo></mover></msub><mtext> </mtext><mo>=</mo><mtext> </mtext><mo stretchy="false">[</mo><msub><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover><mi>n</mi></msub><mo>−</mo><msub><mi>Z</mi><mrow><mi>α</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msub><mtext> </mtext><msqrt><mrow><msub><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover><mi>n</mi></msub><mi mathvariant="normal">/</mi><mi>n</mi></mrow></msqrt><mo separator="true">,</mo><mtext> </mtext><msub><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover><mi>n</mi></msub><mo>+</mo><msub><mi>Z</mi><mrow><mi>α</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msub><mtext> </mtext><msqrt><mrow><msub><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover><mi>n</mi></msub><mi mathvariant="normal">/</mi><mi>n</mi></mrow></msqrt><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">\text{CI}_{\hat{\lambda}} \, = \, [ \bar{y}_{n} - Z_{\alpha/2} \, \sqrt{\bar{y}_{n} / n}, \, \bar{y}_{n} + Z_{\alpha/2} \, \sqrt{\bar{y}_{n}/ n}]</annotation></semantics></math></span>
+<p>We can then come up with a functin to compute the 94% confidence interval (most people choose 95%, but to be consistent with <a href="https://docs.pymc.io/"  class="external-link" target="_blank" rel="noopener">PyMC3</a> we use 94%) for the sample:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> typing <span style="color:#f92672">import</span> Tuple 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">ci</span>(sample: List[int]) <span style="color:#f92672">-&gt;</span> Tuple[float,float]:
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Computes the 94</span><span style="color:#e6db74">% c</span><span style="color:#e6db74">onfidence interval for sampled
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    data from a Poisson distribution
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    z <span style="color:#f92672">=</span> <span style="color:#ae81ff">1.88</span>
+</span></span><span style="display:flex;"><span>    m <span style="color:#f92672">=</span> mle(sample)
+</span></span><span style="display:flex;"><span>    n <span style="color:#f92672">=</span> len(sample)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> (m <span style="color:#f92672">-</span> z<span style="color:#f92672">*</span>np<span style="color:#f92672">.</span>sqrt(m<span style="color:#f92672">/</span>n), m <span style="color:#f92672">+</span> z<span style="color:#f92672">*</span>np<span style="color:#f92672">.</span>sqrt(m<span style="color:#f92672">/</span>n))
+</span></span></code></pre></div><p>We can then get the MLE for the sampled data from <code>Poisson(1.0)</code>,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mle(sample)
+</span></span></code></pre></div><pre><code>0.995
+</code></pre>
+<p>The 94% confidence interval is then,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ci(sample)
+</span></span></code></pre></div><pre><code>(0.9356979932885909, 1.054302006711409)
+</code></pre>
+<p>We can see that the confidence interval does contain the true <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><mn>1</mn></mrow><annotation encoding="application/x-tex">\lambda \, = \, 1</annotation></semantics></math></span>
+. <em>Many people think a 94% confidence interval, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext>CI</mtext><mn>94</mn></msub></mrow><annotation encoding="application/x-tex">\text{CI}_{94}</annotation></semantics></math></span>
+, can be used to say that there is a 94% probability that the true <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ is in the confidence interval <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext>CI</mtext><mn>94</mn></msub></mrow><annotation encoding="application/x-tex">\text{CI}_{94}</annotation></semantics></math></span>
+.  This interpetation is wrong, in frequentist methods, the parameter <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ is assumed to be an unknown fixed value. One cannot make probability statements about fixed values.</em></p>
+<p><em>The confidence interval is a function of the sample space and therefore a random variable. One can make probability statements about the confidence intervals. Indeed the correct interpretation is that if you are able to repeatedly re-sample the population distribution <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>y</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><mi>λ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(y \, \vert \, \lambda)</annotation></semantics></math></span>
+ to form many confidence intervals <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext>CI</mtext><mn>94</mn></msub></mrow><annotation encoding="application/x-tex">\text{CI}_{94}</annotation></semantics></math></span>
+, 94% of them would contain the true population parameter <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+.</em></p>
+<p>We can test this by creating a function which returns a boolean indicating whether or not the parameter <code>lam</code> for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ is contained in the 94% confidence interval from the data <code>sample</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">in_ci</span>(lam: float, sample:  List[int]) <span style="color:#f92672">-&gt;</span> bool:
+</span></span><span style="display:flex;"><span>    interval <span style="color:#f92672">=</span> ci(sample)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> (lam <span style="color:#f92672">&gt;=</span> interval[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">and</span> lam <span style="color:#f92672">&lt;=</span> interval[<span style="color:#ae81ff">1</span>])
+</span></span></code></pre></div><p>We can then test this function,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>in_ci(<span style="color:#ae81ff">1</span>, sample)
+</span></span></code></pre></div><pre><code>True
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>in_ci(<span style="color:#ae81ff">3</span>, sample)
+</span></span></code></pre></div><pre><code>False
+</code></pre>
+<p>We can loop over 1,000 confidence intervals to see how many times they capture the true rate parameter,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>count_in_ci <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span> <span style="color:#66d9ef">if</span> in_ci(<span style="color:#ae81ff">1</span>, p1<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">1000</span>)) <span style="color:#66d9ef">else</span> <span style="color:#ae81ff">0</span> <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">1000</span>)]
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Confidence interval captures true rate </span><span style="color:#e6db74">{}% o</span><span style="color:#e6db74">f times&#34;</span><span style="color:#f92672">.</span>format(<span style="color:#ae81ff">100</span><span style="color:#f92672">*</span>sum(count_in_ci)<span style="color:#f92672">/</span>len(count_in_ci)))
+</span></span></code></pre></div><pre><code>Confidence interval captures true rate 94.3% of times
+</code></pre>
+<p>This is nearly spot on to what the theory says!  Let&rsquo;s now move on to Bayesian methods!</p>
+<h2 id="5-bayesian-esimatators--credible-intervals-with-pymc3">
+  5. Bayesian Esimatators &amp; Credible Intervals With PyMC3 <a class="anchor" id="fifth-bullet"></a>
+  <a class="heading-link" href="#5-bayesian-esimatators--credible-intervals-with-pymc3">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In the frequentist approach the parameter we wish to estimation <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ is fixed, but unknown.  The observed data <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo fence="true">{</mo><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo fence="true">}</mo></mrow><annotation encoding="application/x-tex">\left\{ y_1, y_2, \ldots, y_n \right\}</annotation></semantics></math></span>
+ is assumed to be from a population <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>y</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><mi>λ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(y \, \vert \, \lambda)</annotation></semantics></math></span>
+ and estimates about the value of the population paremeter <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ is obtained by using the maximum likelihood. As we discussed above, probability statements about the unknown rate constant <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ don&rsquo;t make sense as its a fixed value and not a random variable.  However, probability statements can be made about a confidence interval for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+. In the maximum likelihood method, asympotic normality allows us to use confidence intervals as a way to quantify the uncertaintity in our estimator.</p>
+<p>In contrast, in Bayesian statistics, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ is not a fixed value, but assumed to have values coming from a probability distribution called the <a href="https://en.wikipedia.org/wiki/Prior_probability"  class="external-link" target="_blank" rel="noopener">prior</a> <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>λ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(\lambda)</annotation></semantics></math></span>
+. This is often subjective and the choice of distribution for the prior often comes from domain knowledge.  The observed data <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo fence="true">{</mo><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo fence="true">}</mo></mrow><annotation encoding="application/x-tex">\left\{ y_1, y_2, \ldots, y_n \right\}</annotation></semantics></math></span>
+ and samples from the prior taken to evaluate the likelihood of the  <a href="https://en.wikipedia.org/wiki/Posterior_distribution"  class="external-link" target="_blank" rel="noopener">posterior distribution</a> model, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(\lambda \, \vert \, y_1, y_2, \ldots, y_n )</annotation></semantics></math></span>
+. <strong>Now we can formulate estimators for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ and quanitify the uncertaintity in those esimates by directly using the posterior distribution.</strong></p>
+<p>Let <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><mi>λ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(y_1, y_2, \ldots, y_n \, \vert \, \lambda )</annotation></semantics></math></span>
+ be the sampling distribution then <a href="https://en.wikipedia.org/wiki/Bayes%27_theorem"  class="external-link" target="_blank" rel="noopener">Baye&rsquo;s theorem</a> states,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mrow><mi>P</mi><mo stretchy="false">(</mo><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><mi>λ</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>P</mi><mo stretchy="false">(</mo><mi>λ</mi><mo stretchy="false">)</mo></mrow><mrow><mi>m</mi><mo stretchy="false">(</mo><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo></mrow></mfrac><mo separator="true">,</mo><mspace width="1em"/><mtext>and</mtext><mspace width="2em"/><mi>m</mi><mo stretchy="false">(</mo><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mo>∫</mo><mi>P</mi><mo stretchy="false">(</mo><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><mi>λ</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>P</mi><mo stretchy="false">(</mo><mi>λ</mi><mo stretchy="false">)</mo><mtext> </mtext><mi>d</mi><mi>λ</mi></mrow><annotation encoding="application/x-tex"> P(\lambda \, \vert \, y_1, y_2, \ldots, y_n)
+ \; = \; 
+\frac{ P ( y_1, y_2, \ldots, y_n \, \vert \, \lambda) \, P(\lambda)}{m(y_1, y_2, \ldots, y_n)}, \quad \text{and} \qquad m(y_1, y_2, \ldots, y_n) \; = \; \int P ( y_1, y_2, \ldots, y_n\, \vert \, \lambda) \, P(\lambda) \, d\lambda
+</annotation></semantics></math></span>
+<p>Where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo stretchy="false">(</mo><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">m(y_1, y_2, \ldots, y_n)</annotation></semantics></math></span>
+ is called the marginal distribution and used for normalization. Another way to rewrite Baye&rsquo;s formula is in terms of the Likelihood functions, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">L(\lambda \, \vert \,  y_1, y_2, \ldots, y_n)</annotation></semantics></math></span>
+</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mrow><mi>L</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo><mtext> </mtext><mi>P</mi><mo stretchy="false">(</mo><mi>λ</mi><mo stretchy="false">)</mo></mrow><mrow><mi>m</mi><mo stretchy="false">(</mo><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex"> P(\lambda \, \vert \, y_1, y_2, \ldots, y_n)
+ \; = \; 
+\frac{ L(\lambda \, \vert \,  y_1, y_2, \ldots, y_n) \, P(\lambda)}{m(y_1, y_2, \ldots, y_n)}
+</annotation></semantics></math></span>
+<p>The <a href="https://en.wikipedia.org/wiki/Bayes_estimator"  class="external-link" target="_blank" rel="noopener">Bayesian estimator</a> (often called the posterior mean) is taken the be the expected value over the the random variable <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span>
+,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mover accent="true"><mi>λ</mi><mo stretchy="true">^</mo></mover><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msub><mi>E</mi><mrow><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><mi>y</mi></mrow></msub><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> \widehat{\lambda} \; = \; E_{\lambda \, \vert \, y}(\lambda \, \vert \, y_1, y_2, \ldots, y_n)</annotation></semantics></math></span>
+<p>Until the advant of computers, statisticians were stuck with using <a href="https://en.wikipedia.org/wiki/Conjugate_prior"  class="external-link" target="_blank" rel="noopener">conjugate priors</a> with Bayesian methods since there are analytic solutions for the posterior distribution.</p>
+<p>The conjugate prior for a Poisson distribution is a <a href="https://en.wikipedia.org/wiki/Gamma_distribution"  class="external-link" target="_blank" rel="noopener">Gamma distributed</a> which for <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi><mo separator="true">,</mo><mi>β</mi><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\alpha, \beta &gt; 0</annotation></semantics></math></span>
+ takes the form,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><mi>α</mi><mo separator="true">,</mo><mi>β</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><msup><mi>β</mi><mi>α</mi></msup><mrow><mo stretchy="false">(</mo><mi>α</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mo stretchy="false">!</mo></mrow></mfrac><mtext> </mtext><msup><mi>x</mi><mrow><mi>α</mi><mo>−</mo><mn>1</mn></mrow></msup><mtext> </mtext><msup><mi>e</mi><mrow><mo>−</mo><mi>β</mi><mi>y</mi></mrow></msup></mrow><annotation encoding="application/x-tex">
+P(\lambda \, \vert \, \alpha, \beta ) \; = \; \frac{\beta^{\alpha }}{(\alpha-1)! }  \, x^{\alpha-1} \, e^{-\beta y}
+</annotation></semantics></math></span>
+<p>A depiction of the Gamma distribution for various values of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span>
+ can be seen from <a href="https://docs.pymc.io/api/distributions/continuous.html#pymc3.distributions.continuous.Gamma"  class="external-link" target="_blank" rel="noopener">PyMC3&rsquo;s website</a>.</p>
+<p><img src="https://docs.pymc.io/api/distributions/continuous-6.png" alt=""></p>
+<p>Then the posterior is <a href="https://people.stat.sc.edu/Hitchcock/slides535day5spr2014.pdf"  class="external-link" target="_blank" rel="noopener">again a Gamma distribution</a>, but with <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>α</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mtext> </mtext><mo>=</mo><mtext> </mtext><mi>α</mi><mtext> </mtext><mo>+</mo><mtext> </mtext><mi>n</mi></mrow><annotation encoding="application/x-tex">\alpha^{\prime} \, = \, \alpha \, + \, n</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>β</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mtext> </mtext><mo>=</mo><mtext> </mtext><msub><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover><mi>n</mi></msub><mo separator="true">,</mo><mtext> </mtext><mi>β</mi><mtext> </mtext><mo>+</mo><mtext> </mtext><mi>n</mi></mrow><annotation encoding="application/x-tex">\beta^{\prime}  \, = \, \bar{y}_{n}, \,  \beta \, + \, n</annotation></semantics></math></span>
+. This leads to a posterior mean,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mover accent="true"><mi>λ</mi><mo>^</mo></mover><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mi>α</mi><mrow><mi>β</mi><mtext> </mtext><mo>+</mo><mtext> </mtext><mi>n</mi></mrow></mfrac><mtext> </mtext><mo>+</mo><mtext> </mtext><mfrac><msub><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover><mi>n</mi></msub><mrow><mn>1</mn><mtext> </mtext><mo>+</mo><mtext> </mtext><mi>β</mi><mtext> </mtext><mi mathvariant="normal">/</mi><mtext> </mtext><mi>n</mi><mtext> </mtext></mrow></mfrac></mrow><annotation encoding="application/x-tex">\hat{\lambda} \; = \; \frac{\alpha}{\beta \, + \, n} 
+\, + \, \frac{ \bar{y}_{n}}{1 \, + \, \beta \, / \, n\, }</annotation></semantics></math></span>
+<p>We can see that with little data (small <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span>
+) our estimate we are closer to the prior mean (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mi>α</mi><mi>β</mi></mfrac></mrow><annotation encoding="application/x-tex">\frac{\alpha}{\beta}</annotation></semantics></math></span>
+) while with lots of data (large <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span>
+) we move towards the average <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\bar{y}_{n}</annotation></semantics></math></span>
+.</p>
+<p>Let&rsquo;s see this convergence for ourselves! We can define the posterior mean function:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">posterior_mean</span>(alpha: float, beta: float , sample: List[int]) <span style="color:#f92672">-&gt;</span> float:
+</span></span><span style="display:flex;"><span>    n <span style="color:#f92672">=</span> len(sample)
+</span></span><span style="display:flex;"><span>    m <span style="color:#f92672">=</span> sum(sample) <span style="color:#f92672">/</span> n
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> alpha <span style="color:#f92672">/</span> (beta <span style="color:#f92672">+</span> n) <span style="color:#f92672">+</span> m  <span style="color:#f92672">/</span> (<span style="color:#ae81ff">1</span> <span style="color:#f92672">+</span> beta <span style="color:#f92672">/</span> n)
+</span></span></code></pre></div><p>Then define a 1,000 random samples of various sizes:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> random <span style="color:#f92672">import</span> randint
+</span></span><span style="display:flex;"><span>nums_samples <span style="color:#f92672">=</span> [randint(<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">1000</span>) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">1000</span>)]
+</span></span><span style="display:flex;"><span>nums_samples<span style="color:#f92672">.</span>sort()
+</span></span></code></pre></div><p>We can the calculate and plot the posterior mean for the <a href="https://people.stat.sc.edu/Hitchcock/slides535day5spr2014.pdf"  class="external-link" target="_blank" rel="noopener">Poisson-Gamma model</a>  using the data and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><mn>1</mn></mrow><annotation encoding="application/x-tex">\alpha \, = \, 1</annotation></semantics></math></span>
+ and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi><mtext> </mtext><mo>=</mo><mtext> </mtext><mn>3</mn></mrow><annotation encoding="application/x-tex">\beta \, = \, 3</annotation></semantics></math></span>
+,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>alpha <span style="color:#f92672">=</span> <span style="color:#ae81ff">3.0</span>
+</span></span><span style="display:flex;"><span>beta <span style="color:#f92672">=</span> <span style="color:#ae81ff">1.0</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>samples <span style="color:#f92672">=</span> [ posterior_mean(alpha<span style="color:#f92672">=</span>alpha, beta<span style="color:#f92672">=</span>beta, sample <span style="color:#f92672">=</span> p1<span style="color:#f92672">.</span>sample(n)) 
+</span></span><span style="display:flex;"><span>           <span style="color:#66d9ef">for</span> n <span style="color:#f92672">in</span> nums_samples]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>(pd<span style="color:#f92672">.</span>DataFrame({
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;posterior_mean&#34;</span>:samples, 
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;sample_size&#34;</span>:nums_samples
+</span></span><span style="display:flex;"><span>})<span style="color:#f92672">.</span>plot(x<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;sample_size&#34;</span>, 
+</span></span><span style="display:flex;"><span>        y<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;posterior_mean&#34;</span>, 
+</span></span><span style="display:flex;"><span>        title<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Covergence of Posterior Mean&#34;</span>, 
+</span></span><span style="display:flex;"><span>        ylim<span style="color:#f92672">=</span>(<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1.75</span>)))
+</span></span></code></pre></div><pre><code>&lt;AxesSubplot:title={'center':'Covergence of Posterior Mean'}, xlabel='sample_size'&gt;
+</code></pre>
+<p><img src="/bayesmle_files/bayesmle_55_1.png" alt="png"></p>
+<p>Now let&rsquo;s talk about the confidence of this estimate. The anology of confidence in Bayesian esimation is called the <a href="https://en.wikipedia.org/wiki/Credible_interval"  class="external-link" target="_blank" rel="noopener">credible Interval</a> which requires the full posterior. I wrote a function to plot the posterior for the sample from <code>p1</code> below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> gamma <span style="color:#f92672">import</span> posterior_distribution
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>posterior_distribution(alpha, beta, sample)
+</span></span></code></pre></div><p><img src="/bayesmle_files/bayesmle_57_0.png" alt="png"></p>
+<p>As we saw the Bayesian estimator requires the full posterior distribution. Without a conjugate prior Bayesian methods requires numerical approximation to the posterior which computationally expenisve. Despite the added complexity, Bayesian methods allow us to handle situations where we might not have much data and can often lead us to estimates with smaller variance.</p>
+<p>One approach to approximating the posterior distribution is to randomly sample the the prior distribution and then evaluate the likelihood of that prior value and the data using Bayes rule,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mrow><mi>L</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo><mtext> </mtext><mi>P</mi><mo stretchy="false">(</mo><mi>λ</mi><mo stretchy="false">)</mo></mrow><mrow><mi>m</mi><mo stretchy="false">(</mo><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex"> P(\lambda \, \vert \, y_1, y_2, \ldots, y_n)
+ \; = \; 
+\frac{ L(\lambda \, \vert \,  y_1, y_2, \ldots, y_n) \, P(\lambda)}{m(y_1, y_2, \ldots, y_n)}
+</annotation></semantics></math></span>
+<p>Repeatedly sampling the prior and evaluating the likelihood multiple times gives us a good approximation to the posterior distribution. Once we have the posterior distribution we can then evaluate the expected value of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+. A common method for generating the random samples of the prior above is through <a href="https://en.wikipedia.org/wiki/Markov_chain_Monte_Carlo"  class="external-link" target="_blank" rel="noopener">Markov Chain Monte Carlo Methods</a>. Bayesian methods with MCMC can be used easily with <a href="https://docs.pymc.io/"  class="external-link" target="_blank" rel="noopener">PyMC</a>!</p>
+<p>We begin by importing the library</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> pymc3 <span style="color:#66d9ef">as</span> pm
+</span></span></code></pre></div><p>Then define the model as the same Poisson-Gamma above, and sample it 5,000 times to get the expected mean:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">with</span> pm<span style="color:#f92672">.</span>Model() <span style="color:#66d9ef">as</span> model_1:
+</span></span><span style="display:flex;"><span>    λ <span style="color:#f92672">=</span> pm<span style="color:#f92672">.</span>Gamma(<span style="color:#e6db74">&#39;λ&#39;</span>, alpha<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>, beta<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>    y <span style="color:#f92672">=</span> pm<span style="color:#f92672">.</span>Poisson(<span style="color:#e6db74">&#39;y&#39;</span>, mu<span style="color:#f92672">=</span>λ, observed<span style="color:#f92672">=</span>list(sample))
+</span></span><span style="display:flex;"><span>    trace <span style="color:#f92672">=</span> pm<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">5000</span>, tune<span style="color:#f92672">=</span><span style="color:#ae81ff">2000</span>, return_inferencedata<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span></code></pre></div><pre><code>Auto-assigning NUTS sampler...
+Initializing NUTS using jitter+adapt_diag...
+Sequential sampling (2 chains in 1 job)
+NUTS: [λ]
+</code></pre>
+<div>
+    <style>
+        /* Turns off some styling */
+        progress {
+            /* gets rid of default border in Firefox and Opera. */
+            border: none;
+            /* Needs to be in here for Safari polyfill so background images work as expected. */
+            background-size: auto;
+        }
+        .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+            background: #F44336;
+        }
+    </style>
+  <progress value='7000' class='' max='7000' style='width:300px; height:20px; vertical-align: middle;'></progress>
+  100.00% [7000/7000 00:14<00:00 Sampling chain 0, 0 divergences]
+</div>
+<div>
+    <style>
+        /* Turns off some styling */
+        progress {
+            /* gets rid of default border in Firefox and Opera. */
+            border: none;
+            /* Needs to be in here for Safari polyfill so background images work as expected. */
+            background-size: auto;
+        }
+        .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+            background: #F44336;
+        }
+    </style>
+  <progress value='7000' class='' max='7000' style='width:300px; height:20px; vertical-align: middle;'></progress>
+  100.00% [7000/7000 00:14<00:00 Sampling chain 1, 0 divergences]
+</div>
+<pre><code>Sampling 2 chains for 2_000 tune and 5_000 draw iterations (4_000 + 10_000 draws total) took 29 seconds.
+</code></pre>
+<p>We can then view the posterior distribution using the <a href="https://arviz-devs.github.io/arviz/"  class="external-link" target="_blank" rel="noopener">ArviZ</a> library,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> arviz <span style="color:#66d9ef">as</span> az
+</span></span><span style="display:flex;"><span>az<span style="color:#f92672">.</span>plot_posterior(trace)
+</span></span></code></pre></div><pre><code>&lt;AxesSubplot:title={'center':'λ'}&gt;
+</code></pre>
+<p><img src="/bayesmle_files/bayesmle_63_1.png" alt="png"></p>
+<p>The results are the same as before with the analytical posterior.</p>
+<p><em>We should note that <strong>Bayesian estimators are ALWAYS biased due to their choice of prior</strong>, however, they can reduce the variance in our estimators.</em>  This is will become evident in the next example where we show another area where Bayesian method shine is when you have a limited amount of data, but a lot of domain knowledge.</p>
+<p>Say we only have 20 sample points, we can calculate the MLE,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mle(sample[<span style="color:#f92672">-</span><span style="color:#ae81ff">20</span>:])
+</span></span></code></pre></div><pre><code>1.0526315789473684
+</code></pre>
+<p>Not too bad! However, the confidence interval is quite large,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ci(sample[<span style="color:#f92672">-</span><span style="color:#ae81ff">20</span>:])
+</span></span></code></pre></div><pre><code>(0.6101254949789889, 1.4951376629157478)
+</code></pre>
+<p>Let&rsquo;s define our model to be a Poisson-Exponential model where the prior distribution is an <a href="https://en.wikipedia.org/wiki/Exponential_distribution"  class="external-link" target="_blank" rel="noopener">exponential distribution</a> pictured below from <a href="https://docs.pymc.io/api/distributions/continuous.html#pymc3.distributions.continuous.Exponential"  class="external-link" target="_blank" rel="noopener">PyMC3&rsquo;s site</a>:</p>
+<p><img src="https://docs.pymc.io/api/distributions/continuous-5.png" alt=""></p>
+<p>It&rsquo;s unfortunate that these two distributions both use <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ for their paramaters, but I will do my best to make it clear which <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ I refer to.  Using a larger <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ in the exponential prior gives us a smaller sample space while a smaller <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+ in the exponential prior gives us a larger sampling space. Let&rsquo;s choose a define the prior <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>exp</mi><mo>⁡</mo><mo stretchy="false">(</mo><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\exp(-1)</annotation></semantics></math></span>
+ and sample it using MCMC methods 500 times.  We can then plot the posterior and the sampling space using the <a href="https://arviz-devs.github.io/arviz/api/generated/arviz.plot_trace.html"  class="external-link" target="_blank" rel="noopener">plot_trace</a> method,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">with</span> pm<span style="color:#f92672">.</span>Model() <span style="color:#66d9ef">as</span> model_2:
+</span></span><span style="display:flex;"><span>    λ <span style="color:#f92672">=</span> pm<span style="color:#f92672">.</span>Exponential(<span style="color:#e6db74">&#39;λ&#39;</span>, <span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>    y <span style="color:#f92672">=</span> pm<span style="color:#f92672">.</span>Poisson(<span style="color:#e6db74">&#39;y&#39;</span>, mu<span style="color:#f92672">=</span>λ, observed<span style="color:#f92672">=</span>list(sample[<span style="color:#f92672">-</span><span style="color:#ae81ff">20</span>:<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]))
+</span></span><span style="display:flex;"><span>    trace2 <span style="color:#f92672">=</span> pm<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">500</span>, tune<span style="color:#f92672">=</span><span style="color:#ae81ff">2000</span>, cores<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, return_inferencedata<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>az<span style="color:#f92672">.</span>plot_trace(trace2, var_names<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;λ&#39;</span>])
+</span></span></code></pre></div><pre><code>Auto-assigning NUTS sampler...
+Initializing NUTS using jitter+adapt_diag...
+Multiprocess sampling (2 chains in 2 jobs)
+NUTS: [λ]
+</code></pre>
+<div>
+    <style>
+        /* Turns off some styling */
+        progress {
+            /* gets rid of default border in Firefox and Opera. */
+            border: none;
+            /* Needs to be in here for Safari polyfill so background images work as expected. */
+            background-size: auto;
+        }
+        .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+            background: #F44336;
+        }
+    </style>
+  <progress value='5000' class='' max='5000' style='width:300px; height:20px; vertical-align: middle;'></progress>
+  100.00% [5000/5000 00:11<00:00 Sampling 2 chains, 0 divergences]
+</div>
+<pre><code>Sampling 2 chains for 2_000 tune and 500 draw iterations (4_000 + 1_000 draws total) took 12 seconds.
+
+
+
+
+
+array([[&lt;AxesSubplot:title={'center':'λ'}&gt;,
+        &lt;AxesSubplot:title={'center':'λ'}&gt;]], dtype=object)
+</code></pre>
+<p><img src="/bayesmle_files/bayesmle_69_4.png" alt="png"></p>
+<p>We can then calculate the expected value of the posterior and the credible region,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>az<span style="color:#f92672">.</span>summary(trace2, kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;stats&#34;</span>)
+</span></span></code></pre></div><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>mean</th>
+      <th>sd</th>
+      <th>hdi_3%</th>
+      <th>hdi_97%</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>λ</th>
+      <td>1.037</td>
+      <td>0.231</td>
+      <td>0.662</td>
+      <td>1.488</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>The values are nearly the same as MLE.</p>
+<p>One thing to note is that we can see that the posterior isn&rsquo;t very well defined using only 500 MCMC steps. We can see that there seems to be some <a href="https://www.coursera.org/lecture/introduction-to-pymc3/autocorrelation-and-effective-sample-size-YSW3x"  class="external-link" target="_blank" rel="noopener">autocorrelation in the sample space</a>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>az<span style="color:#f92672">.</span>plot_autocorr(trace2)
+</span></span></code></pre></div><pre><code>array([&lt;AxesSubplot:title={'center':'λ\n0'}&gt;,
+       &lt;AxesSubplot:title={'center':'λ\n1'}&gt;], dtype=object)
+</code></pre>
+<p><img src="/bayesmle_files/bayesmle_73_1.png" alt="png"></p>
+<p>Let&rsquo;s bump the number of samples up to 10,000 to see how the posterior distribution looks,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">with</span> model_2:
+</span></span><span style="display:flex;"><span>    trace3 <span style="color:#f92672">=</span> pm<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">10000</span>, tune<span style="color:#f92672">=</span><span style="color:#ae81ff">2000</span>, cores<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, return_inferencedata<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>az<span style="color:#f92672">.</span>plot_trace(trace3, var_names<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;λ&#39;</span>])
+</span></span></code></pre></div><pre><code>Auto-assigning NUTS sampler...
+Initializing NUTS using jitter+adapt_diag...
+Multiprocess sampling (2 chains in 2 jobs)
+NUTS: [λ]
+</code></pre>
+<div>
+    <style>
+        /* Turns off some styling */
+        progress {
+            /* gets rid of default border in Firefox and Opera. */
+            border: none;
+            /* Needs to be in here for Safari polyfill so background images work as expected. */
+            background-size: auto;
+        }
+        .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+            background: #F44336;
+        }
+    </style>
+  <progress value='24000' class='' max='24000' style='width:300px; height:20px; vertical-align: middle;'></progress>
+  100.00% [24000/24000 00:31<00:00 Sampling 2 chains, 0 divergences]
+</div>
+<pre><code>Sampling 2 chains for 2_000 tune and 10_000 draw iterations (4_000 + 20_000 draws total) took 32 seconds.
+
+
+
+
+
+array([[&lt;AxesSubplot:title={'center':'λ'}&gt;,
+        &lt;AxesSubplot:title={'center':'λ'}&gt;]], dtype=object)
+</code></pre>
+<p><img src="/bayesmle_files/bayesmle_75_4.png" alt="png"></p>
+<p>We can see the posterior is pretty well defined, with a little skew right. Let&rsquo;s get the expected mean and credible interval,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>az<span style="color:#f92672">.</span>summary(trace3, kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;stats&#34;</span>)
+</span></span></code></pre></div><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>mean</th>
+      <th>sd</th>
+      <th>hdi_3%</th>
+      <th>hdi_97%</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>λ</th>
+      <td>1.048</td>
+      <td>0.229</td>
+      <td>0.62</td>
+      <td>1.468</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>The Bayesian in method in this case isnt much better than the MLE, but credible interval is more narrow than the confidence interval.</p>
+<p>We can also see the mode of the posterior distribution is nearly directly over 1.0, which is the correct value for our parameter.</p>
+<p>Using the posterior mode as an estimator is called the <a href="https://en.wikipedia.org/wiki/Maximum_a_posteriori_estimation"  class="external-link" target="_blank" rel="noopener">Maximum A-Posteriori (MAP)</a> and we can see the calculated value below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>pm<span style="color:#f92672">.</span>find_MAP(model<span style="color:#f92672">=</span>model_2)
+</span></span></code></pre></div><div>
+    <style>
+        /* Turns off some styling */
+        progress {
+            /* gets rid of default border in Firefox and Opera. */
+            border: none;
+            /* Needs to be in here for Safari polyfill so background images work as expected. */
+            background-size: auto;
+        }
+        .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+            background: #F44336;
+        }
+    </style>
+  <progress value='6' class='' max='6' style='width:300px; height:20px; vertical-align: middle;'></progress>
+  100.00% [6/6 00:00<00:00 logp = -26.451, ||grad|| = 6.1371]
+</div>
+<pre><code>{'λ_log__': array(-1.70517194e-07), 'λ': array(0.99999983)}
+</code></pre>
+<p>That&rsquo;s really good for only 20 data points!!</p>
+<h2 id="6-connecting-the-two-methods">
+  6. Connecting The Two Methods  <a class="anchor" id="sixth-bullet"></a>
+  <a class="heading-link" href="#6-connecting-the-two-methods">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>One way we can connect Bayesian methods with the MLE is by choosing a constant prior <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi></mrow><annotation encoding="application/x-tex">C</annotation></semantics></math></span>
+ or uniform (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>U</mi><mo stretchy="false">(</mo><mi>θ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">U(\theta)</annotation></semantics></math></span>
+ so long <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>θ</mi><mtext> </mtext><mo>≥</mo><mtext> </mtext><mi>λ</mi></mrow><annotation encoding="application/x-tex">\theta \, \geq \, \lambda</annotation></semantics></math></span>
+). Then MAP is the same as the MLE:</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mrow><mi>max</mi><mo>⁡</mo></mrow><mi>λ</mi></munder><mtext> </mtext><mi>P</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mn>1</mn><mrow><mi>m</mi><mo stretchy="false">(</mo><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo></mrow></mfrac><mtext> </mtext><munder><mrow><mi>max</mi><mo>⁡</mo></mrow><mi>λ</mi></munder><mtext> </mtext><mi>L</mi><mo stretchy="false">(</mo><mi>λ</mi><mtext> </mtext><mi mathvariant="normal">∣</mi><mtext> </mtext><msub><mi>y</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>y</mi><mn>2</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex"> \max_{\lambda} \, P(\lambda \, \vert \, y_1, y_2, \ldots, y_n)
+ \; = \; 
+\frac{1}{m(y_1, y_2, \ldots, y_n)} \, \max_{\lambda} \, L(\lambda \, \vert \,  y_1, y_2, \ldots, y_n)
+</annotation></semantics></math></span>
+<p>We can show with PyMC3 by choosing the prior as a <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>U</mi><mo stretchy="false">(</mo><mn>10</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">U(10)</annotation></semantics></math></span>
+:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">with</span> pm<span style="color:#f92672">.</span>Model() <span style="color:#66d9ef">as</span> model_3:
+</span></span><span style="display:flex;"><span>    λ <span style="color:#f92672">=</span> pm<span style="color:#f92672">.</span>Uniform(<span style="color:#e6db74">&#39;λ&#39;</span>, lower<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>, upper<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>)
+</span></span><span style="display:flex;"><span>    y <span style="color:#f92672">=</span> pm<span style="color:#f92672">.</span>Poisson(<span style="color:#e6db74">&#39;y&#39;</span>, mu<span style="color:#f92672">=</span>λ, observed<span style="color:#f92672">=</span>list(sample[<span style="color:#f92672">-</span><span style="color:#ae81ff">20</span>:<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]))
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>pm<span style="color:#f92672">.</span>find_MAP(model<span style="color:#f92672">=</span>model_3)
+</span></span></code></pre></div><div>
+    <style>
+        /* Turns off some styling */
+        progress {
+            /* gets rid of default border in Firefox and Opera. */
+            border: none;
+            /* Needs to be in here for Safari polyfill so background images work as expected. */
+            background-size: auto;
+        }
+        .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+            background: #F44336;
+        }
+    </style>
+  <progress value='8' class='' max='8' style='width:300px; height:20px; vertical-align: middle;'></progress>
+  100.00% [8/8 00:00<00:00 logp = -70.371, ||grad|| = 37.5]
+</div>
+<pre><code>{'λ_interval__': array(-2.14006616), 'λ': array(1.05263158)}
+</code></pre>
+<p>This the the same value as the MLE!</p>
+<p>The <a href="https://en.wikipedia.org/wiki/Bernstein%E2%80%93von_Mises_theorem"  class="external-link" target="_blank" rel="noopener">Bernstein-von Miss Theorem</a> shows rigorously that in the limit of large data Bayesian estimators and Maximum Likelihood estimators converge to the same thing.</p>
+<h2 id="7-conclusions">
+  7. Conclusions  <a class="anchor" id="seventh-bullet"></a>
+  <a class="heading-link" href="#7-conclusions">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>In this post I discussed frequentist and Bayesian estimation techniques applied to data from a <a href="https://en.wikipedia.org/wiki/Poisson_distribution"  class="external-link" target="_blank" rel="noopener">Poisson distribution</a> and covered how to quantity the uncertaintity in each method. I showed how to sample a probability distribution written in Scala from Python using <a href="https://www.py4j.org/"  class="external-link" target="_blank" rel="noopener">Py4J</a>. For frequentist methods I covered <a href="https://en.wikipedia.org/wiki/Maximum_likelihood_estimation"  class="external-link" target="_blank" rel="noopener">maximum likelihood estimation</a>, its convergence and quantifying uncertaintity with confidence intervals using the <a href="https://en.wikipedia.org/wiki/Fisher_information"  class="external-link" target="_blank" rel="noopener">Fisher information</a>. I also covered using Bayesian estimators using <a href="https://docs.pymc.io/"  class="external-link" target="_blank" rel="noopener">PyMC3</a> and quantifying their uncertaintity with <a href="https://en.wikipedia.org/wiki/Credible_interval"  class="external-link" target="_blank" rel="noopener">credible intervals</a> using <a href="https://arviz-devs.github.io/arviz/"  class="external-link" target="_blank" rel="noopener">ArviZ</a>. Finally we showed the connection between the maximum likelihood esimators and Bayesian estimators by choosing a <a href="https://stats.stackexchange.com/questions/124753/what-are-examples-of-flat-priors#:~:text=The%20term%20%22flat%22%20in%20reference,c%20over%20the%20real%20line."  class="external-link" target="_blank" rel="noopener">flat prior</a></p>
+<p>I leared a lot in creating this post and hope you enjoyed it!</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"></code></pre></div>
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>

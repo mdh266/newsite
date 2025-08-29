@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>XGBoost on Mike Harmon</title>
+    <link>http://localhost:1313/tags/xgboost/</link>
+    <description>Recent content in XGBoost on Mike Harmon</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Thu, 23 Apr 2020 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/xgboost/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Green Buildings 3: Build &amp; Deploy Models With MLflow &amp; Docker</title>
+      <link>http://localhost:1313/posts/greenbuildings3/</link>
+      <pubDate>Thu, 23 Apr 2020 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/posts/greenbuildings3/</guid>
+      <description>&lt;h2 id=&#34;contents&#34;&gt;&#xA;  Contents&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#contents&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#intro&#34; &gt;1. Introduction&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#mlflow-one&#34; &gt;2. Intro To MLflow&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#mlflow-two&#34; &gt;3. Linear Regression &amp;amp; Logging A Simple Run&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#mlflow-three&#34; &gt;4. XGBoost &amp;amp; Logging Nested Runs for GridSearchCV&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#mlflow-four&#34; &gt;5. MLflow Models: Model Serving With REST APIs&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#mlflow-five&#34; &gt;6. Deploying to Google App Engine with Docker&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#fifth-bullet&#34; &gt;7. Conclusions &lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;hr&gt;&#xA;&lt;h2 id=&#34;introduction&#34;&gt;&#xA;  Introduction &lt;a class=&#34;anchor&#34; id=&#34;intro&#34;&gt;&lt;/a&gt;&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#introduction&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;This is the third and final post in a series of blog posts about energy usage and green house gas emissions of buildings in New York City. In the &lt;a href=&#34;http://michael-harmon.com/posts/greenbuildings1/&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;first post&lt;/a&gt; I covered exploratory data analysis and outlier removal.  In the &lt;a href=&#34;http://michael-harmon.com/posts/greenbuildings2/&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;second post&lt;/a&gt; I covered imputing missing values. These topics make up the majority of what is called &amp;ldquo;data cleaning&amp;rdquo;.  This last post will deal with model building and model deployment. Specifically I will build a model of New York City building green house gas emissions based on the building energy usage metrics. After I build a sufficiently accurate model I will convert the model to &lt;a href=&#34;https://restfulapi.net/&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;REST API&lt;/a&gt; for serving and then deploy the REST API to the cloud.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

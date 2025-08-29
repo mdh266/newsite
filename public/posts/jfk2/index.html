@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Creating An AI-Based JFK Speech Writer: Part 2 · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+1. Introduction
+2. Data Preparation
+3. A Bidirectional GRU Model
+4. Generating Text
+5. Next Steps
+
+  Introduction 
+  
+    
+    Link to heading
+  
+
+
+In this blog post I follow up on the last post and develop a model for text generation using Recurrent Neural Networks. I&rsquo;ll build a bi-directional gated recurrent unit (GRU) that is trained on speeches made by President John F. Kennedy. Specifically, I&rsquo;ll go over how to build a model that predicts the &ldquo;next word&rdquo; in a sentence based off a sequence of the words coming before it. This project was more challenging than I initially anticipated due to the data preparation needs of the problem as well as the fact the performance is hard to quantify. The data preparation was more involved then other posts that I have done on natural language processing since it involves modeling a sequences of words instead of using a &ldquo;bag-of-words.&rdquo; I&rsquo;ll go over some of these details more in the post.">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Creating An AI-Based JFK Speech Writer: Part 2">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. Data Preparation
+3. A Bidirectional GRU Model
+4. Generating Text
+5. Next Steps
+Introduction Link to heading In this blog post I follow up on the last post and develop a model for text generation using Recurrent Neural Networks. I’ll build a bi-directional gated recurrent unit (GRU) that is trained on speeches made by President John F. Kennedy. Specifically, I’ll go over how to build a model that predicts the “next word” in a sentence based off a sequence of the words coming before it. This project was more challenging than I initially anticipated due to the data preparation needs of the problem as well as the fact the performance is hard to quantify. The data preparation was more involved then other posts that I have done on natural language processing since it involves modeling a sequences of words instead of using a “bag-of-words.” I’ll go over some of these details more in the post.">
+
+<meta property="og:url" content="http://localhost:1313/posts/jfk2/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Creating An AI-Based JFK Speech Writer: Part 2">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. Data Preparation
+3. A Bidirectional GRU Model
+4. Generating Text
+5. Next Steps
+Introduction Link to heading In this blog post I follow up on the last post and develop a model for text generation using Recurrent Neural Networks. I’ll build a bi-directional gated recurrent unit (GRU) that is trained on speeches made by President John F. Kennedy. Specifically, I’ll go over how to build a model that predicts the “next word” in a sentence based off a sequence of the words coming before it. This project was more challenging than I initially anticipated due to the data preparation needs of the problem as well as the fact the performance is hard to quantify. The data preparation was more involved then other posts that I have done on natural language processing since it involves modeling a sequences of words instead of using a “bag-of-words.” I’ll go over some of these details more in the post.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2023-04-01T00:00:00+00:00">
+    <meta property="article:modified_time" content="2023-04-01T00:00:00+00:00">
+    <meta property="article:tag" content="Keras">
+    <meta property="article:tag" content="TensorFlow">
+    <meta property="article:tag" content="RNN">
+    <meta property="article:tag" content="GRU">
+    <meta property="article:tag" content="NLP">
+      <meta property="og:see_also" content="http://localhost:1313/posts/bert/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/jfk1/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/nlp4/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/nlp3/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/nlp1/">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/jfk2/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/jfk2/">
+              Creating An AI-Based JFK Speech Writer: Part 2
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2023-04-01T00:00:00Z">
+                April 1, 2023
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              17-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/keras/">Keras</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/tensorflow/">TensorFlow</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/rnn/">RNN</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/gru/">GRU</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/nlp/">NLP</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#first-bullet" >1. Introduction</a></strong></p>
+<p><strong><a href="#second-bullet" >2. Data Preparation</a></strong></p>
+<p><strong><a href="#third-bullet" >3. A Bidirectional GRU Model</a></strong></p>
+<p><strong><a href="#fourth-bullet" >4. Generating Text</a></strong></p>
+<p><strong><a href="#fifth-bullet" >5. Next Steps</a></strong></p>
+<h2 id="introduction">
+  Introduction <a class="anchor" id="first-bullet"></a>
+  <a class="heading-link" href="#introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this blog post I follow up on the last <a href="http://michael-harmon.com/blog/jfk1.html"  class="external-link" target="_blank" rel="noopener">post</a> and develop a model for text generation using <a href="https://en.wikipedia.org/wiki/Recurrent_neural_network"  class="external-link" target="_blank" rel="noopener">Recurrent Neural Networks</a>. I&rsquo;ll build a bi-directional <a href="https://en.wikipedia.org/wiki/Gated_recurrent_unit"  class="external-link" target="_blank" rel="noopener">gated recurrent unit (GRU)</a> that is trained on speeches made by <a href="https://en.wikipedia.org/wiki/John_F._Kennedy"  class="external-link" target="_blank" rel="noopener">President John F. Kennedy</a>. Specifically, I&rsquo;ll go over how to build a model that predicts the &ldquo;next word&rdquo; in a sentence based off a sequence of the words coming before it. This project was more challenging than I initially anticipated due to the data preparation needs of the problem as well as the fact the performance is hard to quantify. The data preparation was more involved then other posts that I have done on natural language processing since it involves modeling a sequences of words instead of using a &ldquo;<a href="https://en.wikipedia.org/wiki/Bag-of-words_model"  class="external-link" target="_blank" rel="noopener">bag-of-words</a>.&rdquo; I&rsquo;ll go over some of these details more in the post.</p>
+<p>The concept of sequence modeling in <a href="https://en.wikipedia.org/wiki/Recurrent_neural_network"  class="external-link" target="_blank" rel="noopener">recurrent neural networks</a> is also different from other models that I have done in the past and I will spend some time covering this topic. Interestingly, the next word prediction turns out to be a multi-class classification problem, albeit with a very large number of classes! Let&rsquo;s get started with the problem.</p>
+<p>The first step is to import the necessary <a href="https://www.tensorflow.org/"  class="external-link" target="_blank" rel="noopener">TensorFlow</a> and <a href="https://www.tensorflow.org/"  class="external-link" target="_blank" rel="noopener">Google Cloud</a> Python packages (since the data is in <a href="https://cloud.google.com/storage?"  class="external-link" target="_blank" rel="noopener">Google Cloud Storage</a>) :</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> tensorflow <span style="color:#66d9ef">as</span> tf 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> google.oauth2 <span style="color:#f92672">import</span> service_account
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> google.cloud <span style="color:#f92672">import</span> storage
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>tf<span style="color:#f92672">.</span>compat<span style="color:#f92672">.</span>v1<span style="color:#f92672">.</span>logging<span style="color:#f92672">.</span>set_verbosity(<span style="color:#e6db74">&#39;ERROR&#39;</span>)
+</span></span><span style="display:flex;"><span>tf<span style="color:#f92672">.</span>config<span style="color:#f92672">.</span>list_physical_devices(<span style="color:#e6db74">&#39;GPU&#39;</span>)
+</span></span></code></pre></div><pre><code>[PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(tf<span style="color:#f92672">.</span>__version__)
+</span></span></code></pre></div><pre><code>2.9.0
+</code></pre>
+<h2 id="data-preparation">
+  Data Preparation <a class="anchor" id="second-bullet"></a>
+  <a class="heading-link" href="#data-preparation">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Next I connect to <a href="https://cloud.google.com/storage?"  class="external-link" target="_blank" rel="noopener">Google Cloud Storage</a> to download all the concatenated speeches by President Kennedy. To do this I get my GCP credentials and then instantiate the client to connect to the bucket <code>gs://harmon-kennedy/</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>credentials <span style="color:#f92672">=</span> service_account<span style="color:#f92672">.</span>Credentials<span style="color:#f92672">.</span>from_service_account_file(<span style="color:#e6db74">&#39;credentials.json&#39;</span>)
+</span></span><span style="display:flex;"><span>client <span style="color:#f92672">=</span> storage<span style="color:#f92672">.</span>Client(project<span style="color:#f92672">=</span>credentials<span style="color:#f92672">.</span>project_id, credentials<span style="color:#f92672">=</span>credentials)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>bucket <span style="color:#f92672">=</span> client<span style="color:#f92672">.</span>get_bucket(<span style="color:#e6db74">&#34;harmon-kennedy&#34;</span>)
+</span></span></code></pre></div><p>Now I can download all the speeches that were concatenated into one file,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>blob <span style="color:#f92672">=</span> bucket<span style="color:#f92672">.</span>blob(<span style="color:#e6db74">&#34;all_jfk_speeches.txt&#34;</span>)
+</span></span><span style="display:flex;"><span>text <span style="color:#f92672">=</span> blob<span style="color:#f92672">.</span>download_as_text()
+</span></span></code></pre></div><p>I can see the first 300 characters of the text are,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>text[:<span style="color:#ae81ff">300</span>]
+</span></span></code></pre></div><pre><code>'Of particular importance to South Dakota are the farm policies of the Republican party - the party of Benson, Nixon and Mundt - the party which offers our young people no incentive to return to the farm - which offers the farmer only the prospect of lower and lower income - and which offers the nati'
+</code></pre>
+<p>To get situated with the data I can get the number of characters in the text as well as the number of unique characters,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Length of text: </span><span style="color:#e6db74">{</span>len(text)<span style="color:#e6db74">}</span><span style="color:#e6db74"> characters&#39;</span>)
+</span></span></code></pre></div><pre><code>Length of text: 7734579 characters
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>vocab <span style="color:#f92672">=</span> sorted(set(text))
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;</span><span style="color:#e6db74">{</span>len(vocab)<span style="color:#e6db74">}</span><span style="color:#e6db74"> unique characters&#39;</span>)
+</span></span></code></pre></div><pre><code>67 unique characters
+</code></pre>
+<p>Since I&rsquo;ll be making a word level model this isn&rsquo;t totally helpful. Instead I&rsquo;ll get the total number of words and number of unique words. To do this I need to clean the text; convert newline characters to spaces, remove non-English characters and convert characters to lower case.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>words <span style="color:#f92672">=</span> text<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, <span style="color:#e6db74">&#34; &#34;</span>)<span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#34; &#34;</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>clean_words <span style="color:#f92672">=</span> [word<span style="color:#f92672">.</span>lower() <span style="color:#66d9ef">for</span> word <span style="color:#f92672">in</span> words <span style="color:#66d9ef">if</span> word<span style="color:#f92672">.</span>isalpha()]
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>clean_text <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34; &#34;</span><span style="color:#f92672">.</span>join(clean_words)
+</span></span></code></pre></div><p>The impact this had on the same text from above can be seen below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>clean_text[:<span style="color:#ae81ff">300</span>]
+</span></span></code></pre></div><pre><code>'of particular importance to south dakota are the farm policies of the republican party the party of nixon and mundt the party which offers our young people no incentive to return to the farm which offers the farmer only the prospect of lower and lower income and which offers the nation the vision of'
+</code></pre>
+<p>The total number of clean words and unique clean words in the text are,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>len(clean_words)<span style="color:#e6db74">}</span><span style="color:#e6db74"> number of clean words&#34;</span>)
+</span></span></code></pre></div><pre><code>1196835 number of clean words
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>len(set(clean_words))<span style="color:#e6db74">}</span><span style="color:#e6db74"> unique clean words&#34;</span>)
+</span></span></code></pre></div><pre><code>19291 unique clean words
+</code></pre>
+<p>Now let&rsquo;s talk about how we can process our text data for training a model to predict the next word.</p>
+<p>The way a word level text generation model is built is to take a sequence of N words and then predict the next one. To create a training set, the text is split up into sliding widows where the feature vector <strong>x</strong> is the N words in the sequence of text and the target y is the N+1 word in that text. We repeat this process for N=1,2,3,4,&hellip;</p>
+<p>For instance take the sentence &ldquo;the man is walking down the street.&rdquo; To build a model that predicts the next word based on the 4 words that come before it, it is necessary to create the 4 training examples as shown below,</p>
+<figure>
+<img src="https://github.com/mdh266/JFKSpeechWriter/blob/main/images/nextword.png?raw=1" alt="Trulli" style="width:75%">
+<figcaption align = "center">
+From https://www.youtube.com/watch?v=VAMKuRAh2nc
+</figcaption>
+</figure>
+<p>For this model I will use <code>seq_length</code> as <code>N</code> or the number words in the text used to predict the next word. In order to be able to predict the next word I need to reduce the total number words that are possible to predict to a finite number. This means limiting the number of possible words to be a set of size <code>vocab_size</code>. This in turn converts the next word prediction problem into a classification problem with <code>vocab-size</code> classes.</p>
+<p>In order to convert the text which is represented as a sequence of words into numerical vectors I&rsquo;ll use the <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/TextVectorization"  class="external-link" target="_blank" rel="noopener">TextVectorization</a> class. This technique is discussed in more in a prior post which you can read <a href="http://michael-harmon.com/blog/NLP4.html"  class="external-link" target="_blank" rel="noopener">here</a>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>vocab_size <span style="color:#f92672">=</span> <span style="color:#ae81ff">12000</span>
+</span></span><span style="display:flex;"><span>seq_length <span style="color:#f92672">=</span> <span style="color:#ae81ff">30</span>
+</span></span></code></pre></div><p>I first instantiate the <code>TextVectorization</code> layer and fit it to the text:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> tensorflow.keras.layers.experimental.preprocessing <span style="color:#f92672">import</span> TextVectorization
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>vectorizer_layer <span style="color:#f92672">=</span> TextVectorization(
+</span></span><span style="display:flex;"><span>    standardize<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;lower_and_strip_punctuation&#34;</span>,
+</span></span><span style="display:flex;"><span>    max_tokens<span style="color:#f92672">=</span>vocab_size,
+</span></span><span style="display:flex;"><span>    output_mode<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;int&#34;</span>,
+</span></span><span style="display:flex;"><span>    output_sequence_length<span style="color:#f92672">=</span>seq_length,
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>vectorizer_layer<span style="color:#f92672">.</span>adapt([clean_text])
+</span></span></code></pre></div><pre><code>2024-01-28 17:07:18.274711: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+</code></pre>
+<p>Note that I do this on the <code>clean_text</code> string and not the text string.</p>
+<p>I can then get the set of words in the <code>vectorizer_layer</code>&rsquo;s &ldquo;vocabulary&rdquo; and create a dictionary to look up each word&rsquo;s equivalent numerical value.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>voc <span style="color:#f92672">=</span> vectorizer_layer<span style="color:#f92672">.</span>get_vocabulary()
+</span></span><span style="display:flex;"><span>word_index <span style="color:#f92672">=</span> dict(zip(voc, range(len(voc))))
+</span></span></code></pre></div><p>We can see the vocab size of the <code>vectorizer_layer</code>,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>len(voc)
+</span></span></code></pre></div><pre><code>12000
+</code></pre>
+<p>The numerical value for each of the first two words in the example text above is then,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>word_index[<span style="color:#e6db74">&#39;of&#39;</span>]
+</span></span></code></pre></div><pre><code>3
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>word_index[<span style="color:#e6db74">&#39;particular&#39;</span>]
+</span></span></code></pre></div><pre><code>717
+</code></pre>
+<p>The numerical value for the &ldquo;out of vocabulary&rdquo; token is,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>word_index[<span style="color:#e6db74">&#39;[UNK]&#39;</span>]
+</span></span></code></pre></div><pre><code>1
+</code></pre>
+<p>Next I&rsquo;ll create the dataset X and y, where X is the vector of features, which in turn are numerical values for the sequence of words. The vector y is the target which consist of integers that represents the numerical value of next word in the corresponding sequence in X:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>words_seq <span style="color:#f92672">=</span> [clean_words[i:i <span style="color:#f92672">+</span> seq_length] <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(clean_words) <span style="color:#f92672">-</span> seq_length<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)]
+</span></span><span style="display:flex;"><span>next_word <span style="color:#f92672">=</span> [clean_words[i <span style="color:#f92672">+</span> seq_length] <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(clean_words) <span style="color:#f92672">-</span> seq_length<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)]
+</span></span></code></pre></div><pre><code>2024-01-28 17:07:21.834528: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+2024-01-28 17:07:21.836850: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+</code></pre>
+<p>Each entry in <code>words_seq</code> is a list of the <code>seq_length</code> words or tokens that make up the sequence in that training example.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">for</span> words <span style="color:#f92672">in</span> words_seq[:<span style="color:#ae81ff">2</span>]:
+</span></span><span style="display:flex;"><span>    print(<span style="color:#e6db74">&#34; &#34;</span><span style="color:#f92672">.</span>join(words) <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><pre><code>of particular importance to south dakota are the farm policies of the republican party the party of nixon and mundt the party which offers our young people no incentive to
+
+particular importance to south dakota are the farm policies of the republican party the party of nixon and mundt the party which offers our young people no incentive to return
+</code></pre>
+<p>Now I&rsquo;ll convert the target vector of &ldquo;next words&rdquo; to a vector with &ldquo;numerical values&rdquo; using the <code>word_index</code> dictionary:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>next_cat <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>array([word_index<span style="color:#f92672">.</span>get(word, <span style="color:#ae81ff">1</span>) <span style="color:#66d9ef">for</span> word <span style="color:#f92672">in</span> next_word])
+</span></span><span style="display:flex;"><span>next_cat[:<span style="color:#ae81ff">2</span>]
+</span></span></code></pre></div><pre><code>array([978,   5])
+</code></pre>
+<p>Notice that if the word is not in the <code>word_index</code> then it is given the out of vocabulary int of 1.</p>
+<p>Then I convert those list of lists into a list of strings,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>X <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>array([<span style="color:#e6db74">&#34; &#34;</span><span style="color:#f92672">.</span>join(words_seq[i]) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(next_word))
+</span></span><span style="display:flex;"><span>              <span style="color:#66d9ef">if</span> next_cat[i] <span style="color:#f92672">!=</span> <span style="color:#ae81ff">1</span>])<span style="color:#f92672">.</span>reshape(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>X[:<span style="color:#ae81ff">2</span>]
+</span></span></code></pre></div><pre><code>array([['of particular importance to south dakota are the farm policies of the republican party the party of nixon and mundt the party which offers our young people no incentive to'],
+       ['particular importance to south dakota are the farm policies of the republican party the party of nixon and mundt the party which offers our young people no incentive to return']],
+      dtype='&lt;U260')
+</code></pre>
+<p>The reason for doing this is that this way my model will be able to take inputs that are just plain text instead of needing lists of strings that represent that text. The later would require that new inputs to the model be pre-processed before being feed into the trained model, while the latter means a trained model can just take raw text as the input.</p>
+<p>Notice that I only included sequences of the text where the target word was <strong>not</strong> an out of vocabulary word.</p>
+<p>The next two words that correspond to the targets for the examples above are,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>next_word[:<span style="color:#ae81ff">2</span>]
+</span></span></code></pre></div><pre><code>['return', 'to']
+</code></pre>
+<p>Lastly, I&rsquo;ll create the target vector by filtering out the case where value would be out-of-vocabulary tokens:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>y <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>array([cat <span style="color:#66d9ef">for</span> cat <span style="color:#f92672">in</span> next_cat <span style="color:#66d9ef">if</span> cat <span style="color:#f92672">!=</span> <span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span>y[:<span style="color:#ae81ff">2</span>]
+</span></span></code></pre></div><pre><code>array([978,   5])
+</code></pre>
+<p>The reason for filtering the out-of-vocabulary tokens is I don&rsquo;t want to train a model that predicts out-of-vocabulary words since this would be meaningless to end users.</p>
+<p>The size of the X dataset is,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>X<span style="color:#f92672">.</span>shape
+</span></span></code></pre></div><pre><code>(1187726, 1)
+</code></pre>
+<p>That is X is technically a 1-D array, but each entry in X is an array that contains the string of text. Once we transform the X array we will have a matrix it will be of size,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>vectorizer_layer<span style="color:#f92672">.</span>call(X)<span style="color:#f92672">.</span>shape
+</span></span></code></pre></div><pre><code>TensorShape([1187726, 30])
+</code></pre>
+<p>This is what we would expect, 50 features per entry in our design matrix. Again, I use this set up where X is a 1 dimensional array so that my model has only input of text.</p>
+<p>The target variable has shape,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>y<span style="color:#f92672">.</span>shape
+</span></span></code></pre></div><pre><code>(1187726,)
+</code></pre>
+<p>Now to see what effect the vectorizer layer has on the text I&rsquo;ll feed the first two sequences above through the layer.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>vectorizer_layer<span style="color:#f92672">.</span>call(X[:<span style="color:#ae81ff">2</span>])
+</span></span></code></pre></div><pre><code>&lt;tf.Tensor: shape=(2, 30), dtype=int64, numpy=
+array([[   3,  717,  652,    5,  482, 2772,   16,    2,  143,  280,    3,
+           2,  142,   81,    2,   81,    3,  192,    4, 8230,    2,   81,
+          23, 1290,   13,  406,   57,   46, 3001,    5],
+       [ 717,  652,    5,  482, 2772,   16,    2,  143,  280,    3,    2,
+         142,   81,    2,   81,    3,  192,    4, 8230,    2,   81,   23,
+        1290,   13,  406,   57,   46, 3001,    5,  978]])&gt;
+</code></pre>
+<p>The vectorizer layer converts the array of strings with shape <code>(1179990,)</code> to an matrix of integers of shape <code>(1179990, seq_length)</code>. Each entry in the array will be a integer from 1 to <code>vocab_size</code> and is the integer representation for each word.</p>
+<p>Now that we an understanding of how we can create the dataset let&rsquo;s talk about Recurrent Neural Networks.</p>
+<h2 id="a-bidirectional-gru-model">
+  A Bidirectional GRU Model  <a class="anchor" id="third-bullet"></a>
+  <a class="heading-link" href="#a-bidirectional-gru-model">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><a href="https://en.wikipedia.org/wiki/Recurrent_neural_network"  class="external-link" target="_blank" rel="noopener">Recurrent Neural Networks (RNN)</a> are deep learning models used to predict sequences. These models use an internal state, <strong>h</strong>, to act as memory that processes these sequences and &ldquo;remember&rdquo; things from the past. A quintessential diagram of a RNN is shown below,</p>
+<figure>
+<img src="https://github.com/mdh266/JFKSpeechWriter/blob/main/images/rnn.png?raw=1" alt="Trulli" style="width:75%">
+<figcaption align = "center">
+From https://en.wikipedia.org/wiki/Recurrent_neural_network#/media/File:Recurrent_neural_network_unfold.svg/
+</figcaption>
+</figure>
+<p>A RNN cell is shown on the left and on the right is the &ldquo;un-rolled&rdquo; version that shows how the cell processes a sequence of inputs <strong>x</strong> into outputs <strong>o</strong>; there is a subscript <em>t</em> that denotes entry in the sequence. The subscript for each <strong>h</strong> is used to denote the value the internal state or memory cell in the t-th entry in the sequence.</p>
+<p>There are a number of RNN&rsquo;s and a few are shown below,</p>
+<figure>
+<img src="https://github.com/mdh266/JFKSpeechWriter/blob/main/images/types.png?raw=1" alt="Trulli" style="width:75%">
+<figcaption align = "center">
+From https://calvinfeng.gitbook.io/machine-learning-notebook/supervised-learning/recurrent-neural-network/recurrent_neural_networks/
+</figcaption>
+</figure>
+<p>The model I am building in this post that uses a sequence of words to predict the next word is a &ldquo;many-to-one&rdquo; model. The many-to-one RNN gets its name since we using a sequence &ldquo;many&rdquo; of word to predict one word, i.e. the next word.  Zooming into the RNN cell we focus on a specific type of RNN called a <a href="https://en.wikipedia.org/wiki/Gated_recurrent_unit"  class="external-link" target="_blank" rel="noopener">Gated Recurrent Unit (GRU)</a>. The details of a GRU cell are shown below.</p>
+<figure>
+<img src="https://github.com/mdh266/JFKSpeechWriter/blob/main/images/gru_cell.png?raw=1" alt="Trulli" style="width:75%">
+<figcaption align = "center">
+From https://colah.github.io/posts/2015-08-Understanding-LSTMs/
+</figcaption>
+</figure>
+<p>There is a hidden state <strong>h</strong> that takes on values for each iteration <em>t</em>. There is a candidate update to the hidden state <strong>h</strong> with a ~ over it. The candidate update to the hidden state has values between -1 and +1 and is a function of the relevance gate <strong>r</strong> as well as the prior value of the hidden state and the current value of the input. The relevance gate is value between 0 and 1 and is a function of the prior value of the hidden state and the current value of the input. It controls the amount off effect that the prior hidden state value has on the candidate update value for the hidden state.</p>
+<p>Lastly, there is a forget gate <strong>z</strong> which is between 0 and 1 is a function of the prior value of the hidden state and the current value of the input. The forget gate is used to control whether we update the hidden state value or not. If <code>z = 1</code> then we update the internal state to be the candidate state. If <code>z = 0</code>, the value for the hidden state remains unchanged.</p>
+<p>Notice the hidden state value <strong>h</strong> of one iteration can be fed directly into the RNN as well as the input <strong>x</strong>. These variables are not necessarily scalars and are often vectors.</p>
+<p>In the model I am building the variables will be vectors of dimension <code>seq_length</code>. The output of the RNN cell is a vector of size <code>vocab_size</code>. To convert the hidden state vector <strong>x</strong> to <strong>y</strong> we apply a softmax function.</p>
+<p>Many times in natural language processing models make use of a <a href="https://en.wikipedia.org/wiki/Bidirectional_recurrent_neural_networks"  class="external-link" target="_blank" rel="noopener">bi-directional RNN</a>. In this type of model two RNN cells are used, one processing the sequence in the forward direction and one processing the sequence in the reverse direction. The architecture is shown below:</p>
+<figure>
+<img src="https://github.com/mdh266/JFKSpeechWriter/blob/main/images/bidirectionalgru.png?raw=1" alt="Trulli" style="width:75%">
+<figcaption align = "center">
+From https://www.researchgate.net/figure/The-structure-of-a-bidirectional-GRU-model_fig4_366204325
+</figcaption>
+</figure>
+<p>Notice that the forward and backward GRU cells are both a function of the same input value <strong>x</strong> (both at the same time <em>t</em>), but are functions of different iterations hidden states <strong>h</strong> (different values of <em>t</em>). Both cells at the same iteration are used to compute the output at the same iteration. Bidirectional RNN&rsquo;s were introduced to increase the amount of input information available to the network.</p>
+<p>I had originally created a bi-directional GRU model using <a href="https://www.tensorflow.org/guide/keras/custom_layers_and_models"  class="external-link" target="_blank" rel="noopener">TensorFlow&rsquo;s subclassing</a>, however, I ran into issues with the size of this dataset and shuffling the data. It was hard to shuffle the entire Pandas dataframe and then train on it, so instead I looked to using the the TensorFlow <a href="https://www.tensorflow.org/api_docs/python/tf/data/Dataset"  class="external-link" target="_blank" rel="noopener">Dataset</a> module.</p>
+<p>This allows me to &ldquo;stream&rdquo; over the dataset, shuffle and mini-batch it using the <a href="https://www.geeksforgeeks.org/tensorflow-tf-data-dataset-from_tensor_slices/"  class="external-link" target="_blank" rel="noopener">from_tensor_slices</a> to convert the Pandas DataFrame and Series tuple to a TensorFlow dataset.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>dataset <span style="color:#f92672">=</span> (tf<span style="color:#f92672">.</span>data<span style="color:#f92672">.</span>Dataset
+</span></span><span style="display:flex;"><span>             <span style="color:#f92672">.</span>from_tensor_slices((X, y))
+</span></span><span style="display:flex;"><span>             <span style="color:#f92672">.</span>shuffle(<span style="color:#ae81ff">50000</span>)
+</span></span><span style="display:flex;"><span>             <span style="color:#f92672">.</span>batch(<span style="color:#ae81ff">128</span>))
+</span></span></code></pre></div><p>Next, I built a function which creates a sequential model which contains a <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/TextVectorization"  class="external-link" target="_blank" rel="noopener">TextVectorization</a> layer, followed by an <a href="https://keras.io/api/layers/core_layers/embedding/"  class="external-link" target="_blank" rel="noopener">Embedding</a> layer, <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/Bidirectional"  class="external-link" target="_blank" rel="noopener">Bidirectional</a> <a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/GRU"  class="external-link" target="_blank" rel="noopener">GRU</a> layer, and finally a dense layer with a softmax activation layer.</p>
+<p>I compile the model using the <a href="https://www.tensorflow.org/api_docs/python/tf/keras/losses/SparseCategoricalCrossentropy"  class="external-link" target="_blank" rel="noopener">SparseCategoricalEntropy</a> loss function since the target variable has not been one-hot-encoded and use the <a href="https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/Adam"  class="external-link" target="_blank" rel="noopener">Adam</a> optimization algorithm with and learning rate that has exponential decay. Since we are using this as a model to predict the next word, the correct answer is a somewhat subjective and I don&rsquo;t care too much about which metric we use to measure performance.</p>
+<p>I wrote this as function that returns both the fitted vectorizer layer as the compiled Keras model. I need the vectorizer layer so that I have a mapping that convert the predicted numerical &ldquo;next word&rdquo; into actual text.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> typing <span style="color:#f92672">import</span> Tuple
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">build_model</span>(
+</span></span><span style="display:flex;"><span>             text: str, 
+</span></span><span style="display:flex;"><span>             seq_length: int,
+</span></span><span style="display:flex;"><span>             vocab_size: int, 
+</span></span><span style="display:flex;"><span>             embedding_dim: int, 
+</span></span><span style="display:flex;"><span>             units: int
+</span></span><span style="display:flex;"><span>) <span style="color:#f92672">-&gt;</span> Tuple[TextVectorization, tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>models<span style="color:#f92672">.</span>Sequential]:
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    vectorizer_layer <span style="color:#f92672">=</span> TextVectorization(
+</span></span><span style="display:flex;"><span>                            standardize<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;lower_and_strip_punctuation&#34;</span>,
+</span></span><span style="display:flex;"><span>                            max_tokens<span style="color:#f92672">=</span>vocab_size,
+</span></span><span style="display:flex;"><span>                            output_mode<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;int&#34;</span>,
+</span></span><span style="display:flex;"><span>                            output_sequence_length<span style="color:#f92672">=</span>seq_length)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    vectorizer_layer<span style="color:#f92672">.</span>adapt([text])
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    model <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>models<span style="color:#f92672">.</span>Sequential([
+</span></span><span style="display:flex;"><span>                    tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>Input(shape<span style="color:#f92672">=</span>(<span style="color:#ae81ff">1</span>,), 
+</span></span><span style="display:flex;"><span>                                   dtype<span style="color:#f92672">=</span>tf<span style="color:#f92672">.</span>string, 
+</span></span><span style="display:flex;"><span>                                   name<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;text&#39;</span>),
+</span></span><span style="display:flex;"><span>                    vectorizer_layer,
+</span></span><span style="display:flex;"><span>                    tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>layers<span style="color:#f92672">.</span>Embedding(vocab_size, embedding_dim),
+</span></span><span style="display:flex;"><span>                    tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>layers<span style="color:#f92672">.</span>Bidirectional(tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>layers<span style="color:#f92672">.</span>GRU(units)),
+</span></span><span style="display:flex;"><span>                    tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>layers<span style="color:#f92672">.</span>Dense(vocab_size, activation<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;softmax&#39;</span>)
+</span></span><span style="display:flex;"><span>    ])
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    lr_schedule <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>optimizers<span style="color:#f92672">.</span>schedules<span style="color:#f92672">.</span>ExponentialDecay(
+</span></span><span style="display:flex;"><span>                            initial_learning_rate<span style="color:#f92672">=</span><span style="color:#ae81ff">1e-1</span>,
+</span></span><span style="display:flex;"><span>                            decay_steps<span style="color:#f92672">=</span><span style="color:#ae81ff">1000</span>,
+</span></span><span style="display:flex;"><span>                            decay_rate<span style="color:#f92672">=</span><span style="color:#ae81ff">0.001</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    model<span style="color:#f92672">.</span>compile(loss<span style="color:#f92672">=</span>tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>losses<span style="color:#f92672">.</span>SparseCategoricalCrossentropy(), 
+</span></span><span style="display:flex;"><span>                  optimizer<span style="color:#f92672">=</span>tf<span style="color:#f92672">.</span>optimizers<span style="color:#f92672">.</span>Adam(learning_rate<span style="color:#f92672">=</span>lr_schedule))
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> vectorizer_layer, model
+</span></span></code></pre></div><p>I can create a model that has takes in relatively short text of 20 words and predicts the next out of 15,000 possibilities. The embedding layer has 128 dimensions and the Bidirectional GRU layer has 64 units each:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>vectorizer, model <span style="color:#f92672">=</span> build_model(text<span style="color:#f92672">=</span>text, 
+</span></span><span style="display:flex;"><span>                                seq_length<span style="color:#f92672">=</span>seq_length, 
+</span></span><span style="display:flex;"><span>                                vocab_size<span style="color:#f92672">=</span>vocab_size, 
+</span></span><span style="display:flex;"><span>                                embedding_dim<span style="color:#f92672">=</span><span style="color:#ae81ff">128</span>, 
+</span></span><span style="display:flex;"><span>                                units<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>)
+</span></span></code></pre></div><pre><code>2024-01-28 17:07:48.997658: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+</code></pre>
+<p>Notice that for the vectorizer layer I have to pass the original text, <code>seq_length</code> and the <code>vocab_size</code> values to initialize that layer properly. I can get the <a href="https://keras.io/api/models/model/#summary-method"  class="external-link" target="_blank" rel="noopener">summary</a> of the model:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>model<span style="color:#f92672">.</span>summary()
+</span></span></code></pre></div><pre><code>Model: &quot;sequential_19&quot;
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ text_vectorization_30 (Text  (None, 30)               0         
+ Vectorization)                                                  
+                                                                 
+ embedding_19 (Embedding)    (None, 30, 128)           1536000   
+                                                                 
+ bidirectional_19 (Bidirecti  (None, 128)              74496     
+ onal)                                                           
+                                                                 
+ dense_19 (Dense)            (None, 12000)             1548000   
+                                                                 
+=================================================================
+Total params: 3,158,496
+Trainable params: 3,158,496
+Non-trainable params: 0
+_________________________________________________________________
+</code></pre>
+<p>The model has over 3 million parameters which is a lot!</p>
+<p>Now I can train the model on the dataset with a modest 3 epochs:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>history <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>fit(dataset, epochs<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>)
+</span></span></code></pre></div><pre><code>Epoch 1/3
+
+
+2024-01-28 17:07:57.527292: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+2024-01-28 17:07:57.777102: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+2024-01-28 17:07:57.794880: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+2024-01-28 17:07:58.171041: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+2024-01-28 17:07:58.184822: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+
+
+9280/9280 [==============================] - 474s 51ms/step - loss: 7.5869
+Epoch 2/3
+9280/9280 [==============================] - 465s 50ms/step - loss: 7.3280
+Epoch 3/3
+9280/9280 [==============================] - 477s 51ms/step - loss: 7.3280
+</code></pre>
+<p>Now I can save the model for future use:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>model<span style="color:#f92672">.</span>save(<span style="color:#e6db74">&#34;jfk_model&#34;</span>)
+</span></span></code></pre></div><pre><code>WARNING:absl:Found untraced functions such as gru_cell_61_layer_call_fn, gru_cell_61_layer_call_and_return_conditional_losses, gru_cell_62_layer_call_fn, gru_cell_62_layer_call_and_return_conditional_losses while saving (showing 4 of 4). These functions will not be directly callable after loading.
+</code></pre>
+<p>I can reload the model (at another time) as shown below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>model <span style="color:#f92672">=</span> tf<span style="color:#f92672">.</span>keras<span style="color:#f92672">.</span>models<span style="color:#f92672">.</span>load_model(<span style="color:#e6db74">&#34;jfk_model&#34;</span>)
+</span></span></code></pre></div><pre><code>2024-01-28 17:42:19.454192: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+2024-01-28 17:42:19.459024: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+</code></pre>
+<p>I can predict the next word in the sequence from one of the training examples,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>X[<span style="color:#ae81ff">0</span>]
+</span></span></code></pre></div><pre><code>array(['of particular importance to south dakota are the farm policies of the republican party the party of nixon and mundt the party which offers our young people no incentive to'],
+      dtype='&lt;U260')
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>np<span style="color:#f92672">.</span>argmax(model<span style="color:#f92672">.</span>predict([X[<span style="color:#ae81ff">0</span>]]))
+</span></span></code></pre></div><pre><code>2024-01-28 17:42:20.799824: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+2024-01-28 17:42:20.864376: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+2024-01-28 17:42:20.870536: I tensorflow/core/grappler/optimizers/custom_graph_optimizer_registry.cc:113] Plugin optimizer for device_type GPU is enabled.
+
+
+1/1 [==============================] - 0s 474ms/step
+
+
+
+
+
+2
+</code></pre>
+<p>We can then create the mapping to look up the text associated with the numerical value of the next word from the vectorizer layer.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>voc <span style="color:#f92672">=</span> vectorizer<span style="color:#f92672">.</span>get_vocabulary()
+</span></span><span style="display:flex;"><span>word_index <span style="color:#f92672">=</span> dict(zip(voc, range(len(voc))))
+</span></span><span style="display:flex;"><span>reverse_word_map <span style="color:#f92672">=</span> dict(map(reversed, word_index<span style="color:#f92672">.</span>items()))
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>str(reverse_word_map[
+</span></span><span style="display:flex;"><span>        np<span style="color:#f92672">.</span>argmax(
+</span></span><span style="display:flex;"><span>            model<span style="color:#f92672">.</span>predict(X[<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>])
+</span></span></code></pre></div><pre><code>1/1 [==============================] - 0s 101ms/step
+
+
+
+
+
+'the'
+</code></pre>
+<p>We did not get the correct word, this can happen.</p>
+<h2 id="generating-text">
+  Generating Text  <a class="anchor" id="fourth-bullet"></a>
+  <a class="heading-link" href="#generating-text">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Now that the model can generate the next word based on the 30 preceding words we can use it to create text.</p>
+<p>I&rsquo;ll use an in-sample JFK speech at first:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>test <span style="color:#f92672">=</span> X[<span style="color:#ae81ff">3342</span>][<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>print(test)
+</span></span></code></pre></div><pre><code>fails to recognize that the problems of one industry may be different from it completely fails to respect the traditional practices widely accepted in the building it completely fails to
+</code></pre>
+<p>Now I can generate the next best n-words using a greedy algorithm defined below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">next_words_greedy</span>(input_str: str, n: int) <span style="color:#f92672">-&gt;</span> str:
+</span></span><span style="display:flex;"><span>    final_str <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(n):
+</span></span><span style="display:flex;"><span>        prediction <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>predict(np<span style="color:#f92672">.</span>array([input_str]), verbose<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>        idx <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>argmax(prediction[<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span>        next_word <span style="color:#f92672">=</span> str(reverse_word_map[idx])
+</span></span><span style="display:flex;"><span>        final_str <span style="color:#f92672">+=</span> next_word <span style="color:#f92672">+</span> <span style="color:#e6db74">&#39; &#39;</span> 
+</span></span><span style="display:flex;"><span>        input_str <span style="color:#f92672">+=</span> <span style="color:#e6db74">&#39; &#39;</span> <span style="color:#f92672">+</span> next_word
+</span></span><span style="display:flex;"><span>        input_str <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39; &#39;</span><span style="color:#f92672">.</span>join(input_str<span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#39; &#39;</span>)[<span style="color:#ae81ff">1</span>:])
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> final_str
+</span></span></code></pre></div><p>The above function repeatedly adds the next most probable word to the sentence.</p>
+<p>Let&rsquo;s see the results:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>next_words_greedy(test, <span style="color:#ae81ff">3</span>)
+</span></span></code></pre></div><pre><code>'invited the much '
+</code></pre>
+<p>This doenst quite make sense. Choosing the next best word at each step can give us poor results as the sentence might not make sense and often leads to repeated words.</p>
+<p>There a few ways to generate more realistic sentences, one of them being <a href="https://en.wikipedia.org/wiki/Beam_search"  class="external-link" target="_blank" rel="noopener">beam search algorithm</a>. I actually tried using this method with <a href="https://keras.io/keras_nlp/"  class="external-link" target="_blank" rel="noopener">KerasNLP</a>, but had a bunch of issues and could not get it to work.</p>
+<p>So instead I wanted to look at adding some randomness to the next best word algorithm. One way to do this is by choosing the next word by sampling the predicted distribution of words based on their probabilities. I used the <a href="https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html"  class="external-link" target="_blank" rel="noopener">choice</a> method from NumPy to accomplish this below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">next_words_distribution</span>(input_str: str, n: int) <span style="color:#f92672">-&gt;</span> str:
+</span></span><span style="display:flex;"><span>    final_str <span style="color:#f92672">=</span> input_str <span style="color:#f92672">+</span> <span style="color:#e6db74">&#39; &#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(n):
+</span></span><span style="display:flex;"><span>        prediction <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>predict(np<span style="color:#f92672">.</span>array([input_str]), verbose<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>        idx <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>choice(vocab_size, p<span style="color:#f92672">=</span>prediction[<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span>        next_word <span style="color:#f92672">=</span> str(reverse_word_map[idx])
+</span></span><span style="display:flex;"><span>        final_str <span style="color:#f92672">+=</span> next_word <span style="color:#f92672">+</span> <span style="color:#e6db74">&#39; &#39;</span> 
+</span></span><span style="display:flex;"><span>        input_str <span style="color:#f92672">+=</span> <span style="color:#e6db74">&#39; &#39;</span> <span style="color:#f92672">+</span> next_word
+</span></span><span style="display:flex;"><span>        input_str <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39; &#39;</span><span style="color:#f92672">.</span>join(input_str<span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#39; &#39;</span>)[<span style="color:#ae81ff">1</span>:])
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> final_str
+</span></span></code></pre></div><p>Now let&rsquo;s test it out:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>next_words_distribution(test, <span style="color:#ae81ff">10</span>)
+</span></span></code></pre></div><pre><code>'fails to recognize that the problems of one industry may be different from it completely fails to respect the traditional practices widely accepted in the building it completely fails to attorney shall at to hospital that attract on a demand '
+</code></pre>
+<p>This again doesn&rsquo;t quite make too much sense. Building a JFK speech writter from scratch is not as easy as I thought!</p>
+<p>I spent a lot of time tweeking the model to no avail. Instead I think I will stop persuing this architecture and instead use a more modern one in another blog post.</p>
+<h2 id="next-steps">
+  Next Steps  <a class="anchor" id="fifth-bullet"></a>
+  <a class="heading-link" href="#next-steps">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this blog post I covered how to create a generative text model using bi-directional gated recurrent unit (GRU) that is trained on speeches made by President John F. Kennedy. The model was built in Keras using TensorFlow as a back-end and I covered how to use this model to generate text based off an input string.</p>
+<p>The GRU model is a specific type of Recurrent Neural Network (RNN) and models sequences. RNNs were quite popular for Natural Language Processing until around 2017/2018. More recently, Recurrent Neural Networks have fallen out of popularity for NLP tasks as <a href="https://en.wikipedia.org/wiki/Transformer_(machine_learning)">Transformer</a> and <a href="https://en.wikipedia.org/wiki/Attention_(machine_learning)">Attention</a> based methods have shown substantially better performance. Using transformers for generating text that is meant to sound like JFK would be a natural next step and will be a follow up for a future blog post!</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+      <h3 id="see-also-in-nlp">
+        See also in NLP
+        <a class="heading-link" href="#see-also-in-nlp">
+          <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+          <span class="sr-only">Link to heading</span>
+        </a>
+      </h3>
+      <nav>
+        <ul>
+        
+        
+          
+            <li>
+              <a href="/posts/bert/">Text Classification 5: Fine Tuning BERT With HuggingFace</a>
+            </li>
+          
+        
+          
+        
+          
+            <li>
+              <a href="/posts/jfk1/">Creating An AI-Based JFK Speech Writer: Part 1</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/nlp4/">Text Classification 4: Deep Learning With Tensorflow &amp; Optuna</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/nlp3/">Text Classification 3: A Machine Learning Powered Web App</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/nlp1/">Text Classification 1: Imbalanced Data</a>
+            </li>
+          
+        
+        </ul>
+      </nav>
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>

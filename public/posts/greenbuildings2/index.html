@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Green Buildings 2: Imputing Missing Values With Scikit-Learn · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+1. Introduction
+2. Analyzing Distributions &amp; Correlations
+3. Imputing Missing Values With Scikit-Learn 
+4. Next Steps
+
+  Introduction 
+  
+    
+    Link to heading
+  
+
+
+This is the second post in a series of blog posts about building a predictive model of green house gas emissions of buildings in NYC. In my first post I covered how to perform">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Green Buildings 2: Imputing Missing Values With Scikit-Learn">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. Analyzing Distributions &amp; Correlations
+3. Imputing Missing Values With Scikit-Learn 4. Next Steps
+Introduction Link to heading This is the second post in a series of blog posts about building a predictive model of green house gas emissions of buildings in NYC. In my first post I covered how to perform">
+
+<meta property="og:url" content="http://localhost:1313/posts/greenbuildings2/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Green Buildings 2: Imputing Missing Values With Scikit-Learn">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. Analyzing Distributions &amp; Correlations
+3. Imputing Missing Values With Scikit-Learn 4. Next Steps
+Introduction Link to heading This is the second post in a series of blog posts about building a predictive model of green house gas emissions of buildings in NYC. In my first post I covered how to perform">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-02-16T00:00:00+00:00">
+    <meta property="article:modified_time" content="2020-02-16T00:00:00+00:00">
+    <meta property="article:tag" content="Scikit-Learn">
+    <meta property="article:tag" content="K-Nearest Neighbors">
+    <meta property="article:tag" content="Big Query">
+    <meta property="article:tag" content="Missing Value Imputation">
+    <meta property="article:tag" content="Google Cloud">
+      <meta property="og:see_also" content="http://localhost:1313/posts/kmeans/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/greenbuildings3/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/greenbuildings1/">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/greenbuildings2/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/greenbuildings2/">
+              Green Buildings 2: Imputing Missing Values With Scikit-Learn
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2020-02-16T00:00:00Z">
+                February 16, 2020
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              13-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/scikit-learn/">Scikit-Learn</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/k-nearest-neighbors/">K-Nearest Neighbors</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/big-query/">Big Query</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/missing-value-imputation/">Missing Value Imputation</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/google-cloud/">Google Cloud</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#first-bullet" >1. Introduction</a></strong></p>
+<p><strong><a href="#second-bullet" >2. Analyzing Distributions &amp; Correlations</a></strong></p>
+<p><strong><a href="#third-bullet" >3. Imputing Missing Values With Scikit-Learn </a></strong></p>
+<p><strong><a href="#fourth-bullet" >4. Next Steps</a></strong></p>
+<h2 id="introduction">
+  Introduction <a class="anchor" id="first-bullet"></a>
+  <a class="heading-link" href="#introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>This is the second post in a series of blog posts about building a predictive model of green house gas emissions of buildings in NYC. In my <a href="http://michael-harmon.com/posts/greenbuildings1"  class="external-link" target="_blank" rel="noopener">first post</a> I covered how to perform</p>
+<ul>
+<li>Exploratory data analysis</li>
+<li>Identify and remove outliers</li>
+</ul>
+<p>In this current blog post I will cover the very important topic of</p>
+<ul>
+<li>Imputing missing values</li>
+</ul>
+<p>Specifically I will cover <a href="https://en.wikipedia.org/wiki/Imputation_%28statistics%29#Regression"  class="external-link" target="_blank" rel="noopener">imputations techniques</a> using Scikit-Learn&rsquo;s <a href="https://scikit-learn.org/stable/modules/impute.html"  class="external-link" target="_blank" rel="noopener">impute module</a> using both point estimates (i.e. mean, median) using the <strong><a href="https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html"  class="external-link" target="_blank" rel="noopener">SimpleImputer</a></strong> class as well as more complicated regression models (i.e. KNN) using the <strong><a href="https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html"  class="external-link" target="_blank" rel="noopener">IterativeImputer</a></strong> class. The later requires that the features in the model are correlated.  This is indeed the case for our dataset and in our particular case we also need to <a href="https://en.wikipedia.org/wiki/Data_transformation_%28statistics%29"  class="external-link" target="_blank" rel="noopener">transform</a> the feautres in order to discern a more meaningful and predictive relationship between them. As we will see, the transformation of the features also gives us much better results for imputing missing values.</p>
+<p>I should remark that one must always first determine if missing values are missing at random or missing not at random. Values that are missing not at random are dangerous to impute. See <a href="https://en.wikipedia.org/wiki/Missing_data#Missing_completely_at_random"  class="external-link" target="_blank" rel="noopener">here</a> for more discussion. In this case we don&rsquo;t really know why the data is missing and will impute the missing values.  Imputatation of missing values will introduces bias into our dataset, but as we saw in the last post that nearly 50% of the data had missing values, so we <em>have to do something</em>.</p>
+<p>Lastly we remark that the use of KNN, while flexible and works quite well is not the best model imputing missing values for models in production. This is because KNN is a <a href="http://www.cs.cornell.edu/courses/cs578/2007fa/CS578_knn_lecture.pdf"  class="external-link" target="_blank" rel="noopener">memory-based model</a> and stores the entire dataset which is impracticle for large datasets and models which require low latency. It was used in this case in-lieu of more traditional regression models because the features whose values we wished to impute did not follow a normal distribution.</p>
+<h2 id="analyzing-distributions--correlations">
+  Analyzing Distributions &amp; Correlations <a class="anchor" id="second-bullet"></a>
+  <a class="heading-link" href="#analyzing-distributions--correlations">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>We first import the necessary packages.  In the previous post I talked about using <a href="https://cloud.google.com/"  class="external-link" target="_blank" rel="noopener">Google Cloud Platform</a> and won&rsquo;t go over the details of the configuations, but declare them in my list of import below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas <span style="color:#66d9ef">as</span> pd
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> matplotlib.pyplot <span style="color:#66d9ef">as</span> plt
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> seaborn <span style="color:#66d9ef">as</span> sns
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span>matplotlib inline
+</span></span><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>set()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> warnings
+</span></span><span style="display:flex;"><span>warnings<span style="color:#f92672">.</span>filterwarnings(<span style="color:#e6db74">&#39;ignore&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> google.oauth2 <span style="color:#f92672">import</span> service_account
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> google.cloud <span style="color:#f92672">import</span> bigquery
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> json
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas_gbq 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>credentials <span style="color:#f92672">=</span> service_account<span style="color:#f92672">.</span>Credentials\
+</span></span><span style="display:flex;"><span>                             <span style="color:#f92672">.</span>from_service_account_file(<span style="color:#e6db74">&#39;./derby.json&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>client <span style="color:#f92672">=</span> bigquery<span style="color:#f92672">.</span>Client(project     <span style="color:#f92672">=</span> credentials<span style="color:#f92672">.</span>project_id,
+</span></span><span style="display:flex;"><span>                         credentials <span style="color:#f92672">=</span> credentials)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>pandas_gbq<span style="color:#f92672">.</span>context<span style="color:#f92672">.</span>credentials <span style="color:#f92672">=</span> credentials
+</span></span><span style="display:flex;"><span>pandas_gbq<span style="color:#f92672">.</span>context<span style="color:#f92672">.</span>project     <span style="color:#f92672">=</span> credentials<span style="color:#f92672">.</span>project_id
+</span></span></code></pre></div><p>Let&rsquo;s first get the names of the columns (I actually forgot what they were):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>result <span style="color:#f92672">=</span> client<span style="color:#f92672">.</span>query(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">SELECT 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    column_name
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">FROM 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    db_gb.INFORMATION_SCHEMA.COLUMNS
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">WHERE 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    table_name = &#39;no_outlier_data&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> row <span style="color:#f92672">in</span> result<span style="color:#f92672">.</span>result():
+</span></span><span style="display:flex;"><span>    print(row[<span style="color:#ae81ff">0</span>])
+</span></span></code></pre></div><pre><code>Energy_Star
+Site_EUI
+NGI
+EI
+WI
+GHGI
+OPSFT
+Age
+Residential
+</code></pre>
+<p>Now that I know the names of the columns let&rsquo;s see exactly what the number of null values each column has and graph these counts.  To make it more interesting I break this down even further by incorporating whether the building was Multi-family or Office space:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>query <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">SELECT
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   Residential,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SUM(CASE WHEN Energy_Star IS NULL THEN 1 ELSE 0 END)  AS Energy_Star_NA,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SUM(CASE WHEN Site_EUI IS NULL THEN 1 ELSE 0 END)  AS Site_EUI_NA,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SUM(CASE WHEN NGI IS NULL THEN 1 ELSE 0 END)  AS NGI_NA,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SUM(CASE WHEN WI IS NULL THEN 1 ELSE 0 END)  AS WI_NA,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SUM(CASE WHEN EI IS NULL THEN 1 ELSE 0 END)  AS EI_NA,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SUM(CASE WHEN GHGI IS NULL THEN 1 ELSE 0 END) AS GHGI_NA,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">FROM 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    db_gb.raw_data 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">GROUP BY
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Residential
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>num_nulls_df  <span style="color:#f92672">=</span> pandas_gbq<span style="color:#f92672">.</span>read_gbq(query)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># reshape the dataframe </span>
+</span></span><span style="display:flex;"><span>num_nulls_df2 <span style="color:#f92672">=</span> num_nulls_df<span style="color:#f92672">.</span>melt(id_vars<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Residential&#39;</span>)\
+</span></span><span style="display:flex;"><span>                            <span style="color:#f92672">.</span>rename(columns<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;value&#34;</span>:<span style="color:#e6db74">&#34;Count&#34;</span>})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># bar plot with break outs on residential column</span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>figure(figsize<span style="color:#f92672">=</span>(<span style="color:#ae81ff">10</span>,<span style="color:#ae81ff">3</span>))
+</span></span><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>barplot(data<span style="color:#f92672">=</span>num_nulls_df2,
+</span></span><span style="display:flex;"><span>            x<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;variable&#39;</span>,
+</span></span><span style="display:flex;"><span>            y<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Count&#39;</span>,
+</span></span><span style="display:flex;"><span>            hue<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Residential&#39;</span>)
+</span></span></code></pre></div><pre><code>Downloading: 100%|██████████| 2/2 [00:00&lt;00:00,  5.44rows/s]
+
+
+
+
+
+&lt;matplotlib.axes._subplots.AxesSubplot at 0x7fcea4a389b0&gt;
+</code></pre>
+<p><img src="/greenbuildings2_files/greenbuildings2_6_2.png" alt="png"></p>
+<p>We can see generally residential buildings have more missing values than office buildings.  This isn&rsquo;t quite a fair comparison as the number of residential buildings could be much larger than the number of office buildings and therefore inflating the number of missing values.</p>
+<p>What we are really interested in is <em>the percentage of missing values in each column and within each building type</em>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>query <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">SELECT
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   Residential,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SUM(CASE WHEN Energy_Star IS NULL THEN 1 ELSE 0 END) / COUNT(*) AS Energy_Star_NA,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SUM(CASE WHEN Site_EUI IS NULL THEN 1 ELSE 0 END) / COUNT(*) AS Site_EUI_NA,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SUM(CASE WHEN NGI IS NULL THEN 1 ELSE 0 END) / COUNT(*) AS NGI_NA,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SUM(CASE WHEN WI IS NULL THEN 1 ELSE 0 END) / COUNT(*) AS WI_NA,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SUM(CASE WHEN EI IS NULL THEN 1 ELSE 0 END) / COUNT(*) AS EI_NA,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SUM(CASE WHEN GHGI IS NULL THEN 1 ELSE 0 END) / COUNT(*) AS GHGI_NA,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">FROM 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    db_gb.no_outlier_data 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">GROUP BY 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Residential
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>frac_nulls_df <span style="color:#f92672">=</span> pandas_gbq<span style="color:#f92672">.</span>read_gbq(query)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># reshape the dataframe </span>
+</span></span><span style="display:flex;"><span>frac_nulls_df2 <span style="color:#f92672">=</span> frac_nulls_df<span style="color:#f92672">.</span>melt(id_vars<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Residential&#39;</span>)\
+</span></span><span style="display:flex;"><span>                              <span style="color:#f92672">.</span>rename(columns<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;value&#34;</span>:<span style="color:#e6db74">&#34;Fraction Null&#34;</span>})
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># bar plot with break outs on residential column</span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>figure(figsize<span style="color:#f92672">=</span>(<span style="color:#ae81ff">10</span>,<span style="color:#ae81ff">3</span>))
+</span></span><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>barplot(data<span style="color:#f92672">=</span>frac_nulls_df2,
+</span></span><span style="display:flex;"><span>            x<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;variable&#39;</span>,
+</span></span><span style="display:flex;"><span>            y<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Fraction Null&#39;</span>,
+</span></span><span style="display:flex;"><span>            hue<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Residential&#39;</span>)
+</span></span></code></pre></div><pre><code>Downloading: 100%|██████████| 2/2 [00:00&lt;00:00,  5.71rows/s]
+
+
+
+
+
+&lt;matplotlib.axes._subplots.AxesSubplot at 0x7fce9f4f7390&gt;
+</code></pre>
+<p><img src="/greenbuildings2_files/greenbuildings2_8_2.png" alt="png"></p>
+<p>This is a much more meaningful comparison!  Note that we are using the data <em>without any outliers</em>, that is the table resulting from the <a href="http://michael-harmon.com/blog/GreenBuildings1.html"  class="external-link" target="_blank" rel="noopener">last post</a>. We can see that,</p>
+<ul>
+<li>
+<p>Water intensity (<code>WI</code>) is the field with highest percentage of missing values</p>
+</li>
+<li>
+<p>Natural Gas Intensity (<code>NGI</code>) has the second highest percentage of missing values.</p>
+</li>
+<li>
+<p><code>Energy_Star</code> also has a sizable amount of missing values.</p>
+</li>
+</ul>
+<p><strong>Site Energy Use Intensity (<code>EUI</code>), Electricity Intensity (<code>EI</code>) and Green House Gas Intensity (<code>GHGI</code>) have negligable amounts of missing values and those records with missing values will be dropped. Note that the sizable difference between Residential values means we have to take building type into account when imputing these values.</strong></p>
+<p>Let&rsquo;s pull all the columns to determine the relationship of each feature not only with <code>GHGI</code> (remember the final objective of these posts is to make a model that predicts <code>GHGI</code>), but also with all the other features.  We determine the relationships using a heat map of the correlation matrix as we did in the last post:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df <span style="color:#f92672">=</span> pandas_gbq<span style="color:#f92672">.</span>read_gbq(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">SELECT
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   Energy_Star,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   Site_EUI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   NGI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   EI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   WI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   GHGI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   Age,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   OPSFT,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   Residential,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">FROM
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    db_gb.no_outlier_data
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>)
+</span></span></code></pre></div><pre><code>Downloading: 100%|██████████| 9834/9834 [00:01&lt;00:00, 5066.82rows/s]
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.preprocessing <span style="color:#f92672">import</span> StandardScaler
+</span></span><span style="display:flex;"><span>scaler1 <span style="color:#f92672">=</span> StandardScaler()
+</span></span><span style="display:flex;"><span>Xs      <span style="color:#f92672">=</span> scaler1<span style="color:#f92672">.</span>fit_transform(df)
+</span></span><span style="display:flex;"><span>xs_df   <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>DataFrame(Xs, columns<span style="color:#f92672">=</span>df<span style="color:#f92672">.</span>columns)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>fig, ax <span style="color:#f92672">=</span> plt<span style="color:#f92672">.</span>subplots(figsize<span style="color:#f92672">=</span>(<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">6</span>))  
+</span></span><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>color_palette(<span style="color:#e6db74">&#34;BuGn_r&#34;</span>,)
+</span></span><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>heatmap(xs_df<span style="color:#f92672">.</span>corr(),
+</span></span><span style="display:flex;"><span>            linewidths<span style="color:#f92672">=</span><span style="color:#ae81ff">.5</span>,
+</span></span><span style="display:flex;"><span>            cmap<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;RdBu_r&#34;</span>)
+</span></span></code></pre></div><pre><code>&lt;matplotlib.axes._subplots.AxesSubplot at 0x7fce8fe4d9b0&gt;
+</code></pre>
+<p><img src="/greenbuildings2_files/greenbuildings2_12_1.png" alt="png"></p>
+<p>We can see that,</p>
+<ul>
+<li>
+<p>Occupancy Per Square Foot (<code>OPSFT</code>) and <code>Age</code> are not very correlated with <code>GHGI</code>.  Therefore we will not concern ourselves with them in our model.</p>
+</li>
+<li>
+<p>Water intensity (<code>WI</code>) is not very correlated and has as mentioned has A LOT missing values.</p>
+</li>
+<li>
+<p><code>EI</code>, <code>NGI</code>, <code>Energy_Star</code>, and <code>GHGI</code>, are all highly correlated.</p>
+</li>
+</ul>
+<p>Let&rsquo;s look at the scatter plots of features and <code>GHGI</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>pairplot(df,
+</span></span><span style="display:flex;"><span>             vars<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#34;Energy_Star&#34;</span>,<span style="color:#e6db74">&#34;Site_EUI&#34;</span>,<span style="color:#e6db74">&#34;NGI&#34;</span>,<span style="color:#e6db74">&#34;EI&#34;</span>,<span style="color:#e6db74">&#34;GHGI&#34;</span>, <span style="color:#e6db74">&#34;WI&#34;</span>],
+</span></span><span style="display:flex;"><span>             hue<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Residential&#39;</span>)
+</span></span></code></pre></div><pre><code>&lt;seaborn.axisgrid.PairGrid at 0x7fce9f478828&gt;
+</code></pre>
+<p><img src="/greenbuildings2_files/greenbuildings2_14_1.png" alt="png"></p>
+<p>In the above graph the off-diagonal grids are the relationship between the variables while the  graphs along the diagonal are the density of the variables. <strong>We can see from the off-diagonal graphs there is <a href="https://en.wikipedia.org/wiki/Heteroscedasticity"  class="external-link" target="_blank" rel="noopener">heteroscedasticity</a> between the features and GHGI</strong>, however, we won&rsquo;t address this issue too much in this post. The right most column shows that WI is not correlated with GHGI or any of the other features.  <strong>We therefore will not be imputing missing values for water intensity (<code>WI</code>) and drop it as a feature for the model of GHGI</strong> and instead be focusing on imputing missing values for</p>
+<ol>
+<li><strong>Energy_Star</strong></li>
+<li><strong>NGI</strong></li>
+</ol>
+<p>From the graphs along the diagonal all variables except for <code>Energy_Star</code> have sharply peaked <a href="https://en.wikipedia.org/wiki/Mode_%28statistics%29"  class="external-link" target="_blank" rel="noopener">modes</a> with <a href="https://en.wikipedia.org/wiki/Long_tail"  class="external-link" target="_blank" rel="noopener">long tails</a>. Interestingly, <code>NGI</code> and <code>EI</code> seem to be bimodal distributions which will make things more difficult for imputing their missing values. In order to make the relations between features more visible I tried tranforming the data. The first transformation I used was too use the square root of all the variables except for <code>Energy_Star</code>.  The reason I chose I the squart root is because it will reduce the sharp-peakedness of the distributions and hopefully make them more normally distributed:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df_sqrt <span style="color:#f92672">=</span> pandas_gbq<span style="color:#f92672">.</span>read_gbq(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">SELECT
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   Energy_Star,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SQRT(Site_EUI) AS Site_EUI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SQRT(NGI)      AS NGI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SQRT(EI)       AS EI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SQRT(GHGI)     AS GHGI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   Residential,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">FROM 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    db_gb.no_outlier_data
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>pairplot(df_sqrt,
+</span></span><span style="display:flex;"><span>             vars<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#34;Energy_Star&#34;</span>,<span style="color:#e6db74">&#34;Site_EUI&#34;</span>,<span style="color:#e6db74">&#34;NGI&#34;</span>,<span style="color:#e6db74">&#34;EI&#34;</span>,<span style="color:#e6db74">&#34;GHGI&#34;</span>],
+</span></span><span style="display:flex;"><span>             hue<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Residential&#39;</span>)
+</span></span></code></pre></div><pre><code>Downloading: 100%|██████████| 9834/9834 [00:01&lt;00:00, 6043.71rows/s]
+
+
+
+
+
+&lt;seaborn.axisgrid.PairGrid at 0x7fce9df10d30&gt;
+</code></pre>
+<p><img src="/greenbuildings2_files/greenbuildings2_16_2.png" alt="png"></p>
+<p><strong>We can see that neither <code>Energy_Star</code> nor <code>NGI</code> are normally distributed, meaning that a linear regression model would not be appropriate in this situation and hence choose a more flexible regression model.</strong> Interesting the relationship between <code>Energy_Star</code> and <code>Site_EUI</code> seams to be somewhat <a href="https://en.wikipedia.org/wiki/Sigmoid_function"  class="external-link" target="_blank" rel="noopener">sigmodal</a> in shape signfiying a non-linear relationship between the two.</p>
+<p>The relationship between <code>NGI</code>, <code>Site_EUI</code> and <code>GHGI</code> seems to be linear, but suffering from <a href="https://en.wikipedia.org/wiki/Heteroscedasticity"  class="external-link" target="_blank" rel="noopener">heteroscedasticity</a>. One way to reduce the variance is to use use log tranformations on the variable. For the purposes of imputing missing values in <code>NGI</code> we only really care heteroscedasticity in the <code>NGI</code> and therefore only transform it. Inorder to avoid the issue of introducing infinities when <code>NGI</code> is zero into we add a 1 when log transforming it:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df_sqrt[<span style="color:#e6db74">&#34;LOG_NGI&#34;</span>] <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>log(<span style="color:#ae81ff">1</span> <span style="color:#f92672">+</span> df_sqrt[<span style="color:#e6db74">&#34;NGI&#34;</span>])
+</span></span></code></pre></div><p>Now lets look at the relationship of this variable with respect to the square root of the other features:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>pairplot(df_sqrt, 
+</span></span><span style="display:flex;"><span>             x_vars<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;EI&#39;</span>,<span style="color:#e6db74">&#39;Site_EUI&#39;</span>,<span style="color:#e6db74">&#39;Energy_Star&#39;</span>,<span style="color:#e6db74">&#39;GHGI&#39;</span>], 
+</span></span><span style="display:flex;"><span>             y_vars<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;LOG_NGI&#39;</span>, 
+</span></span><span style="display:flex;"><span>             hue<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Residential&#39;</span>,
+</span></span><span style="display:flex;"><span>             kind <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;reg&#39;</span>,
+</span></span><span style="display:flex;"><span>             size<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>, 
+</span></span><span style="display:flex;"><span>             dropna<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span></code></pre></div><pre><code>&lt;seaborn.axisgrid.PairGrid at 0x7fce9cf25470&gt;
+</code></pre>
+<p><img src="/greenbuildings2_files/greenbuildings2_20_1.png" alt="png"></p>
+<p>We can see that that the heteroscedasticity between <code>LOG_NGI</code> and <code>Site_EUI</code> has been reduced.  Let&rsquo;s look at what these transformation does to <code>NGI</code>&rsquo;s distribution:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>figure(figsize<span style="color:#f92672">=</span>(<span style="color:#ae81ff">12</span>,<span style="color:#ae81ff">6</span>))
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>subplot(<span style="color:#ae81ff">311</span>)
+</span></span><span style="display:flex;"><span>df[<span style="color:#e6db74">&#34;NGI&#34;</span>]<span style="color:#f92672">.</span>plot(kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;hist&#34;</span>,bins<span style="color:#f92672">=</span><span style="color:#ae81ff">100</span>,title<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;NGI&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>subplot(<span style="color:#ae81ff">312</span>)
+</span></span><span style="display:flex;"><span>df_sqrt[<span style="color:#e6db74">&#34;NGI&#34;</span>]<span style="color:#f92672">.</span>plot(kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;hist&#34;</span>,bins<span style="color:#f92672">=</span><span style="color:#ae81ff">100</span>,title<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;SQRT(NGI)&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>subplot(<span style="color:#ae81ff">313</span>)
+</span></span><span style="display:flex;"><span>df_sqrt[<span style="color:#e6db74">&#34;LOG_NGI&#34;</span>]<span style="color:#f92672">.</span>plot(kind<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;hist&#34;</span>,bins<span style="color:#f92672">=</span><span style="color:#ae81ff">100</span>,title<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;LOG(1+SQRT(NGI))&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>tight_layout()
+</span></span></code></pre></div><p><img src="/greenbuildings2_files/greenbuildings2_22_0.png" alt="png"></p>
+<p>We can see that the square root transformation spreads out values of <code>NGI</code> and there are clearly two modes in the distribution (this results from the two building types). The log transformation spreads out the values of <code>NGI</code> even further reducing the bimodality, but keeping a fat tail in the distribution. It&rsquo;s hard for me to say which transformed verisons of <code>NGI</code> are better best. Ultimately we will choose whichever transformation gives us the best performance in predicting <code>GHGI</code>.</p>
+<h2 id="imputing-missing-values-with-scikit-learn">
+  Imputing Missing Values With Scikit-Learn <a class="anchor" id="third-bullet"></a>
+  <a class="heading-link" href="#imputing-missing-values-with-scikit-learn">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Now let&rsquo;s move onto the process of imputing missing values for <code>Energy_Star</code> and <code>NGI</code> using Scikit-learn&rsquo;s <a href="https://scikit-learn.org/stable/modules/impute.html"  class="external-link" target="_blank" rel="noopener">impute module</a>.  Ultimately we are interested in predicting <code>GHGI</code> and therefore set up the imputation of the missing values as stage in a simple linear regression model for <code>GHGI</code>.  We will then choose the imputation technique that gives the best <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">R^{2}</annotation></semantics></math></span>
+ value for the model.  <strong>We perform the imputation in this method as using the target variable (<code>GHGI</code>) to directly impute missing values of features would introduce extra bias into our model that we wish to avoid.</strong> Let&rsquo;s read in the transformed dataset removing the cases where the <code>GHGI</code>, <code>Site_EUI</code> and <code>EI</code> are not null:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df2 <span style="color:#f92672">=</span> pandas_gbq<span style="color:#f92672">.</span>read_gbq(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">SELECT
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   Energy_Star AS     Energy_Star,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SQRT(Site_EUI)     AS SQRT_EUI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SQRT(NGI)          AS SQRT_NGI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   LOG(1 + SQRT(NGI)) AS LOG_NGI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SQRT(EI)           AS SQRT_EI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   SQRT(GHGI)         AS SQRT_GHGI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">   Residential,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">FROM 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    db_gb.no_outlier_data
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">WHERE 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    GHGI IS NOT NULL
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">AND EI IS NOT NULL
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">AND Site_EUI IS NOT NULL
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Number of datapoints: &#34;</span>, df2<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>])
+</span></span></code></pre></div><pre><code>Downloading: 100%|██████████| 9542/9542 [00:01&lt;00:00, 5552.54rows/s]
+
+Number of datapoints:  9542
+</code></pre>
+<p>Next lets import the necessary packages and create our training set and test set:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.linear_model <span style="color:#f92672">import</span> LinearRegression
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.preprocessing <span style="color:#f92672">import</span> StandardScaler
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.metrics <span style="color:#f92672">import</span> r2_score
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.pipeline     <span style="color:#f92672">import</span> make_pipeline, Pipeline
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.experimental <span style="color:#f92672">import</span> enable_iterative_imputer
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.impute       <span style="color:#f92672">import</span> SimpleImputer, IterativeImputer
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.neighbors    <span style="color:#f92672">import</span> KNeighborsRegressor
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.model_selection <span style="color:#f92672">import</span> GridSearchCV, train_test_split, cross_val_score
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>X_real <span style="color:#f92672">=</span> df2<span style="color:#f92672">.</span>drop([<span style="color:#e6db74">&#39;SQRT_GHGI&#39;</span>], axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>Y_real <span style="color:#f92672">=</span> df2[<span style="color:#e6db74">&#39;SQRT_GHGI&#39;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>X_train, X_test, Y_train, Y_test <span style="color:#f92672">=</span> train_test_split(X_real,Y_real, random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">32</span>)
+</span></span></code></pre></div><p>Let&rsquo;s first use just the square root of <code>NGI</code> and then see what value using the log tranformation adds with dealing with the heteroscedasticity in the data:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># using the SQRT(NGI)</span>
+</span></span><span style="display:flex;"><span>X_train1 <span style="color:#f92672">=</span> X_train<span style="color:#f92672">.</span>drop(<span style="color:#e6db74">&#34;LOG_NGI&#34;</span>, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>X_test1  <span style="color:#f92672">=</span> X_test<span style="color:#f92672">.</span>drop(<span style="color:#e6db74">&#34;LOG_NGI&#34;</span>, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># using the LOG(1 + SQRT(NGI))</span>
+</span></span><span style="display:flex;"><span>X_train2 <span style="color:#f92672">=</span> X_train<span style="color:#f92672">.</span>drop(<span style="color:#e6db74">&#34;SQRT_NGI&#34;</span>, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>X_test2  <span style="color:#f92672">=</span> X_test<span style="color:#f92672">.</span>drop(<span style="color:#e6db74">&#34;SQRT_NGI&#34;</span>, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</span></span></code></pre></div><p>Let&rsquo;s first look at the using the mean of the feature values to fill in for the missing values using the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html"  class="external-link" target="_blank" rel="noopener">SimpleImputer</a> class.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mean_pipe <span style="color:#f92672">=</span> make_pipeline(SimpleImputer(strategy<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;mean&#39;</span>),
+</span></span><span style="display:flex;"><span>                          StandardScaler(),
+</span></span><span style="display:flex;"><span>                          LinearRegression())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Cross Validated R^2:&#34;</span>, np<span style="color:#f92672">.</span>mean(cross_val_score(mean_pipe, X_train1, Y_train, cv<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>)))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>mean_pipe<span style="color:#f92672">.</span>fit(X_train1, Y_train)
+</span></span><span style="display:flex;"><span>Y_pred <span style="color:#f92672">=</span> mean_pipe<span style="color:#f92672">.</span>predict(X_test1)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Explained variance score: </span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Test R^2: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(r2_score(Y_test, Y_pred)))
+</span></span></code></pre></div><pre><code>Cross Validated R^2: 0.7728948575377176
+Test R^2: 0.7353835183095065
+</code></pre>
+<p>Using the mean value of each feature to fill in for the missing value overall does quite well.  The high <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">R^{2}</annotation></semantics></math></span>
+ is due to the highly fact the <code>Site_EUI</code> and <code>GHGI</code> are highly correlated. Often times people use the median instead of the mean when imputing missing values. This is especially true when there are outliers in the data as the mean is more sensitive to outliers than the median.  Let&rsquo;s see how using the median performs:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>median_pipe <span style="color:#f92672">=</span> make_pipeline(SimpleImputer(strategy<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;median&#39;</span>),
+</span></span><span style="display:flex;"><span>                            StandardScaler(),
+</span></span><span style="display:flex;"><span>                            LinearRegression())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Cross Validated R^2:&#34;</span>, np<span style="color:#f92672">.</span>mean(cross_val_score(median_pipe, X_train1, Y_train, cv<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>)))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>median_pipe<span style="color:#f92672">.</span>fit(X_train1, Y_train)
+</span></span><span style="display:flex;"><span>Y_pred <span style="color:#f92672">=</span> median_pipe<span style="color:#f92672">.</span>predict(X_test1)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Explained variance score: </span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Test R^2: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(r2_score(Y_test, Y_pred)))
+</span></span></code></pre></div><pre><code>Cross Validated R^2: 0.7713591852735993
+Test R^2: 0.7343757833703362
+</code></pre>
+<p>Not much of a difference, but we can see using the median instead of the mean in this case is slightly worse!</p>
+<p>Now, let&rsquo;s try using the correlation between features to impute the missing values. <strong>Since the relationship between <code>Energy_Star</code> and the rest of the features is non-linear we use a <a href="https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html"  class="external-link" target="_blank" rel="noopener">K Nearest Neighbors</a> regession method as this model can does not assume linearity between the features.</strong>  Instead KNN regression methods averages the values of the K nearest neighbors to impute the missing values.  In order to determine the best values of K to use we will create a grid search and use cross-validation to control for overfitting.  We create the Scikit-learn pipeline:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>knn_pipe <span style="color:#f92672">=</span> Pipeline([(<span style="color:#e6db74">&#34;scaler&#34;</span>,  StandardScaler()),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#34;imputer&#34;</span>, IterativeImputer(estimator<span style="color:#f92672">=</span>KNeighborsRegressor())),
+</span></span><span style="display:flex;"><span>                     (<span style="color:#e6db74">&#34;reg&#34;</span>,     LinearRegression())])
+</span></span></code></pre></div><p>Next we create a dictionary containing the parameters we want to search over:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>params <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;imputer__estimator__n_neighbors&#34;</span>: [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">5</span>,<span style="color:#ae81ff">10</span>,<span style="color:#ae81ff">15</span>,<span style="color:#ae81ff">20</span>],
+</span></span><span style="display:flex;"><span>          <span style="color:#e6db74">&#34;imputer__estimator__weights&#34;</span>:     [<span style="color:#e6db74">&#34;uniform&#34;</span>,<span style="color:#e6db74">&#34;distance&#34;</span>]}
+</span></span></code></pre></div><p>Note that we have to use a <code>imputer__estimator__</code> instead of the traditional <code>imputer__</code> to assign the hyper-parameter values within the pipeline. Then we define the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html"  class="external-link" target="_blank" rel="noopener">GridSearchCV</a> object and set <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">R^2</annotation></semantics></math></span>
+ as the scoring metric.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>grid   <span style="color:#f92672">=</span> GridSearchCV(estimator   <span style="color:#f92672">=</span> knn_pipe,
+</span></span><span style="display:flex;"><span>                      param_grid  <span style="color:#f92672">=</span> params,
+</span></span><span style="display:flex;"><span>                      scoring     <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;r2&#34;</span>,
+</span></span><span style="display:flex;"><span>                      cv          <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>,
+</span></span><span style="display:flex;"><span>                      n_jobs      <span style="color:#f92672">=-</span><span style="color:#ae81ff">1</span>)
+</span></span></code></pre></div><p>Let&rsquo;s perform the grid search and find performance of the best model:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>grid<span style="color:#f92672">.</span>fit(X_train1, Y_train)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># get the best estimator</span>
+</span></span><span style="display:flex;"><span>knn_imputer <span style="color:#f92672">=</span> grid<span style="color:#f92672">.</span>best_estimator_
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Cross Validated R^2: &#34;</span>, grid<span style="color:#f92672">.</span>best_score_)
+</span></span></code></pre></div><pre><code>Cross Validated R^2:  0.77417344326708
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>Y_pred <span style="color:#f92672">=</span> knn_imputer<span style="color:#f92672">.</span>predict(X_test1)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Explained variance score: </span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Test R^2: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(r2_score(Y_test, Y_pred)))
+</span></span></code></pre></div><pre><code>Test R^2: 0.7368308332916311
+</code></pre>
+<p>The results are slightly better than using the mean for imputing missing values.  Instead of imputing the missing values for <code>SQRT(NGI)</code>, let&rsquo;s instead impute the missing values for <code>LOG(1 + SQRT(NGI)</code> and see if this improves the model. I&rsquo;m thinking it will since reducing the heteroscedasticity in that feature may bring points closer together:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>grid<span style="color:#f92672">.</span>fit(X_train2, Y_train)
+</span></span><span style="display:flex;"><span>knn_imputer2 <span style="color:#f92672">=</span> grid<span style="color:#f92672">.</span>best_estimator_
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Y_pred <span style="color:#f92672">=</span> knn_imputer2<span style="color:#f92672">.</span>predict(X_test2)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Explained variance score: </span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Test R^2: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(r2_score(Y_test, Y_pred)))
+</span></span></code></pre></div><pre><code>Test R^2: 0.7437197904635404
+</code></pre>
+<p>It worked! The KNN model works better using the log of the square root instead of just the square root. <strong>Note that the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">R^2</annotation></semantics></math></span>
+ can be a bad metric for feature selection as increasing the number of features increases the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">R^2</annotation></semantics></math></span>
+, however, it is appropriate in this case as we are just swapping one feature for another.</strong></p>
+<p>Let&rsquo;s see the imputer that worked the best by taking apart the pipeline:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>scaler  <span style="color:#f92672">=</span> knn_imputer2[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>imputer <span style="color:#f92672">=</span> knn_imputer2[<span style="color:#ae81ff">1</span>]
+</span></span><span style="display:flex;"><span>print(imputer)
+</span></span></code></pre></div><pre><code>IterativeImputer(add_indicator=False,
+                 estimator=KNeighborsRegressor(algorithm='auto', leaf_size=30,
+                                               metric='minkowski',
+                                               metric_params=None, n_jobs=None,
+                                               n_neighbors=5, p=2,
+                                               weights='uniform'),
+                 imputation_order='ascending', initial_strategy='mean',
+                 max_iter=10, max_value=None, min_value=None,
+                 missing_values=nan, n_nearest_features=None, random_state=None,
+                 sample_posterior=False, skip_complete=False, tol=0.001,
+                 verbose=0)
+</code></pre>
+<p>We can see that the optimal number of neighbors is 5.</p>
+<p>Now let&rsquo;s impute the missing values. We have to first scale the featuers, impute the missing values and finally unscale the features:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>X_fixed <span style="color:#f92672">=</span> scaler<span style="color:#f92672">.</span>inverse_transform(
+</span></span><span style="display:flex;"><span>                imputer<span style="color:#f92672">.</span>transform(
+</span></span><span style="display:flex;"><span>                    scaler<span style="color:#f92672">.</span>transform(X_real<span style="color:#f92672">.</span>drop(<span style="color:#e6db74">&#34;SQRT_NGI&#34;</span>, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>))))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># add the columns names</span>
+</span></span><span style="display:flex;"><span>X_df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>DataFrame(X_fixed, columns<span style="color:#f92672">=</span>X_real<span style="color:#f92672">.</span>drop(<span style="color:#e6db74">&#34;SQRT_NGI&#34;</span>, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)<span style="color:#f92672">.</span>columns)
+</span></span></code></pre></div><p>Note that we droped the <code>SQRT(NGI)</code> feature since we won&rsquo;t be imputing those values. We then create the same <code>GHGI</code> concatenating the previous dataframe with the <code>GHGI</code> series:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>X_sqrt_df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>concat([X_df<span style="color:#f92672">.</span>reset_index()<span style="color:#f92672">.</span>drop(<span style="color:#e6db74">&#34;index&#34;</span>,axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>), 
+</span></span><span style="display:flex;"><span>                       Y_real<span style="color:#f92672">.</span>to_frame()<span style="color:#f92672">.</span>reset_index()<span style="color:#f92672">.</span>drop(<span style="color:#e6db74">&#34;index&#34;</span>,axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)], 
+</span></span><span style="display:flex;"><span>                     axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</span></span></code></pre></div><p>Before we finish off we have to inverse-tranform the features and rename the columns:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># inverse transform the features</span>
+</span></span><span style="display:flex;"><span>X_sqrt_df[<span style="color:#e6db74">&#34;NGI&#34;</span>] <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>exp(X_sqrt_df[<span style="color:#e6db74">&#34;LOG_NGI&#34;</span>])<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>X_fin_df   <span style="color:#f92672">=</span> X_sqrt_df<span style="color:#f92672">.</span>apply(<span style="color:#66d9ef">lambda</span> x: x<span style="color:#f92672">*</span>x)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># rename </span>
+</span></span><span style="display:flex;"><span>X_fin_df<span style="color:#f92672">.</span>drop(<span style="color:#e6db74">&#34;LOG_NGI&#34;</span>, inplace<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>X_fin_df   <span style="color:#f92672">=</span> X_fin_df<span style="color:#f92672">.</span>rename(columns<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;SQRT_EI&#34;</span>  : <span style="color:#e6db74">&#34;EI&#34;</span>,
+</span></span><span style="display:flex;"><span>                                       <span style="color:#e6db74">&#34;SQRT_EUI&#34;</span> : <span style="color:#e6db74">&#34;Site_EUI&#34;</span>,
+</span></span><span style="display:flex;"><span>                                       <span style="color:#e6db74">&#34;SQRT_GHGI&#34;</span>: <span style="color:#e6db74">&#34;GHGI&#34;</span>})
+</span></span></code></pre></div><p>Let&rsquo;s look at the resulting features values one last time.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>pairplot(X_fin_df,
+</span></span><span style="display:flex;"><span>             vars<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#34;Energy_Star&#34;</span>,<span style="color:#e6db74">&#34;Site_EUI&#34;</span>,<span style="color:#e6db74">&#34;NGI&#34;</span>,<span style="color:#e6db74">&#34;EI&#34;</span>,<span style="color:#e6db74">&#34;GHGI&#34;</span>],
+</span></span><span style="display:flex;"><span>             hue<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Residential&#39;</span>)
+</span></span></code></pre></div><pre><code>&lt;seaborn.axisgrid.PairGrid at 0x7fce9c231978&gt;
+</code></pre>
+<p><img src="/greenbuildings2_files/greenbuildings2_54_1.png" alt="png"></p>
+<p>Note that the distribution of <code>Energy_Star</code> looks very different than when we initially started! The bias introduced by imputing the missing values skewed it to low values.</p>
+<p>Finally let&rsquo;s write the results back to BigQuery:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>pandas_gbq<span style="color:#f92672">.</span>to_gbq(X_fin_df,<span style="color:#e6db74">&#34;db_gb.clean_data&#34;</span>)
+</span></span></code></pre></div><pre><code>1it [00:04,  4.95s/it]
+</code></pre>
+<h2 id="next-steps">
+  Next Steps  <a class="anchor" id="fourth-bullet"></a>
+  <a class="heading-link" href="#next-steps">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this post we covered techniques for imputing the missing values using Scikit-learn&rsquo;s <a href="https://scikit-learn.org/stable/modules/impute.html"  class="external-link" target="_blank" rel="noopener">impute module</a>. In the <a href="http://michael-harmon.com/blog/GreenBuildings1.html"  class="external-link" target="_blank" rel="noopener">previous post</a> we covered the topics of exploratory analysis and removing outliers. These three topics are the bedrock of wrangling and cleaning data and form a solid basis for any modeling effort. In the next post we will build off this work and move toward advanced regression methods for predicting the green house gas emission intensity of buildings from this dataset.</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+      <h3 id="see-also-in-scikit-learn">
+        See also in Scikit-Learn
+        <a class="heading-link" href="#see-also-in-scikit-learn">
+          <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+          <span class="sr-only">Link to heading</span>
+        </a>
+      </h3>
+      <nav>
+        <ul>
+        
+        
+          
+            <li>
+              <a href="/posts/kmeans/">Writing A Scikit Learn Compatible Clustering Algorithm</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/greenbuildings3/">Green Buildings 3: Build &amp; Deploy Models With MLflow &amp; Docker</a>
+            </li>
+          
+        
+          
+        
+          
+            <li>
+              <a href="/posts/greenbuildings1/">Green Buildings 1: Exploratory Analysis &amp; Outlier Removal</a>
+            </li>
+          
+        
+        </ul>
+      </nav>
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>

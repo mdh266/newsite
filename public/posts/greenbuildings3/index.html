@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Green Buildings 3: Build &amp; Deploy Models With MLflow &amp; Docker · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+1. Introduction
+2. Intro To MLflow
+3. Linear Regression &amp; Logging A Simple Run
+4. XGBoost &amp; Logging Nested Runs for GridSearchCV
+5. MLflow Models: Model Serving With REST APIs
+6. Deploying to Google App Engine with Docker
+7. Conclusions 
+
+
+  Introduction 
+  
+    
+    Link to heading
+  
+
+
+This is the third and final post in a series of blog posts about energy usage and green house gas emissions of buildings in New York City. In the first post I covered exploratory data analysis and outlier removal.  In the second post I covered imputing missing values. These topics make up the majority of what is called &ldquo;data cleaning&rdquo;.  This last post will deal with model building and model deployment. Specifically I will build a model of New York City building green house gas emissions based on the building energy usage metrics. After I build a sufficiently accurate model I will convert the model to REST API for serving and then deploy the REST API to the cloud.">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Green Buildings 3: Build & Deploy Models With MLflow & Docker">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. Intro To MLflow
+3. Linear Regression &amp; Logging A Simple Run
+4. XGBoost &amp; Logging Nested Runs for GridSearchCV
+5. MLflow Models: Model Serving With REST APIs
+6. Deploying to Google App Engine with Docker
+7. Conclusions Introduction Link to heading This is the third and final post in a series of blog posts about energy usage and green house gas emissions of buildings in New York City. In the first post I covered exploratory data analysis and outlier removal. In the second post I covered imputing missing values. These topics make up the majority of what is called “data cleaning”. This last post will deal with model building and model deployment. Specifically I will build a model of New York City building green house gas emissions based on the building energy usage metrics. After I build a sufficiently accurate model I will convert the model to REST API for serving and then deploy the REST API to the cloud.">
+
+<meta property="og:url" content="http://localhost:1313/posts/greenbuildings3/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Green Buildings 3: Build & Deploy Models With MLflow & Docker">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. Intro To MLflow
+3. Linear Regression &amp; Logging A Simple Run
+4. XGBoost &amp; Logging Nested Runs for GridSearchCV
+5. MLflow Models: Model Serving With REST APIs
+6. Deploying to Google App Engine with Docker
+7. Conclusions Introduction Link to heading This is the third and final post in a series of blog posts about energy usage and green house gas emissions of buildings in New York City. In the first post I covered exploratory data analysis and outlier removal. In the second post I covered imputing missing values. These topics make up the majority of what is called “data cleaning”. This last post will deal with model building and model deployment. Specifically I will build a model of New York City building green house gas emissions based on the building energy usage metrics. After I build a sufficiently accurate model I will convert the model to REST API for serving and then deploy the REST API to the cloud.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-04-23T00:00:00+00:00">
+    <meta property="article:modified_time" content="2020-04-23T00:00:00+00:00">
+    <meta property="article:tag" content="Scikit-Learn">
+    <meta property="article:tag" content="MLflow">
+    <meta property="article:tag" content="XGBoost">
+    <meta property="article:tag" content="Docker">
+    <meta property="article:tag" content="Google Cloud">
+    <meta property="article:tag" content="Regression">
+      <meta property="og:see_also" content="http://localhost:1313/posts/kmeans/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/greenbuildings2/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/greenbuildings1/">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/greenbuildings3/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/greenbuildings3/">
+              Green Buildings 3: Build &amp; Deploy Models With MLflow &amp; Docker
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2020-04-23T00:00:00Z">
+                April 23, 2020
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              16-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/scikit-learn/">Scikit-Learn</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/mlflow/">MLflow</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/xgboost/">XGBoost</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/docker/">Docker</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/google-cloud/">Google Cloud</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/regression/">Regression</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#intro" >1. Introduction</a></strong></p>
+<p><strong><a href="#mlflow-one" >2. Intro To MLflow</a></strong></p>
+<p><strong><a href="#mlflow-two" >3. Linear Regression &amp; Logging A Simple Run</a></strong></p>
+<p><strong><a href="#mlflow-three" >4. XGBoost &amp; Logging Nested Runs for GridSearchCV</a></strong></p>
+<p><strong><a href="#mlflow-four" >5. MLflow Models: Model Serving With REST APIs</a></strong></p>
+<p><strong><a href="#mlflow-five" >6. Deploying to Google App Engine with Docker</a></strong></p>
+<p><strong><a href="#fifth-bullet" >7. Conclusions </a></strong></p>
+<hr>
+<h2 id="introduction">
+  Introduction <a class="anchor" id="intro"></a>
+  <a class="heading-link" href="#introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>This is the third and final post in a series of blog posts about energy usage and green house gas emissions of buildings in New York City. In the <a href="http://michael-harmon.com/posts/greenbuildings1/"  class="external-link" target="_blank" rel="noopener">first post</a> I covered exploratory data analysis and outlier removal.  In the <a href="http://michael-harmon.com/posts/greenbuildings2/"  class="external-link" target="_blank" rel="noopener">second post</a> I covered imputing missing values. These topics make up the majority of what is called &ldquo;data cleaning&rdquo;.  This last post will deal with model building and model deployment. Specifically I will build a model of New York City building green house gas emissions based on the building energy usage metrics. After I build a sufficiently accurate model I will convert the model to <a href="https://restfulapi.net/"  class="external-link" target="_blank" rel="noopener">REST API</a> for serving and then deploy the REST API to the cloud.</p>
+<p>The processes of model development and deployment are made a lot easier with <a href="https://mlflow.org/"  class="external-link" target="_blank" rel="noopener">MLflow</a> library. Specifically, I will cover using the <a href="https://www.mlflow.org/docs/latest/tracking.html"  class="external-link" target="_blank" rel="noopener">MLflow Tracking</a> framework to log all the diffent models I developed as well as their performance.  MLflow tracking acts a great way to memorialize and document the model development process. I will then use <a href="https://www.mlflow.org/docs/latest/models.html"  class="external-link" target="_blank" rel="noopener">MLflow Models</a> to convert the top model into a <a href="https://restfulapi.net/"  class="external-link" target="_blank" rel="noopener">REST API</a> for model serving. I will go over two ways MLflow Models creates REST API including the newly added method that uses <a href="https://www.docker.com/"  class="external-link" target="_blank" rel="noopener">Docker</a>. Finally I will show how to simply deploy the &ldquo;Dockerized&rdquo; API to the cloud through <a href="https://cloud.google.com/appengine"  class="external-link" target="_blank" rel="noopener">Google App Engine</a>.</p>
+<p>Note the MLflow library is still <em>relatively new</em> and the APi may change, for this purpose I should remark that I am working with MLflow version 1.8.0.  I should also point out that model serving through Docker was <a href="https://www.mlflow.org/docs/latest/cli.html#mlflow-models-build-docker"  class="external-link" target="_blank" rel="noopener">experimental</a> in MLflow 1.8.0 and may have changed since I finished this project.</p>
+<h2 id="working-with-mlflow">
+  Working With MLflow <a class="anchor" id="mlflow-one"></a>
+  <a class="heading-link" href="#working-with-mlflow">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><a href="https://mlflow.org/"  class="external-link" target="_blank" rel="noopener">MLflow</a> is an open source tool to make machine learning easier and more reproducible and was create by <a href="https://databricks.com/"  class="external-link" target="_blank" rel="noopener">Databricks</a> (the same people who created <a href="https://spark.apache.org/"  class="external-link" target="_blank" rel="noopener">Apache Spark</a>). There are many components to MLflow, but the two I will be looking at are,</p>
+<ul>
+<li><a href="https://www.mlflow.org/docs/latest/tracking.html"  class="external-link" target="_blank" rel="noopener">MLflow Tracking</a> : A tool for logging modeling experiments</li>
+<li><a href="https://www.mlflow.org/docs/latest/models.html"  class="external-link" target="_blank" rel="noopener">MLflow Models</a> : A tool for serving models as REST APIs</li>
+</ul>
+<p>I will stick to using MLflow locally instead of a production set up. You can start the Web UI with the command:</p>
+<pre><code>mlflow ui --host=0.0.0.0 --port=5050
+</code></pre>
+<p>Then going to the website http://0.0.0.0:5050 in your web broswer where we will see the following:</p>
+<img src="https://github.com/mdh266/NYCBuildingEnergyUse/blob/master/notebooks/images/EmptyMLFlow.png?raw=1">
+<p>We can see the generic MLflow website without any modeling experiment data. This will change soon enough. We can collect modeling information into &ldquo;<em>experiments</em>&rdquo; that will contain &ldquo;<em>runs</em>&rdquo;. Each run could be one model or a series of different models each trained with different parameter values. In this way MLflow tracking is great for organizing and maintaining as much information about the development process as you like.</p>
+<p>Locally, MLflow will create a file directory called,</p>
+<pre><code>mlruns
+</code></pre>
+<p>that will be housed in the same path that the <code>mlflow ui</code> was run in.  Let&rsquo;s import the library along with some other basic libraries:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> mlflow
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> warnings
+</span></span><span style="display:flex;"><span>warnings<span style="color:#f92672">.</span>filterwarnings(<span style="color:#e6db74">&#39;ignore&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas <span style="color:#66d9ef">as</span> pd
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> matplotlib.pyplot <span style="color:#66d9ef">as</span> plt
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> seaborn <span style="color:#66d9ef">as</span> sns
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span>matplotlib inline
+</span></span><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>set()
+</span></span></code></pre></div><p>We can see what the MLflow tracking url is to see where all the data for MLflow will be stored (i.e. where <code>mlruns</code> directory is):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mlflow<span style="color:#f92672">.</span>get_tracking_uri()
+</span></span></code></pre></div><pre><code>'file:///Users/mukeharmon/Documents/DS_Projects/NYCEnergyUsage/notebook/mlruns'
+</code></pre>
+<p>Now let&rsquo;s create an experiment for this project and get started!</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">try</span>:
+</span></span><span style="display:flex;"><span>    mlflow<span style="color:#f92672">.</span>create_experiment(<span style="color:#e6db74">&#34;greenbuildings&#34;</span>)
+</span></span><span style="display:flex;"><span>    experiment <span style="color:#f92672">=</span> mlflow<span style="color:#f92672">.</span>get_experiment_by_name(<span style="color:#e6db74">&#34;greenbuildings&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">except</span>:
+</span></span><span style="display:flex;"><span>    experiment <span style="color:#f92672">=</span> mlflow<span style="color:#f92672">.</span>get_experiment_by_name(<span style="color:#e6db74">&#34;greenbuildings&#34;</span>)
+</span></span></code></pre></div><p>We can see that we get an &ldquo;experiment&rdquo; that has a number of attributes:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(experiment)
+</span></span></code></pre></div><pre><code>&lt;Experiment: artifact_location='file:///Users/mukeharmon/Documents/DS_Projects/NYCEnergyUsage/notebook/mlruns/1', experiment_id='1', lifecycle_stage='active', name='greenbuildings', tags={}&gt;
+</code></pre>
+<p>These attributes include:</p>
+<ul>
+<li><strong>artifact_location</strong> (where the metadata + models will be stored)</li>
+<li><strong>experiment_id</strong> (id to help us track the experiment)</li>
+<li><strong>lifestyle_stage</strong> (whether its active, deleted, etc.)</li>
+<li><strong>name</strong> (experiment name)</li>
+<li><strong>tag</strong></li>
+</ul>
+<p>The <code>experiment_id</code> is an important attribute and will be used quite frequently to know where to log and organize all the modeling information. Let&rsquo;s set that number as a variable to use later:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>exp_id <span style="color:#f92672">=</span> experiment<span style="color:#f92672">.</span>experiment_id
+</span></span></code></pre></div><p>Let&rsquo;s move on to building our first model for predicting green house gas emission of buildings.</p>
+<h2 id="linear-regression--logging-a-simple-run">
+  Linear Regression &amp; Logging A Simple Run <a class="anchor" id="mlflow-two"></a>
+  <a class="heading-link" href="#linear-regression--logging-a-simple-run">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Let&rsquo;s build a predictive model for green house gas emissions by multifamily homes and offices  in New York City.  We&rsquo;ll do this at first using a simple linear regression model. While not the best in terms of predictive performance it is often a great first step since it allows us to interpet the effect each feature has on the predicted green house gas emissions. We&rsquo;ll discuss this more later, but for now lets import our data from <a href="https://cloud.google.com/bigquery"  class="external-link" target="_blank" rel="noopener">Google BigQuery</a> using the set up from the <a href="http://michael-harmon.com/blog/GreenBuildings1.html"  class="external-link" target="_blank" rel="noopener">previous posts</a>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> google.oauth2 <span style="color:#f92672">import</span> service_account
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> google.cloud <span style="color:#f92672">import</span> bigquery
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> json
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas_gbq 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>credentials <span style="color:#f92672">=</span> service_account<span style="color:#f92672">.</span>Credentials\
+</span></span><span style="display:flex;"><span>                             <span style="color:#f92672">.</span>from_service_account_file(<span style="color:#e6db74">&#39;./derby.json&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>pandas_gbq<span style="color:#f92672">.</span>context<span style="color:#f92672">.</span>credentials <span style="color:#f92672">=</span> credentials
+</span></span><span style="display:flex;"><span>pandas_gbq<span style="color:#f92672">.</span>context<span style="color:#f92672">.</span>project     <span style="color:#f92672">=</span> credentials<span style="color:#f92672">.</span>project_id
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df <span style="color:#f92672">=</span> pandas_gbq<span style="color:#f92672">.</span>read_gbq(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">SELECT  
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    CAST(Energy_Star AS INT64) AS Energy_Star,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Site_EUI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    NGI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    EI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    GHGI,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    CAST(Residential AS INT64) AS Residential,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">FROM 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    db_gb.clean_data
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>)
+</span></span></code></pre></div><p>And get the target variable and features:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>X <span style="color:#f92672">=</span> df<span style="color:#f92672">.</span>drop(<span style="color:#e6db74">&#34;GHGI&#34;</span>,axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>Y <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#34;GHGI&#34;</span>] 
+</span></span></code></pre></div><p>Let&rsquo;s remind ourselves what the distribution of the target variable and predictors look like using the pairplot shown in the <a href="http://michael-harmon.com/blog/GreenBuildings2.html"  class="external-link" target="_blank" rel="noopener">last post</a>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sns<span style="color:#f92672">.</span>pairplot(df,
+</span></span><span style="display:flex;"><span>             vars<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#34;Energy_Star&#34;</span>,<span style="color:#e6db74">&#34;Site_EUI&#34;</span>,<span style="color:#e6db74">&#34;NGI&#34;</span>,<span style="color:#e6db74">&#34;EI&#34;</span>,<span style="color:#e6db74">&#34;GHGI&#34;</span>],
+</span></span><span style="display:flex;"><span>             size<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>,
+</span></span><span style="display:flex;"><span>             hue<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Residential&#39;</span>)
+</span></span></code></pre></div><pre><code>&lt;seaborn.axisgrid.PairGrid at 0x10f5ac160&gt;
+</code></pre>
+<p><img src="/greenbuildings3_files/greenbuildings3_18_1.png" alt="png"></p>
+<p><strong>We can from the last row in this graph that the relationship between <code>GHGI</code> and <code>Site_EUI</code>, <code>NGI</code>, as well as <code>EI</code> is somewhat linear, but the relationship of <code>GHGI</code> and <code>Energy_Star</code> is less well defined.</strong></p>
+<p>Let&rsquo;s create our train and test set as well fix our random state (to have repeatable datasets)</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.model_selection <span style="color:#f92672">import</span> train_test_split
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>random_state <span style="color:#f92672">=</span> <span style="color:#ae81ff">93</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>X_train, X_test, y_train, y_test <span style="color:#f92672">=</span> train_test_split(X, Y, test_size<span style="color:#f92672">=</span><span style="color:#ae81ff">0.2</span>, random_state<span style="color:#f92672">=</span>random_state)
+</span></span></code></pre></div><p>As we stated earlier we&rsquo;ll start out with a <a href="http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html">Linear Regression model</a> since it is simple and interpertable. We can easily implement a least squares regression model using Scikit-learn:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.preprocessing   <span style="color:#f92672">import</span> StandardScaler
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.pipeline        <span style="color:#f92672">import</span> Pipeline
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.linear_model    <span style="color:#f92672">import</span> LinearRegression
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.metrics         <span style="color:#f92672">import</span> r2_score, mean_squared_error
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.compose <span style="color:#f92672">import</span> ColumnTransformer
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>cat_feats <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;Residential&#39;</span>]
+</span></span><span style="display:flex;"><span>num_feats <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;Energy_Star&#39;</span>,<span style="color:#e6db74">&#39;Site_EUI&#39;</span>,<span style="color:#e6db74">&#39;NGI&#39;</span>,<span style="color:#e6db74">&#39;EI&#39;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>scaler <span style="color:#f92672">=</span> ColumnTransformer(transformers<span style="color:#f92672">=</span>[(<span style="color:#e6db74">&#39;num_transform&#39;</span>, StandardScaler(), num_feats)],
+</span></span><span style="display:flex;"><span>                           remainder<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;passthrough&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>pipe <span style="color:#f92672">=</span> Pipeline([(<span style="color:#e6db74">&#39;preprocessor&#39;</span>, transformer),
+</span></span><span style="display:flex;"><span>                 (<span style="color:#e6db74">&#39;reg&#39;</span>, LinearRegression())])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>model <span style="color:#f92672">=</span> pipe<span style="color:#f92672">.</span>fit(X_train, y_train)
+</span></span></code></pre></div><p>Notice we use a <a href="https://scikit-learn.org/stable/modules/generated/sklearn.compose.ColumnTransformer.html"  class="external-link" target="_blank" rel="noopener">ColumnTransformer</a> to only normalize the numerical features and not <code>Residential</code> which is categorical.  We can then evaluate the model performance (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">R^{2}</annotation></semantics></math></span>
+-score) on the test set to <em>see how much variance in the model we are able to explain</em> as well as the mean square error (MSE):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>y_pred <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>predict(X_test)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;R2 score: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(r2_score(y_test, y_pred)))
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;MSE: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(mean_squared_error(y_test, y_pred)))
+</span></span></code></pre></div><pre><code>R2 score: 0.6476491751039197
+MSE: 2.226459421390599e-06
+</code></pre>
+<p>We can explain 64.76% of the variance which is pretty good, but definitely leaves room for improvement.  Let&rsquo;s take a look at the coefficients of the linear regression model.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># get the last stage of the pipeline which is the model</span>
+</span></span><span style="display:flex;"><span>reg <span style="color:#f92672">=</span> pipe<span style="color:#f92672">.</span>steps[<span style="color:#ae81ff">1</span>][<span style="color:#ae81ff">1</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># print the coefficients</span>
+</span></span><span style="display:flex;"><span>print(pd<span style="color:#f92672">.</span>Series(reg<span style="color:#f92672">.</span>coef_,index<span style="color:#f92672">=</span>X_train<span style="color:#f92672">.</span>columns))
+</span></span></code></pre></div><pre><code>Energy_Star   -0.000124
+Site_EUI       0.001640
+NGI            0.000244
+EI             0.001017
+Residential    0.000268
+dtype: float64
+</code></pre>
+<p>The model coefficents can be interpreated as folllows: for continuous feautres, an increase in one of their in units yields an increase in the unit of green house emissions that is equal to the coefficent. For example, increasing <code>Site_EUI</code> by 1 unit increase <code>GHGI</code> by 0.00164 units. We can see that increasing the electricty, energy intensity, and natural gas intensity increases green house gas emissions which makes sense. Increasing the Energy Star rating of the building tends to decrease the greenhouse gas emissions which makes sense. It also seems that residential buildings tend to emit more green house gases than office space buildings, albiet weakly.</p>
+<p>We can measure the p-values for coefficents by using Scikit-Learns&rsquo;s <a href="http://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.f_regression.html">f_regression</a> function.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.feature_selection <span style="color:#f92672">import</span> f_regression
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>f_stats, pvals <span style="color:#f92672">=</span> f_regression(scaler<span style="color:#f92672">.</span>fit_transform(X_train), y_train)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;P-Values:&#34;</span>)
+</span></span><span style="display:flex;"><span>print(pd<span style="color:#f92672">.</span>Series(pvals,index<span style="color:#f92672">=</span>X_train<span style="color:#f92672">.</span>columns))
+</span></span></code></pre></div><pre><code>P-Values:
+Energy_Star     0.000000e+00
+Site_EUI        0.000000e+00
+NGI            1.940368e-183
+EI              0.000000e+00
+Residential     6.788885e-28
+dtype: float64
+</code></pre>
+<p><strong>We see that even though the coeficients of the regression model are rather small, their small p-values show that they are still signifcant and should be included in our model.</strong>  Overfitting a linear model can be quite obvious from the coefficients when one of the features has a large absolute value. In our model this does not seem to be the case and we don&rsquo;t have to consider overfitting or using regularization further.</p>
+<p>Let&rsquo;s add a run to the MLflow experiment that corresponds to this model.  We use the <code>start_run</code> function and pass the experiment id along with the name for this run being &ldquo;Linear Regression&rdquo;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>run <span style="color:#f92672">=</span> mlflow<span style="color:#f92672">.</span>start_run(experiment_id<span style="color:#f92672">=</span>exp_id, run_name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Linear Regression&#34;</span>)
+</span></span></code></pre></div><p>We can see that we have an active run that is a <a href="https://www.mlflow.org/docs/latest/python_api/mlflow.entities.html#mlflow.entities.RunInfo"  class="external-link" target="_blank" rel="noopener">RunInfo</a> entity that maintains information about the run:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>run<span style="color:#f92672">.</span>info
+</span></span></code></pre></div><pre><code>&lt;RunInfo: artifact_uri='file:///Users/mukeharmon/Documents/DS_Projects/NYCEnergyUsage/notebook/mlruns/1/835633c6abc4436ea913f471a123e729/artifacts', end_time=None, experiment_id='1', lifecycle_stage='active', run_id='835633c6abc4436ea913f471a123e729', run_uuid='835633c6abc4436ea913f471a123e729', start_time=1587943715502, status='RUNNING', user_id='mukeharmon'&gt;
+</code></pre>
+<p>We can add the metrics for our model using the <code>add_metrics</code> functions:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mlflow<span style="color:#f92672">.</span>log_metric(<span style="color:#e6db74">&#34;r2&#34;</span> ,r2_score(y_test, y_pred))
+</span></span><span style="display:flex;"><span>mlflow<span style="color:#f92672">.</span>log_metric(<span style="color:#e6db74">&#34;mse&#34;</span>, mean_squared_error(y_test, y_pred))
+</span></span></code></pre></div><p>Let&rsquo;s look at some of the residuals in the continuous features to see if we can find any non-linear patterns that might signal ways improve the model.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> utilities.PlottingFunctions <span style="color:#f92672">import</span> plot_residuals
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>f <span style="color:#f92672">=</span> plot_residuals(X_test <span style="color:#f92672">=</span> X_test,
+</span></span><span style="display:flex;"><span>                   y_test <span style="color:#f92672">=</span> y_test,
+</span></span><span style="display:flex;"><span>                   y_pred <span style="color:#f92672">=</span> y_pred)
+</span></span></code></pre></div><p><img src="/greenbuildings3_files/greenbuildings3_37_0.png" alt="png"></p>
+<p>There are no obvious patterns in the residuals, but at the same time they <strong>do not appear to be normally distributed as the theory says they should be.</strong>  This tells me that we might be able to use a more flexible model to capture the nonlinearities in the relationships.</p>
+<p>We can log this image as well using the <code>log_artifact</code> method:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>f<span style="color:#f92672">.</span>savefig(<span style="color:#e6db74">&#34;resid.png&#34;</span>)
+</span></span><span style="display:flex;"><span>mlflow<span style="color:#f92672">.</span>log_artifact(<span style="color:#e6db74">&#34;resid.png&#34;</span>)
+</span></span></code></pre></div><p>For the time being let&rsquo;s log the model using the so called <a href="https://mlflow.org/docs/latest/models.html#scikit-learn-sklearn"  class="external-link" target="_blank" rel="noopener">scikit-learn flavor</a> and end the run:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> mlflow.sklearn
+</span></span><span style="display:flex;"><span>mlflow<span style="color:#f92672">.</span>sklearn<span style="color:#f92672">.</span>log_model(model, <span style="color:#e6db74">&#34;LinearModel&#34;</span>)
+</span></span><span style="display:flex;"><span>mlflow<span style="color:#f92672">.</span>end_run()
+</span></span></code></pre></div><p>We can go to the MLflow UI to see that the run has been added with its metrics:
+<img src="https://github.com/mdh266/NYCBuildingEnergyUse/blob/master/notebooks/images/LinearModel1.png?raw=1"></p>
+<p>Clicking on the run we can see the model performance metrics, logged model and artifacts:</p>
+<img src="https://github.com/mdh266/NYCBuildingEnergyUse/blob/master/notebooks/images/LinearModel2.png?raw=1">
+<p>The <code>LinearModel</code> folder under the artifacts tab contains the <a href="https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html"  class="external-link" target="_blank" rel="noopener">conda environment</a> (<code>conda.yml</code>), the pickled model (<code>model.pkl</code>) and associated metadata (<code>MLModel</code>). We should note that the <code>conda.yml</code> file is used to package all the necessary libraries for serving the model <code>model.pkl</code>.</p>
+<h2 id="xgboost--logging-nested-runs-for-gridsearchcv">
+  XGBoost &amp; Logging Nested Runs for GridSearchCV <a class="anchor" id="mlflow-three"></a>
+  <a class="heading-link" href="#xgboost--logging-nested-runs-for-gridsearchcv">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Let&rsquo;s try another model to see if we cant improve the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">R^2</annotation></semantics></math></span>
+ score and MSE. One algorithm that performs quite well is <a href="https://xgboost.readthedocs.io/en/latest/"  class="external-link" target="_blank" rel="noopener">XGBoost</a>. XGBoost is a based on gradient boosted decision trees and is one of the best performing machine learning models avaiable. It builds the model in a stage-wise fashion like other boosting methods do, and it generalizes them by allowing optimization of an arbitrary differentiable loss function. You can read more about gradient boosting <a href="https://machinelearningmastery.com/gentle-introduction-gradient-boosting-algorithm-machine-learning/"  class="external-link" target="_blank" rel="noopener">here</a>.</p>
+<p>Let&rsquo;s import the XGBoost Regressor and then run a small grid search using cross-valiation to find the optimal parameter values:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> xgboost <span style="color:#f92672">import</span> XGBRegressor
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.model_selection <span style="color:#f92672">import</span> GridSearchCV
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># define the parameter values</span>
+</span></span><span style="display:flex;"><span>paramters <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;n_estimators&#34;</span>   :[<span style="color:#ae81ff">10</span>,<span style="color:#ae81ff">15</span>,<span style="color:#ae81ff">25</span>,<span style="color:#ae81ff">50</span>,<span style="color:#ae81ff">100</span>,<span style="color:#ae81ff">150</span>],
+</span></span><span style="display:flex;"><span>             <span style="color:#e6db74">&#34;max_depth&#34;</span>      :[<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">5</span>,<span style="color:#ae81ff">7</span>,<span style="color:#ae81ff">10</span>],
+</span></span><span style="display:flex;"><span>             <span style="color:#e6db74">&#34;loss&#34;</span>           :[<span style="color:#e6db74">&#34;ls&#34;</span>, <span style="color:#e6db74">&#34;lad&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># define the grid search and optimization metric</span>
+</span></span><span style="display:flex;"><span>grid <span style="color:#f92672">=</span> GridSearchCV(estimator<span style="color:#f92672">=</span>XGBRegressor(),
+</span></span><span style="display:flex;"><span>                    param_grid<span style="color:#f92672">=</span>paramters,
+</span></span><span style="display:flex;"><span>                    scoring<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;r2&#34;</span>,
+</span></span><span style="display:flex;"><span>                    cv<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>,
+</span></span><span style="display:flex;"><span>                    n_jobs<span style="color:#f92672">=-</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># perform the grid search</span>
+</span></span><span style="display:flex;"><span>xgb_model <span style="color:#f92672">=</span> grid<span style="color:#f92672">.</span>fit(X_train, y_train)
+</span></span></code></pre></div><p><strong>NOTE: Scaling is unnecessary for tree based methods</strong>.</p>
+<p>Now that we have the best model from our grid search over the trainin set let see how it performs on the test set:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>y_pred <span style="color:#f92672">=</span> xgb_model<span style="color:#f92672">.</span>predict(X_test)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;R^2 score: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(r2_score(y_test, y_pred)))
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;MSE </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(mean_squared_error(y_test, y_pred)))
+</span></span></code></pre></div><pre><code>R^2 score: 0.7761477343001326
+MSE 1.4144935977206672e-06
+</code></pre>
+<p>A definite improvement in the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">R^2</annotation></semantics></math></span>
+ score and MSE! Let&rsquo;s take a look at the residuals:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>f <span style="color:#f92672">=</span> plot_residuals(X_test <span style="color:#f92672">=</span> X_test,
+</span></span><span style="display:flex;"><span>                   y_test <span style="color:#f92672">=</span> y_test,
+</span></span><span style="display:flex;"><span>                   y_pred <span style="color:#f92672">=</span> y_pred)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>f<span style="color:#f92672">.</span>savefig(<span style="color:#e6db74">&#34;resid.png&#34;</span>)
+</span></span></code></pre></div><p><img src="/greenbuildings3_files/greenbuildings3_49_0.png" alt="png"></p>
+<p>Not terribly different than the linear regression model, but we see less outliers in the relationship between <code>NGI</code> and the residuals.</p>
+<p>While we have improved our prediction capabilities, one draw back to more complex models like XGBoost is that they are less interperable. Despite this draw back, XGBoost still allows to the find the relative importance of the features:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>model <span style="color:#f92672">=</span> grid<span style="color:#f92672">.</span>best_estimator_
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> coef <span style="color:#f92672">in</span> zip(X_train<span style="color:#f92672">.</span>columns, model<span style="color:#f92672">.</span>feature_importances_):
+</span></span><span style="display:flex;"><span>    print(coef)
+</span></span></code></pre></div><pre><code>('Energy_Star', 0.03286382)
+('Site_EUI', 0.4422697)
+('NGI', 0.26643634)
+('EI', 0.24186888)
+('Residential', 0.016561199)
+</code></pre>
+<p>While we know the importance of the features we don&rsquo;t now how they effect the <code>GHGI</code>, i.e. if the <code>NGI</code> does the <code>GHGI</code> go up or down? By how much does it go up or down?  Given what we see just from the above these are not questions the model can answer in general terms. This is what we mean by model interperability!</p>
+<p>Now let&rsquo;s log all the information from the grid search and each of the models performances using a nested run using a &ldquo;with&rdquo; statement:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">with</span> mlflow<span style="color:#f92672">.</span>start_run(
+</span></span><span style="display:flex;"><span>            experiment_id<span style="color:#f92672">=</span>exp_id,
+</span></span><span style="display:flex;"><span>            run_name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;XGBoostRegressor&#34;</span>,
+</span></span><span style="display:flex;"><span>            nested<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>):
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Get the grid cell results</span>
+</span></span><span style="display:flex;"><span>    cv_results <span style="color:#f92672">=</span> grid<span style="color:#f92672">.</span>cv_results_
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># loop over each of the parameters and log them along</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># with the metric and rank of the model</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> params, metric, rank <span style="color:#f92672">in</span> zip(cv_results[<span style="color:#e6db74">&#39;params&#39;</span>],
+</span></span><span style="display:flex;"><span>                                    cv_results[<span style="color:#e6db74">&#39;mean_test_score&#39;</span>],
+</span></span><span style="display:flex;"><span>                                    cv_results[<span style="color:#e6db74">&#34;rank_test_score&#34;</span>]):
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">with</span> mlflow<span style="color:#f92672">.</span>start_run(experiment_id<span style="color:#f92672">=</span>exp_id, 
+</span></span><span style="display:flex;"><span>                              nested<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>):
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># log the parameters</span>
+</span></span><span style="display:flex;"><span>            mlflow<span style="color:#f92672">.</span>log_params(params)
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># log the R2 score</span>
+</span></span><span style="display:flex;"><span>            mlflow<span style="color:#f92672">.</span>log_metric(<span style="color:#e6db74">&#34;r2&#34;</span>,metric)
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># set the rank</span>
+</span></span><span style="display:flex;"><span>            mlflow<span style="color:#f92672">.</span>set_tag(<span style="color:#e6db74">&#34;rank&#34;</span>,rank)
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># For the best estimator (xbg_model) </span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># let&#39;s log the parameters for the best model and</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># its metric artifacts</span>
+</span></span><span style="display:flex;"><span>    mlflow<span style="color:#f92672">.</span>log_params(grid<span style="color:#f92672">.</span>best_params_)
+</span></span><span style="display:flex;"><span>    mlflow<span style="color:#f92672">.</span>log_metrics({<span style="color:#e6db74">&#34;r2&#34;</span> : r2_score(y_test, y_pred),
+</span></span><span style="display:flex;"><span>                       <span style="color:#e6db74">&#34; mse&#34;</span>: mean_squared_error(y_test, y_pred)})
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    mlflow<span style="color:#f92672">.</span>log_artifact(<span style="color:#e6db74">&#34;resid.png&#34;</span>)
+</span></span><span style="display:flex;"><span>    mlflow<span style="color:#f92672">.</span>log_model(<span style="color:#e6db74">&#34;XGBoost&#34;</span>,xbg_model)
+</span></span></code></pre></div><p>Let&rsquo;s take a look at the MLflow UI again:</p>
+<img src="https://github.com/mdh266/NYCBuildingEnergyUse/blob/master/notebooks/images/XGBoostRun.png?raw=1">
+<p>We can see the + symbol on the left side of the <code>Run Name</code> corresponding to the run &ldquo;XGBoostRegresor&rdquo;.  Clicking on the symbol shows the rest of the results from the grid search as a dropdown:</p>
+<p><img src="images/XGBoostGrid.png" alt="image.png"></p>
+<p>We can see the different parameters used in each of the runs, the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">R^2</annotation></semantics></math></span>
+ value for that model as well as the ranking of that model. Notice that the first model and the last of the models with rank 1 are the same. However, their <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">R^2</annotation></semantics></math></span>
+ values are different. This is because the one is the model perfomance on the test set, while the other is the average model of the model performances in the 5-fold cross validation.</p>
+<p>Another nice feature of MLflow is the ability to compare model runs, to see the effect of say a hyper-parameter on model performance. You can select the model runs from the drop down and click the &ldquo;compare&rdquo; button displayed in the pictures above. I took a sample from the grid search above to see the effect of <code>max_depth</code> on the model with 100 estimators and <code>ls</code> for its log function:</p>
+<img src="https://github.com/mdh266/NYCBuildingEnergyUse/blob/master/notebooks/images/Compare.png?raw=1">
+<p>We can see that the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">R^{2}</annotation></semantics></math></span>
+ decreases as the <code>max_depth</code> increases. This makes sense as taking larger values of the <code>max_depth</code> generally leads to overfitting.</p>
+<h2 id="mlflow-models-serving-with-rest-apis--docker">
+  MLflow Models: Serving With REST APIs &amp; Docker<a class="anchor" id="mlflow-four"></a>
+  <a class="heading-link" href="#mlflow-models-serving-with-rest-apis--docker">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Now that we have built a good model for green house gas emission let&rsquo;s to deploy this model. One popular mechanism for deploying (or serving) a model is using a <a href="https://restfulapi.net/"  class="external-link" target="_blank" rel="noopener">REST API</a>. Deploying a model as an API means that we create a <a href="https://en.wikipedia.org/wiki/Web_server"  class="external-link" target="_blank" rel="noopener">webserver</a> with a <a href="https://en.wikipedia.org/wiki/URL"  class="external-link" target="_blank" rel="noopener">url</a> that accepts requests. End users or &ldquo;clients&rdquo; can make requests to the API and pass a list of data points containing features (usually as <a href="https://www.json.org/json-en.html"  class="external-link" target="_blank" rel="noopener">json</a>). This list of features is fed into the model and the model spits out a list of predictions corresponding to those features. These list of predictions are sent back to the client (again usually as json).</p>
+<p>The first step in the process is to save the model using the <a href="https://www.mlflow.org/docs/latest/python_api/mlflow.xgboost.html"  class="external-link" target="_blank" rel="noopener">XGBoost</a> module:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> mlflow.xgboost
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>model <span style="color:#f92672">=</span> mlflow<span style="color:#f92672">.</span>xgboost<span style="color:#f92672">.</span>load_model(<span style="color:#e6db74">&#34;/Users/mukeharmon/Documents/DS_Projects/NYCEnergyUsage/notebook/model/XGBModel&#34;</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> mlflow
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">try</span>:
+</span></span><span style="display:flex;"><span>    mlflow<span style="color:#f92672">.</span>create_experiment(<span style="color:#e6db74">&#34;some&#34;</span>)
+</span></span><span style="display:flex;"><span>    experiment <span style="color:#f92672">=</span> mlflow<span style="color:#f92672">.</span>get_experiment_by_name(<span style="color:#e6db74">&#34;greenbuildings&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">except</span>:
+</span></span><span style="display:flex;"><span>    
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>experiment <span style="color:#f92672">=</span> mlflow<span style="color:#f92672">.</span>create_experiment(<span style="color:#e6db74">&#34;some2&#34;</span>)
+</span></span></code></pre></div><pre><code>INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>experiment
+</span></span></code></pre></div><pre><code>'2'
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mlflow<span style="color:#f92672">.</span>tracking<span style="color:#f92672">.</span>set_tracking_uri(<span style="color:#e6db74">&#34;sqlite:////Users/mukeharmon/Documents/DS_Projects/NYCEnergyUsage/notebook/mlflow.db&#34;</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mlflow<span style="color:#f92672">.</span>get_artifact_uri()
+</span></span></code></pre></div><pre><code>INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+
+
+
+
+
+'./runs/0/bc4b93d03e4e49baaa31f00a4609223f/artifacts'
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>run <span style="color:#f92672">=</span> mlflow<span style="color:#f92672">.</span>start_run(experiment_id<span style="color:#f92672">=</span>experiment)
+</span></span><span style="display:flex;"><span>mlflow<span style="color:#f92672">.</span>log_metric(<span style="color:#e6db74">&#34;mse&#34;</span>,<span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>mlflow<span style="color:#f92672">.</span>xgboost<span style="color:#f92672">.</span>log_model(model,<span style="color:#e6db74">&#34;XGBoost&#34;</span>)
+</span></span><span style="display:flex;"><span>mlflow<span style="color:#f92672">.</span>end_run()
+</span></span></code></pre></div><pre><code>INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mlflow<span style="color:#f92672">.</span>end_run()
+</span></span></code></pre></div><pre><code>INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+</code></pre>
+<p>This creats a folder similar to the <code>LinerModel</code> one we discussed above. The next step is to use the MLflow commnand line to serve the model. From the directory where we saved the above model we can use the command:</p>
+<pre><code>mlflow models serve --m XGBModel
+</code></pre>
+<p>This will initially show the following:
+<img src="https://github.com/mdh266/NYCBuildingEnergyUse/blob/master/notebooks/images/XGBoostServe1.png?raw=1"></p>
+<p>If everything builds properly we will then see the following:</p>
+<img src="https://github.com/mdh266/NYCBuildingEnergyUse/blob/master/notebooks/images/XGBoostServe1_P2.png?raw=1">
+<p>Notice the &ldquo;Listening at: http://127.0.0.1:5000&rdquo;, this is the url for our webserver. We will make requests to get model predictions at the url. We have built a REST API that uses <a href="https://flask.palletsprojects.com/en/1.1.x/"  class="external-link" target="_blank" rel="noopener">flask</a> and <a href="https://gunicorn.org/"  class="external-link" target="_blank" rel="noopener">gunicorn</a> with a one line command using MLflow! To see how difficult this be to do by hand see my other <a href="https://github.com/mdh266/DockerMLRestAPI"  class="external-link" target="_blank" rel="noopener">github repo</a>.</p>
+<p>Let&rsquo;s get some test data to try out model REST API:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>test_df <span style="color:#f92672">=</span> X_test<span style="color:#f92672">.</span>head(<span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>test_df
+</span></span></code></pre></div><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+<pre><code>.dataframe tbody tr th {
+    vertical-align: top;
+}
+
+.dataframe thead th {
+    text-align: right;
+}
+</code></pre>
+<p></style></p>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Energy_Star</th>
+      <th>Site_EUI</th>
+      <th>NGI</th>
+      <th>EI</th>
+      <th>Residential</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>3208</th>
+      <td>7744</td>
+      <td>52.7</td>
+      <td>45.964180</td>
+      <td>10.120456</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>103</th>
+      <td>9</td>
+      <td>112.2</td>
+      <td>25.918749</td>
+      <td>29.770710</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p>Let&rsquo;s get the predictions that the XGBoost model gives us as is to what the REST API returns:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>xgb_model<span style="color:#f92672">.</span>predict(test_df)
+</span></span></code></pre></div><pre><code>array([0.00314277, 0.00720516], dtype=float32)
+</code></pre>
+<p>Now let&rsquo;s convert the test data from a <a href="https://pandas.pydata.org/"  class="external-link" target="_blank" rel="noopener">Pandas</a> dataframe to json:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>test_json <span style="color:#f92672">=</span> test_df<span style="color:#f92672">.</span>to_json(orient<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;split&#39;</span>)
+</span></span><span style="display:flex;"><span>test_json
+</span></span></code></pre></div><pre><code>'{&quot;columns&quot;:[&quot;Energy_Star&quot;,&quot;Site_EUI&quot;,&quot;NGI&quot;,&quot;EI&quot;,&quot;Residential&quot;],&quot;index&quot;:[3208,103],&quot;data&quot;:[[7744,52.7,45.9641802469,10.1204555556,1],[9,112.2,25.9187489356,29.7707095517,1]]}'
+</code></pre>
+<p>We can submit the json as request for predictions to the REST API:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> requests
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>result <span style="color:#f92672">=</span> requests<span style="color:#f92672">.</span>post(url<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;http://127.0.0.1:5000/invocations&#34;</span>,
+</span></span><span style="display:flex;"><span>                       data<span style="color:#f92672">=</span>test_json,
+</span></span><span style="display:flex;"><span>                       headers<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#39;Content-Type&#39;</span>:<span style="color:#e6db74">&#39;application/json&#39;</span>})
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>result<span style="color:#f92672">.</span>json()
+</span></span></code></pre></div><pre><code>[0.0031427741050720215, 0.007205158472061157]
+</code></pre>
+<p>The results are the same! Now let&rsquo;s take this one step further and use MLflow to build a <a href="https://www.docker.com/"  class="external-link" target="_blank" rel="noopener">Docker</a> image so that we can deploy our REST API as a container. This again, is only one lineand that command is,</p>
+<pre><code>mlflow models build-docker -m XGBModel -n xgbmodel
+</code></pre>
+<p>Where the <code>xgbmodel</code> is the tag for the Docker image and <code>XGBModel</code> is the folder we saved our model as. If the image is built properly we can see the following:</p>
+<img src="https://github.com/mdh266/NYCBuildingEnergyUse/blob/master/notebooks/images/Success.png?raw=1" >
+<p>The image is <code>fafed3745d54</code> and the tag is <code>xgbmodel:latest</code>. We can start up our containerized REST API using the command:</p>
+<pre><code>docker run -ip 8000:8080 fafed3745d54
+</code></pre>
+<p>The <code>-p 8000:8080</code> is for <a href="https://runnable.com/docker/binding-docker-ports"  class="external-link" target="_blank" rel="noopener">port forwarding</a>. Notice that we have to use 8000 because the the results show:</p>
+<img src="https://github.com/mdh266/NYCBuildingEnergyUse/blob/master/notebooks/images/DockerRun.png?raw=1">
+<p>We can the make a request to that url and port:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>result <span style="color:#f92672">=</span> requests<span style="color:#f92672">.</span>post(url<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;http://127.0.0.1:8000/invocations&#34;</span>,
+</span></span><span style="display:flex;"><span>                       data<span style="color:#f92672">=</span>test_json,
+</span></span><span style="display:flex;"><span>                       headers<span style="color:#f92672">=</span>{<span style="color:#e6db74">&#39;Content-Type&#39;</span>:<span style="color:#e6db74">&#39;application/json&#39;</span>})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>result<span style="color:#f92672">.</span>json()
+</span></span></code></pre></div><pre><code>[0.0031427741050720215, 0.007205158472061157]
+</code></pre>
+<p>The reults are the same as expected!</p>
+<p>There is one downside for using MLflow to build a docker image and that is your image turns out to be quite large. We can see this from the command:</p>
+<pre><code>docker images 
+</code></pre>
+<p>which shows,</p>
+<img src="https://github.com/mdh266/NYCBuildingEnergyUse/blob/master/notebooks/images/DockerImageSize.png?raw=1" >
+<p>Our model takes up 2.72 GB!</p>
+<h2 id="6-deploying-to-google-app-engine-with-docker">
+  6. Deploying to Google App Engine with Docker  <a class="anchor" id="mlflow-five"></a>
+  <a class="heading-link" href="#6-deploying-to-google-app-engine-with-docker">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>We have come to the last topic of this post which is deploying our model as REST API to the cloud. We can easily deploy the &ldquo;Dockerized&rdquo; model API to <a href="https://cloud.google.com/appengine"  class="external-link" target="_blank" rel="noopener">Google Cloud App</a> Engine using the Docker image we created.</p>
+<p>The first step is to follow the instructions <a href="https://cloud.google.com/container-registry/docs/quickstart"  class="external-link" target="_blank" rel="noopener">here</a> for copying the local Docker image to <a href="https://cloud.google.com/container-registry"  class="external-link" target="_blank" rel="noopener">Google Cloud Registry (GCR)</a>. For me the command was :</p>
+<img src="https://github.com/mdh266/NYCBuildingEnergyUse/blob/master/notebooks/images/pushtogcr.png?raw=1">
+<p>Once that is done we can check GCR to make sure the image has been pushed, you can see the results below:</p>
+<img src="https://github.com/mdh266/NYCBuildingEnergyUse/blob/master/notebooks/images/GCR.png?raw=1">
+<p>Next I built the <code>app.yaml</code> for a custom runtime and using flexibly environment as described <a href="https://cloud.google.com/appengine/docs/flexible/custom-runtimes/build"  class="external-link" target="_blank" rel="noopener">here</a>.  The contents of my <code>app.yaml</code> are:</p>
+<pre><code>runtime: custom
+env: flex
+service: xgbmodel
+env_variables: 
+  DISABLE_NGINX: &quot;true&quot;
+</code></pre>
+<p>It&rsquo;s important to note using the container will start <a href="https://www.nginx.com/"  class="external-link" target="_blank" rel="noopener">nginx</a> and <a href="https://gunicorn.org/"  class="external-link" target="_blank" rel="noopener">gunicorn</a> processes which we DO NOT want and therefore chose <code>DISABLE_NGINX: &quot;true&quot;</code> as discussed <a href="https://www.mlflow.org/docs/latest/cli.html#mlflow-models-build-docker"  class="external-link" target="_blank" rel="noopener">here</a>.</p>
+<p>I then ran the command to deploy the app (<code>gcloud app deploy</code>) using <code>--image-url</code> with the address for my image in GCR:</p>
+<p><img src="images/deploy.png" alt="image"></p>
+<p>One everything is completed I can check my app was created in the App Engine tab:</p>
+<p><img src="images/AppEngine.png" alt="image.png"></p>
+<p>Now I can use the <code>target url</code> as pictured above to run a request against as shown below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>target_url <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;https://xgbmodel-dot-advance-sonar-232016.uc.r.appspot.com/invocations&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>result <span style="color:#f92672">=</span> requests<span style="color:#f92672">.</span>post(url     <span style="color:#f92672">=</span> target_url,
+</span></span><span style="display:flex;"><span>                       data    <span style="color:#f92672">=</span> test_json,
+</span></span><span style="display:flex;"><span>                       headers <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#39;Content-Type&#39;</span>:<span style="color:#e6db74">&#39;application/json&#39;</span>})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>result<span style="color:#f92672">.</span>json()
+</span></span></code></pre></div><pre><code>[0.0031427741050720215, 0.007205158472061157]
+</code></pre>
+<p>It worked! To see how difficult this be to do by hand see my other <a href="https://github.com/mdh266/DockerMLRestAPI"  class="external-link" target="_blank" rel="noopener">github repo</a>.  That&rsquo;s enough for this post!</p>
+<hr>
+<h2 id="conclusions">
+  Conclusions <a class="anchor" id="fifth-bullet"></a>
+  <a class="heading-link" href="#conclusions">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>This blog post ends the series of blog posts that starts with a real life dataset on building energy usage and green house gas emissions. In previous posts we covered cleaning the dataset, but in this blog post we covered using the cleaned dataset and building a model with <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mtext> </mtext><mo>=</mo><mtext> </mtext><mn>0.776</mn></mrow><annotation encoding="application/x-tex">R^2 \, = \, 0.776</annotation></semantics></math></span>
+ and deploying it to Google App Engine as an API using Docker. This process was made signifcantly easier using the MLflow library for model development and serving. This project was a lot of fun and I learned a ton workng on it.  I hope you found this useful!</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+      <h3 id="see-also-in-scikit-learn">
+        See also in Scikit-Learn
+        <a class="heading-link" href="#see-also-in-scikit-learn">
+          <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+          <span class="sr-only">Link to heading</span>
+        </a>
+      </h3>
+      <nav>
+        <ul>
+        
+        
+          
+            <li>
+              <a href="/posts/kmeans/">Writing A Scikit Learn Compatible Clustering Algorithm</a>
+            </li>
+          
+        
+          
+        
+          
+            <li>
+              <a href="/posts/greenbuildings2/">Green Buildings 2: Imputing Missing Values With Scikit-Learn</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/greenbuildings1/">Green Buildings 1: Exploratory Analysis &amp; Outlier Removal</a>
+            </li>
+          
+        
+        </ul>
+      </nav>
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>

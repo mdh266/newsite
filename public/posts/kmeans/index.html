@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Writing A Scikit Learn Compatible Clustering Algorithm · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+1. Introduction
+2. The k-means clustering alogorithm
+3. Writing the k-means algorithm with NumPy
+4. Writing a Scikit-Learn compatible estimator
+5. Using the elbow method and Pipelines
+6. Summary &amp; References
+
+  Introduction 
+  
+    
+    Link to heading
+  
+
+
+Clustering algorithms and unsupervised learning methods have been gaining popularity recently. This is partly because the amount of data being generated has increased exponentially, but also because labels for this data are often still hard to come by. Labeling data can be time consuming and requires human effort which can be expensive. Unsupervised learning methods are machine learning methods that can be used to gleam information from unlabeled data. Clustering algorithms specifically take unlabeled points within a dataset and try to group them into &ldquo;clusters&rdquo;. Within clusters datapoints are very &ldquo;similar&rdquo; (in some sense that will be discussed later) and datapoints between cluster are very &ldquo;disimilar&rdquo;.">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Writing A Scikit Learn Compatible Clustering Algorithm">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. The k-means clustering alogorithm
+3. Writing the k-means algorithm with NumPy
+4. Writing a Scikit-Learn compatible estimator
+5. Using the elbow method and Pipelines
+6. Summary &amp; References
+Introduction Link to heading Clustering algorithms and unsupervised learning methods have been gaining popularity recently. This is partly because the amount of data being generated has increased exponentially, but also because labels for this data are often still hard to come by. Labeling data can be time consuming and requires human effort which can be expensive. Unsupervised learning methods are machine learning methods that can be used to gleam information from unlabeled data. Clustering algorithms specifically take unlabeled points within a dataset and try to group them into “clusters”. Within clusters datapoints are very “similar” (in some sense that will be discussed later) and datapoints between cluster are very “disimilar”.">
+
+<meta property="og:url" content="http://localhost:1313/posts/kmeans/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Writing A Scikit Learn Compatible Clustering Algorithm">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. The k-means clustering alogorithm
+3. Writing the k-means algorithm with NumPy
+4. Writing a Scikit-Learn compatible estimator
+5. Using the elbow method and Pipelines
+6. Summary &amp; References
+Introduction Link to heading Clustering algorithms and unsupervised learning methods have been gaining popularity recently. This is partly because the amount of data being generated has increased exponentially, but also because labels for this data are often still hard to come by. Labeling data can be time consuming and requires human effort which can be expensive. Unsupervised learning methods are machine learning methods that can be used to gleam information from unlabeled data. Clustering algorithms specifically take unlabeled points within a dataset and try to group them into “clusters”. Within clusters datapoints are very “similar” (in some sense that will be discussed later) and datapoints between cluster are very “disimilar”.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2022-05-04T00:00:00+00:00">
+    <meta property="article:modified_time" content="2022-05-04T00:00:00+00:00">
+    <meta property="article:tag" content="Scikit-Learn">
+    <meta property="article:tag" content="NumPy">
+    <meta property="article:tag" content="K-Means">
+      <meta property="og:see_also" content="http://localhost:1313/posts/greenbuildings3/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/greenbuildings2/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/greenbuildings1/">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/kmeans/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/kmeans/">
+              Writing A Scikit Learn Compatible Clustering Algorithm
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2022-05-04T00:00:00Z">
+                May 4, 2022
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              17-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/scikit-learn/">Scikit-Learn</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/numpy/">NumPy</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/k-means/">K-Means</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#first-bullet" >1. Introduction</a></strong></p>
+<p><strong><a href="#second-bullet" >2. The k-means clustering alogorithm</a></strong></p>
+<p><strong><a href="#third-bullet" >3. Writing the k-means algorithm with NumPy</a></strong></p>
+<p><strong><a href="#fourth-bullet" >4. Writing a Scikit-Learn compatible estimator</a></strong></p>
+<p><strong><a href="#fifth-bullet" >5. Using the elbow method and Pipelines</a></strong></p>
+<p><strong><a href="#sixth-bullet" >6. Summary &amp; References</a></strong></p>
+<h2 id="introduction">
+  Introduction <a class="anchor" id="first-bullet"></a>
+  <a class="heading-link" href="#introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Clustering algorithms and unsupervised learning methods have been gaining popularity recently. This is partly because the amount of data being generated has increased exponentially, but also because labels for this data are often still hard to come by. Labeling data can be time consuming and requires human effort which can be expensive. Unsupervised learning methods are machine learning methods that can be used to gleam information from unlabeled data. Clustering algorithms specifically take unlabeled points within a dataset and try to group them into &ldquo;clusters&rdquo;. Within clusters datapoints are very &ldquo;similar&rdquo; (in some sense that will be discussed later) and datapoints between cluster are very &ldquo;disimilar&rdquo;.</p>
+<p>I have mixed feelings on clustering. It&rsquo;s often hard to quantify how well a model is performing when you dont have a measure to define what is correct or not. On the other hand without labeled data, they are often all we&rsquo;ve got! Despite being hard to quantify their performance clustering methods can be helpful for <a href="https://en.wikipedia.org/wiki/Semi-supervised_learning"  class="external-link" target="_blank" rel="noopener">Semi-Supervised Learning</a> where there is a small amount of labeled data and a large amount of unlabeled data.</p>
+<p>In this post, I will go over how to write a <a href="https://en.wikipedia.org/wiki/K-means_clustering"  class="external-link" target="_blank" rel="noopener">k-means clustering</a> algorithm from scratch using <a href="https://numpy.org/"  class="external-link" target="_blank" rel="noopener">NumPy</a>. The algorithm will be explained in the next section and while seemingly simple, it can be tricky to implement efficiently! As an added bonus, I will go over how to implement the algorithm in a way that is <a href="https://scikit-learn.org/stable/"  class="external-link" target="_blank" rel="noopener">Scikit-Learn</a> compatible so that we can use Scikit-Learn&rsquo;s framework including <a href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html"  class="external-link" target="_blank" rel="noopener">Pipelines</a> and <a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html"  class="external-link" target="_blank" rel="noopener">GridSearchCV</a> (which admittidely isn&rsquo;t particuarly helpful for this model).</p>
+<p>Let&rsquo;s start out by talking about the technical details of the k-means clustering algorithm.</p>
+<h2 id="the-k-means-clustering-alogorithm">
+  The k-means clustering alogorithm <a class="anchor" id="second-bullet"></a>
+  <a class="heading-link" href="#the-k-means-clustering-alogorithm">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>The k-means clustering algorithm is a means of partitioning a dataset, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">X</mtext><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>n</mi><mo>×</mo><mi>p</mi></mrow></msup></mrow><annotation encoding="application/x-tex">\textbf{X} \in \mathbb{R}^{n \times p}</annotation></semantics></math></span>
+, of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span>
+ points and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span>
+ features into <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span>
+ clusters. It specifically assumes</p>
+<ul>
+<li>
+<p>explicitly that the number of clusters can be defined <em>a-priori</em>.</p>
+</li>
+<li>
+<p>implicitly that all points in the dataset belong to clusters that can be well-separated</p>
+</li>
+</ul>
+<p>The main idea of the algorithm is to find a centroid for each of the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span>
+ clusters, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold-italic">μ</mi><mi>k</mi></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mi>p</mi></msup></mrow><annotation encoding="application/x-tex">\boldsymbol \mu_{k} \in \mathbb{R}^{p}</annotation></semantics></math></span>
+, that represents the &ldquo;center&rdquo; of the cluster. The algorithm then assign points within a dataset to the cluster that it is closest to. This assignement requires us to define a metric <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>x</mi><mn>2</mn></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">d(x_{1}, x_{2})</annotation></semantics></math></span>
+ to tell the algorithm how close two points are within our feature space or how &ldquo;similar&rdquo; they are. Most often the distance function <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi></mrow><annotation encoding="application/x-tex">d</annotation></semantics></math></span>
+ is taken to the <a href="https://en.wikipedia.org/wiki/Euclidean_distance"  class="external-link" target="_blank" rel="noopener">euclidian distance</a>.</p>
+<p>The k-means clustering algorithm tries to form clusters which contain points which are similar with respect to the distance metric <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi></mrow><annotation encoding="application/x-tex">d</annotation></semantics></math></span>
+. It turns out this is equivalent to minimizing the variance within each cluster. Let the set of all clusters be <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">S</mi><mo>=</mo><mo stretchy="false">{</mo><msub><mi>S</mi><mn>1</mn></msub><mo separator="true">,</mo><mtext> </mtext><mo>…</mo><mo separator="true">,</mo><mtext> </mtext><msub><mi>S</mi><mi>k</mi></msub><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">\mathbf{S} = \{S_1, \, \ldots, \, S_k\}</annotation></semantics></math></span>
+, then the cost function is defined as,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi mathvariant="script">J</mi><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>k</mi></munderover><mi mathvariant="normal">∣</mi><msub><mi>S</mi><mi>j</mi></msub><mi mathvariant="normal">∣</mi><mi mathvariant="normal">Var</mi><mo>⁡</mo><msub><mi>S</mi><mi>j</mi></msub></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>k</mi></munderover><msub><mi>r</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>j</mi></mrow></msub><mtext> </mtext><mi mathvariant="normal">∥</mi><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>−</mo><msub><mi mathvariant="bold-italic">μ</mi><mi>j</mi></msub><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\mathcal{J}(k) \; &amp;= \; \sum_{j=1}^k |S_j| \operatorname{Var} S_j \\
+&amp;= \; \sum_{i=1}^{n} \sum_{j=1}^{k} r_{i,j} \,  \Vert \textbf{x}_i - \boldsymbol \mu_j \Vert^{2}
+\end{aligned}
+</annotation></semantics></math></span>
+<p>Where for each <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mi>p</mi></msup></mrow><annotation encoding="application/x-tex">\textbf{x}_i \in \mathbb{R}^{p}</annotation></semantics></math></span>
+ we have the definition of the indicator function,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>r</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>k</mi></mrow></msub><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mrow><mo fence="true">{</mo><mtable rowspacing="0.16em" columnalign="center center" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mn>1</mn><mo separator="true">,</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mtext>if</mtext><mtext>  </mtext><mi>k</mi><mo>=</mo><mi><munder><mo><mi mathvariant="normal">arg min</mi><mo>⁡</mo></mo><mi>j</mi></munder></mi><mi mathvariant="normal">∥</mi><msub><mtext mathvariant="bold">x</mtext><mi>j</mi></msub><mo>−</mo><msub><mi mathvariant="bold-italic">μ</mi><mi>j</mi></msub><msup><mi mathvariant="normal">∥</mi><mn>2</mn></msup></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mn>0</mn><mo separator="true">,</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mtext>otherwise</mtext></mstyle></mtd></mtr></mtable></mrow></mrow><annotation encoding="application/x-tex"> r_{i,k} \; = \; \left\{  \begin{array}{cc}
+1, &amp; \text{if} \;  k = 
+\underset{j} {\operatorname{arg\,min}} \Vert \textbf{x}_j - \boldsymbol \mu_j \Vert^{2}  \\
+0, &amp; \text{otherwise}
+\end{array} \right.
+</annotation></semantics></math></span>
+<p>It can be seen that the sum, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∣</mi><msub><mi>S</mi><mi>k</mi></msub><mi mathvariant="normal">∣</mi><mtext>  </mtext><mo>=</mo><mtext>  </mtext><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></msubsup><msub><mi>r</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>k</mi></mrow></msub></mrow><annotation encoding="application/x-tex">|S_k| \; = \; \sum_{i=1}^n r_{i,k}</annotation></semantics></math></span>
+ is the number of points assigned to each cluster!</p>
+<p>Minimizing the cost function <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">J</mi><mo stretchy="false">(</mo><mi>k</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{J}(k)</annotation></semantics></math></span>
+ is an NP-hard problem and a heuristic is usually applied to approximate solutions to the optimal centroids. This heuristic is a greedy iterative method that is called the <a href="https://en.wikipedia.org/wiki/K-means_clustering"  class="external-link" target="_blank" rel="noopener">Lloyd–Forgy algorithm</a> and has the following the steps,</p>
+<ol>
+<li>Intialize the centroids by randomly assigning <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold-italic">μ</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">\boldsymbol \mu_k</annotation></semantics></math></span>
+ to one of the datapoints</li>
+</ol>
+<p>Then while not converged,</p>
+<ol start="2">
+<li>Assign each <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">x_{i}</annotation></semantics></math></span>
+ to a cluster, i.e. find <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>r</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>k</mi></mrow></msub></mrow><annotation encoding="application/x-tex">r_{i,k}</annotation></semantics></math></span>
+</li>
+<li>Update <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold-italic">μ</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">\boldsymbol \mu_{k}</annotation></semantics></math></span>
+ by taking them to be the mean of all datapoints in the cluster,</li>
+</ol>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><msub><mi mathvariant="bold-italic">μ</mi><mi>k</mi></msub><mtext>  </mtext></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>  </mtext><mfrac><mrow><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>r</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>k</mi></mrow></msub><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub></mrow><mrow><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>r</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>k</mi></mrow></msub></mrow></mfrac></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mi><munder><mo><mi mathvariant="normal">avg</mi><mo>⁡</mo></mo><mrow><mi>x</mi><mo>∈</mo><msub><mi>S</mi><mi>k</mi></msub></mrow></munder></mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\boldsymbol \mu_k \;&amp; = \; \frac{\sum_{i=1}^n r_{i,k} \textbf{x}_i}{\sum_{i=1}^n r_{i,k}} \\
+&amp;= \underset{x \in S_k} {\operatorname{avg}}(x)
+\end{aligned}</annotation></semantics></math></span>
+<p>Convergence is usually taken to be that the distance between each cluster&rsquo;s centroid before and after each iteration is less than some predefined tolerance. Another option is that one can also set a maximum number iterations that algorithm can take.</p>
+<p>This heuristic method is used to train the k-means model and attempts to find groupings of the data that minimizes the cost function which is the weighted sum of the squares errors of the clusters. Given that is the cost function is a sum of square errors, <em>it is sensitive to outliers</em> just like linear regression. In addition the k-means has the following limitations,</p>
+<ul>
+<li>Requires the number of clusters to be known ahead of time.</li>
+<li>It generally prefers clusters that are approximately the same size.</li>
+<li>Can really only find clusters that are spherical.</li>
+<li>The optimization problem is non-convex and iterative solutions often converge to local optimums instead of global optimum.</li>
+</ul>
+<p>Additionally, the algorithm is sensitive to the initial conditions and a number of different random initial conditions are chosen and the one with the best results is chosen as the final model.</p>
+<h3 id="a-side-note-on-k-means">
+  A side note on k-means++
+  <a class="heading-link" href="#a-side-note-on-k-means">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<hr>
+<p>The k-means++ is an algorithm for choosing the initial values (or &ldquo;seeds&rdquo;) for the heuristic solution by specifying a procedure to initialize the cluster centroids before proceeding with the standard iterative k-means algorithm discussed above. The initialization algorithm has the following steps,</p>
+<ul>
+<li>Choose one center uniformly at random among the data points called <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">x</mtext></mrow><annotation encoding="application/x-tex">\textbf{x}</annotation></semantics></math></span>
+.</li>
+<li>For each data point <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\textbf{x}_{i}</annotation></semantics></math></span>
+ not chosen yet, compute <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mo stretchy="false">(</mo><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo separator="true">,</mo><mtext mathvariant="bold">x</mtext><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">d(\textbf{x}_{i}, \textbf{x})</annotation></semantics></math></span>
+, the distance between <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">x</mtext></mrow><annotation encoding="application/x-tex">\textbf{x}</annotation></semantics></math></span>
+ and the nearest center that has already been chosen.</li>
+<li>Choose one new data point at random as a new center, using a weighted probability distribution where a point <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="bold">x</mtext></mrow><annotation encoding="application/x-tex">\textbf{x}</annotation></semantics></math></span>
+ is chosen with probability proportional to <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mo stretchy="false">(</mo><msub><mtext mathvariant="bold">x</mtext><mi>i</mi></msub><mo separator="true">,</mo><mtext mathvariant="bold">x</mtext><msup><mo stretchy="false">)</mo><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">d(\textbf{x}_{i}, \textbf{x})^2</annotation></semantics></math></span>
+.</li>
+<li>Repeat Steps 2 and 3 until <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span>
+ centroids have been chosen.</li>
+<li>Now that the initial centers have been chosen, proceed using standard iterative heuristic.</li>
+</ul>
+<p>With the k-means++ initialization, the algorithm is guaranteed to find a solution that is <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">O</mi><mo stretchy="false">(</mo><mi>log</mi><mo>⁡</mo><mi>k</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log k)</annotation></semantics></math></span>
+ and is competitive to the optimal k-means solution.</p>
+<h2 id="writing-the-k-means-algorithm-with-numpy">
+  Writing the k-means algorithm with NumPy <a class="anchor" id="third-bullet"></a>
+  <a class="heading-link" href="#writing-the-k-means-algorithm-with-numpy">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>First lets start out by creatinga a simple dataset in 2 dimensions.  We can use 10,000 points belonging to 3 clusters as shown below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span>N <span style="color:#f92672">=</span> <span style="color:#ae81ff">10000</span>
+</span></span><span style="display:flex;"><span>k <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>data1 <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>randn(N<span style="color:#f92672">//</span><span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">2</span>) <span style="color:#f92672">+</span> np<span style="color:#f92672">.</span>array([<span style="color:#ae81ff">5</span>,<span style="color:#ae81ff">6</span>])
+</span></span><span style="display:flex;"><span>data2 <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>randn(N<span style="color:#f92672">//</span><span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">2</span>) <span style="color:#f92672">+</span> np<span style="color:#f92672">.</span>array([<span style="color:#f92672">-</span><span style="color:#ae81ff">5</span>,<span style="color:#f92672">-</span><span style="color:#ae81ff">6</span>])
+</span></span><span style="display:flex;"><span>data3 <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>randn(N<span style="color:#f92672">//</span><span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">2</span>) <span style="color:#f92672">+</span> np<span style="color:#f92672">.</span>array([<span style="color:#f92672">-</span><span style="color:#ae81ff">10</span>,<span style="color:#ae81ff">3</span>])
+</span></span><span style="display:flex;"><span>data <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>concatenate((data1, data2, data3))
+</span></span></code></pre></div><p>Now we lets plot the points,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> matplotlib.pyplot <span style="color:#66d9ef">as</span> plt
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span>matplotlib inline
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>scatter(data[:,<span style="color:#ae81ff">0</span>], data[:,<span style="color:#ae81ff">1</span>])
+</span></span></code></pre></div><pre><code>&lt;matplotlib.collections.PathCollection at 0x107c81190&gt;
+</code></pre>
+<p><img src="/kmeans_files/kmeans_3_1.png" alt="png"></p>
+<h3 id="initializing-the-centroids">
+  Initializing The Centroids
+  <a class="heading-link" href="#initializing-the-centroids">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<hr>
+<p>To initialize the centroids we need to come up with a function that takes a dataset of N points and chooses k of them to be the centroids. This is a naive initialization process compared to k-means++, but for our purposes it will do. We define this function using the <a href="https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html"  class="external-link" target="_blank" rel="noopener">np.random.choice</a> function to get the entries of the k different points as shown below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>choice(N, <span style="color:#ae81ff">3</span>,replace<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span></code></pre></div><pre><code>array([1749, 1121, 1310])
+</code></pre>
+<p>We can then write a function to initialize these centroids,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> typing <span style="color:#f92672">import</span> List
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">init_centroids</span>(X: np<span style="color:#f92672">.</span>array, K: int) <span style="color:#f92672">-&gt;</span> List[float]:
+</span></span><span style="display:flex;"><span>    N <span style="color:#f92672">=</span> X<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> X[np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>choice(N, K,replace<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)]
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>centroids <span style="color:#f92672">=</span> init_centroids(data, <span style="color:#ae81ff">3</span>)
+</span></span></code></pre></div><p>The three initial points for the centroids are,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>centroids
+</span></span></code></pre></div><pre><code>array([[-11.23745643,   3.46931906],
+       [ -4.91882472,  -4.87376259],
+       [  4.78626865,   6.48088   ]])
+</code></pre>
+<p>We can plot these to see where they are with respsect to the rest of the points,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>figure()
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>scatter(data[:,<span style="color:#ae81ff">0</span>], data[:,<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> centroids:
+</span></span><span style="display:flex;"><span>    plt<span style="color:#f92672">.</span>scatter(<span style="color:#f92672">*</span>c, color<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;red&#34;</span>)
+</span></span></code></pre></div><p><img src="/kmeans_files/kmeans_12_0.png" alt="png"></p>
+<p>Two of the centroids look like they are in the same cluster (note due to random seeding you may not get the same results). Now let&rsquo;s write a function that assigns each of the points in the dataset to a cluster by finding cluster that each point is closest to.</p>
+<h3 id="assign-each-point-to-a-cluster">
+  Assign Each Point To A Cluster
+  <a class="heading-link" href="#assign-each-point-to-a-cluster">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<hr>
+<p>Let&rsquo;s take an example with the first data point,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>point <span style="color:#f92672">=</span> data[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>point
+</span></span></code></pre></div><pre><code>array([5.24048539, 6.26693666])
+</code></pre>
+<p>We can remind ourselves what the centroids look like,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>centroids
+</span></span></code></pre></div><pre><code>array([[-11.23745643,   3.46931906],
+       [ -4.91882472,  -4.87376259],
+       [  4.78626865,   6.48088   ]])
+</code></pre>
+<p>Now we want to find the distance from the point to each of the centroids and will use the concept of <a href="https://numpy.org/doc/stable/user/basics.broadcasting.html"  class="external-link" target="_blank" rel="noopener">broadcasting</a> in NumPy. We can see the shape <code>point</code> and <code>centroids</code>,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;point.shape = </span><span style="color:#e6db74">{</span>point<span style="color:#f92672">.</span>shape<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;centroids.shape = </span><span style="color:#e6db74">{</span>centroids<span style="color:#f92672">.</span>shape<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><pre><code>point.shape = (2,)
+centroids.shape = (3, 2)
+</code></pre>
+<p>Now subtracting the two using broadcasting results in</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>point <span style="color:#f92672">-</span> centroids
+</span></span></code></pre></div><pre><code>array([[16.47794182,  2.79761759],
+       [10.15931011, 11.14069925],
+       [ 0.45421674, -0.21394334]])
+</code></pre>
+<p>We broadcasted the point from a (2,) shape to a (3,2) to match the shape of the <code>centroids</code> array and then performed elementwise subtraction.</p>
+<p>Now we can calculate the distance by using the <a href="https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html"  class="external-link" target="_blank" rel="noopener">norm</a> from NumPy&rsquo;s numerical linear alebgra module. The use for the norm allows us to use data from arbitrary dimensions!</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>dists <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>linalg<span style="color:#f92672">.</span>norm(point <span style="color:#f92672">-</span> centroids, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>dists 
+</span></span></code></pre></div><pre><code>array([16.71374377, 15.07735924,  0.50208027])
+</code></pre>
+<p>Now we assign the point to the cluster which is closes usign the <a href="https://numpy.org/doc/stable/reference/generated/numpy.argmin.html"  class="external-link" target="_blank" rel="noopener">argmin</a> function from NumPy.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>np<span style="color:#f92672">.</span>argmin(dists)
+</span></span></code></pre></div><pre><code>2
+</code></pre>
+<p>This means point is closest to cluster 3 (size Python is 0 indexed)! We can see this below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>figure()
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>scatter(data[:,<span style="color:#ae81ff">0</span>], data[:,<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> centroids:
+</span></span><span style="display:flex;"><span>    plt<span style="color:#f92672">.</span>scatter(<span style="color:#f92672">*</span>c, color<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;red&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>scatter(<span style="color:#f92672">*</span>point, color<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;purple&#39;</span>)
+</span></span></code></pre></div><pre><code>&lt;matplotlib.collections.PathCollection at 0x107e1f5e0&gt;
+</code></pre>
+<p><img src="/kmeans_files/kmeans_26_1.png" alt="png"></p>
+<p>Now we want to do this for every point in the dataset, we create a new vector called <code>labels</code> that is the cluster each point belows to. We use the NumPy empty function to assign an empty array of size N (so that the memory is allocated for up front).</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>labels <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>empty(data<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>])
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>labels
+</span></span></code></pre></div><pre><code>array([0., 0., 0., ..., 0., 0., 0.])
+</code></pre>
+<p>Now we can write function to assign all the points in the dataset to the cluster it is closest to. We do this for entire dataset using the <a href="https://www.geeksforgeeks.org/enumerate-in-python/"  class="external-link" target="_blank" rel="noopener">enumerate</a> function to keep track of the index in the label array while looping over each point in the dataset,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">update_labels</span>(X: np<span style="color:#f92672">.</span>array, labels: np<span style="color:#f92672">.</span>array) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> i, point <span style="color:#f92672">in</span> enumerate(X):
+</span></span><span style="display:flex;"><span>        dists <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>linalg<span style="color:#f92672">.</span>norm(point <span style="color:#f92672">-</span> centroids, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>) <span style="color:#75715e"># norm along the rows</span>
+</span></span><span style="display:flex;"><span>        labels[i] <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>argmin(dists)
+</span></span></code></pre></div><p>Note this is function edits the labels array by reference instead of returning a new array.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>update_labels(data, labels)
+</span></span><span style="display:flex;"><span>labels
+</span></span></code></pre></div><pre><code>array([2., 2., 2., ..., 0., 0., 0.])
+</code></pre>
+<h3 id="updating-the-centroids">
+  Updating The Centroids
+  <a class="heading-link" href="#updating-the-centroids">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<hr>
+<p>The last function we need to write is a function that will update the centroids. The way we update the centroids is by finding the points that belong to a each cluster and the finding the mean (or any other average) of those points features to make the new centroid for that cluster.</p>
+<p>We can find all the points that belong to each cluster using the concept of <a href="https://jakevdp.github.io/PythonDataScienceHandbook/02.06-boolean-arrays-and-masks.html"  class="external-link" target="_blank" rel="noopener">Masking</a>. To see how this works we can find all the labeled points that belong to each cluster. For instance we can find which points belong to cluster 0 with the following.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>(labels<span style="color:#f92672">==</span><span style="color:#ae81ff">0</span>)
+</span></span></code></pre></div><pre><code>array([False, False, False, ...,  True,  True,  True])
+</code></pre>
+<p>Note that this returns a boolean array that says whether each value in the array is a 0 or not. We can then use masking to get all points that are in cluster 0,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>data[labels<span style="color:#f92672">==</span><span style="color:#ae81ff">0</span>]
+</span></span></code></pre></div><pre><code>array([[-10.49346302,   3.01319403],
+       [-10.28456084,   2.8061653 ],
+       [ -9.34551533,   3.14996967],
+       ...,
+       [-12.78795698,   2.84267242],
+       [-11.20825349,   4.3302826 ],
+       [-10.00988014,   4.17066035]])
+</code></pre>
+<p>We can obtain the centroid values by taking the average along each column; this can be calculated with the <a href="https://numpy.org/doc/stable/reference/generated/numpy.mean.html"  class="external-link" target="_blank" rel="noopener">mean</a> function from NumPy with <code>axis=0</code> to signify we are summing all the rows in each column,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>data[labels<span style="color:#f92672">==</span><span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>mean(axis<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>)
+</span></span></code></pre></div><pre><code>array([2.72674413, 3.4421267 ])
+</code></pre>
+<p>Writing this as a function that takes in the <code>dataframe</code> and <code>labels</code> we can write a for loop over the clusters and then use the <a href="https://numpy.org/doc/stable/reference/generated/numpy.stack.html"  class="external-link" target="_blank" rel="noopener">stack</a> function to collect the centroids as an array of of centroids.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">update_centroids</span>(X: np<span style="color:#f92672">.</span>array, labels: np<span style="color:#f92672">.</span>array, K: int) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>    centroids <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>stack([
+</span></span><span style="display:flex;"><span>                        X[labels<span style="color:#f92672">==</span>i]<span style="color:#f92672">.</span>mean(axis<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(K)
+</span></span><span style="display:flex;"><span>    ])
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> centroids
+</span></span></code></pre></div><p>And can use this to calculate one iteration of the k means algorithm,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>update_centroids(data, labels, <span style="color:#ae81ff">3</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>figure()
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>scatter(data[:,<span style="color:#ae81ff">0</span>], data[:,<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> centroids:
+</span></span><span style="display:flex;"><span>    plt<span style="color:#f92672">.</span>scatter(<span style="color:#f92672">*</span>c, color<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;red&#34;</span>)
+</span></span></code></pre></div><p><img src="/kmeans_files/kmeans_43_0.png" alt="png"></p>
+<p>Now, lets right the <code>fit</code> function which will uses all the functions we wrote prior to iteratively fit a k-means model. The last thing we need to mention is convergence which tells us when our iterative method should terminate. The iterative is terminated when,</p>
+<ul>
+<li>We have reached some predefined maximum number of iterations called <code>max_iter</code></li>
+<li>The distance between the centroids in before and after an iteration is less than some predefined tolerance <code>tol</code></li>
+</ul>
+<p>Note that the method is assumed to have converged only when the second condition is achieved, the former just terminates the iteration since the method has not converged in a reasonable timeframe. The <code>fit</code> is below and returns the centroids of the clusters,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">fit</span>(X: np<span style="color:#f92672">.</span>array, K: int, max_iters: int <span style="color:#f92672">=</span> <span style="color:#ae81ff">100</span>, tol:float <span style="color:#f92672">=</span> <span style="color:#ae81ff">1e-10</span>) <span style="color:#f92672">-&gt;</span> List[float]:
+</span></span><span style="display:flex;"><span>    centroids <span style="color:#f92672">=</span> init_centroids(X<span style="color:#f92672">=</span>X, K<span style="color:#f92672">=</span>K)
+</span></span><span style="display:flex;"><span>    labels <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>empty(X<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(max_iters):
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># label points belonging to clusters</span>
+</span></span><span style="display:flex;"><span>        prev_centroids <span style="color:#f92672">=</span> centroids
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># update labels</span>
+</span></span><span style="display:flex;"><span>        update_labels(X<span style="color:#f92672">=</span>X, labels<span style="color:#f92672">=</span>labels)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># update centroids</span>
+</span></span><span style="display:flex;"><span>        centroids <span style="color:#f92672">=</span> update_centroids(X<span style="color:#f92672">=</span>X, labels<span style="color:#f92672">=</span>labels, K<span style="color:#f92672">=</span>K)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> np<span style="color:#f92672">.</span>linalg<span style="color:#f92672">.</span>norm(prev_centroids <span style="color:#f92672">-</span> centroids) <span style="color:#f92672">&lt;</span> tol:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> centroids
+</span></span></code></pre></div><p>We can use this to now fit out model and verify the results after they have converged,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>centroids <span style="color:#f92672">=</span> fit(X<span style="color:#f92672">=</span>data, K<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>figure()
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>scatter(data[:,<span style="color:#ae81ff">0</span>], data[:,<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> centroids:
+</span></span><span style="display:flex;"><span>    plt<span style="color:#f92672">.</span>scatter(<span style="color:#f92672">*</span>c, color<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;red&#34;</span>)
+</span></span></code></pre></div><p><img src="/kmeans_files/kmeans_47_0.png" alt="png"></p>
+<p>Looks pretty good! Now let&rsquo;s talk about how to make this Scikit-Learn compatible.</p>
+<h1 id="writing-a-scikit-learn-compatible-estimator">
+  Writing a Scikit-Learn compatible estimator <a class="anchor" id="fourth-bullet"></a>
+  <a class="heading-link" href="#writing-a-scikit-learn-compatible-estimator">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h1>
+<hr>
+<p>Now we want to go about creating a Scikit-Learn compatible k-means clustering model so that we can use the library&rsquo;s built in <a href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html"  class="external-link" target="_blank" rel="noopener">Pipeline</a> and <a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html"  class="external-link" target="_blank" rel="noopener">GridSearchCV</a>. This realies on our ability to create a <a href="https://scikit-learn.org/stable/developers/develop.html"  class="external-link" target="_blank" rel="noopener">custom estimator for Scikit-learn</a>.</p>
+<p>In order to accomplish this, we need to create a KMeans clustering class for our model that extends the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html"  class="external-link" target="_blank" rel="noopener">BaseEstimator</a> class and since this since clustering algorithm we also extend the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.base.ClassifierMixin.html"  class="external-link" target="_blank" rel="noopener">ClusterMixin</a> class. This method uses the concept of inheritence and <a href="https://realpython.com/python-interface/"  class="external-link" target="_blank" rel="noopener">abstract base classes or interfaces</a> though not quite so formally.</p>
+<p>One thing we change in the implementation is that we allow the number of clusters to be a class member <code>K</code> which is passed to the constructor along with the the maximum number of iteration <code>max_iter</code>, the tolerance <code>tol</code> to determine if the method has converged and a <code>random_state</code> to see the choice of datapoints as initial cluster centroids. The other major changes to the functions written above are mostly either cosmetic or required to make them methods of the class.  Specifically we werite the functions to be private methods of the class and therefore require the <code>self</code> parameter and a &ldquo;_&rdquo; prefix for all but the <code>fit</code> method which will remain public. Lastly, we change the centroids related methods so that the no longer return the centroids, but rather update the objects centroids member.</p>
+<p>The class is written below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.base <span style="color:#f92672">import</span> BaseEstimator, ClusterMixin
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> __future__ <span style="color:#f92672">import</span> annotations
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">KMeans</span>(BaseEstimator, ClusterMixin):
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, 
+</span></span><span style="display:flex;"><span>                 K: int<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, 
+</span></span><span style="display:flex;"><span>                 max_iter: int<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>, 
+</span></span><span style="display:flex;"><span>                 random_state: int <span style="color:#f92672">=</span> <span style="color:#ae81ff">42</span>,
+</span></span><span style="display:flex;"><span>                 tol: float <span style="color:#f92672">=</span> <span style="color:#ae81ff">1e-6</span>):
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>K <span style="color:#f92672">=</span> K
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>max_iter <span style="color:#f92672">=</span> max_iter
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>centroids <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>random_state <span style="color:#f92672">=</span> random_state
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>tol <span style="color:#f92672">=</span> tol
+</span></span><span style="display:flex;"><span>        np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>seed(random_state)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_init_centroids</span>(self, X: np<span style="color:#f92672">.</span>array) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>        N <span style="color:#f92672">=</span> X<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>centroids <span style="color:#f92672">=</span> X[np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>choice(N,self<span style="color:#f92672">.</span>K,replace<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_update_labels</span>(self, X: np<span style="color:#f92672">.</span>array, labels: np<span style="color:#f92672">.</span>array) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> i, point <span style="color:#f92672">in</span> enumerate(X):
+</span></span><span style="display:flex;"><span>            dists <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>linalg<span style="color:#f92672">.</span>norm(point <span style="color:#f92672">-</span> self<span style="color:#f92672">.</span>centroids, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>) <span style="color:#75715e"># sum along the rows</span>
+</span></span><span style="display:flex;"><span>            labels[i] <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>argmin(dists)
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_update_centroids</span>(self, X: np<span style="color:#f92672">.</span>array, labels: np<span style="color:#f92672">.</span>array) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>centroids <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>stack([
+</span></span><span style="display:flex;"><span>                            X[labels<span style="color:#f92672">==</span>i]<span style="color:#f92672">.</span>mean(axis<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(self<span style="color:#f92672">.</span>K)
+</span></span><span style="display:flex;"><span>        ])
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">fit</span>(self, X: np<span style="color:#f92672">.</span>array, y: np<span style="color:#f92672">.</span>array<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>) <span style="color:#f92672">-&gt;</span> KMeans:
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>_init_centroids(X)
+</span></span><span style="display:flex;"><span>        labels <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>empty(X<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(self<span style="color:#f92672">.</span>max_iter):
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># label points belonging to clusters</span>
+</span></span><span style="display:flex;"><span>            prev_centroids <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>centroids
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># update labels</span>
+</span></span><span style="display:flex;"><span>            self<span style="color:#f92672">.</span>_update_labels(X, labels)
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># update centroids</span>
+</span></span><span style="display:flex;"><span>            self<span style="color:#f92672">.</span>_update_centroids(X, labels)
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> np<span style="color:#f92672">.</span>linalg<span style="color:#f92672">.</span>norm(prev_centroids <span style="color:#f92672">-</span> self<span style="color:#f92672">.</span>centroids) <span style="color:#f92672">&lt;</span> self<span style="color:#f92672">.</span>tol:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> self
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">predict</span>(self, X: np<span style="color:#f92672">.</span>array) <span style="color:#f92672">-&gt;</span> np<span style="color:#f92672">.</span>array:
+</span></span><span style="display:flex;"><span>        labels <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>empty(X<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>_update_labels(X, labels)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> labels
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">score</span>(self, X: np<span style="color:#f92672">.</span>array, y: np<span style="color:#f92672">.</span>array<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>) <span style="color:#f92672">-&gt;</span> np<span style="color:#f92672">.</span>array:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> y <span style="color:#f92672">is</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>            y <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>predict(X)
+</span></span><span style="display:flex;"><span>            
+</span></span><span style="display:flex;"><span>        variance <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>sum([np<span style="color:#f92672">.</span>linalg<span style="color:#f92672">.</span>norm(X[y<span style="color:#f92672">==</span>i] <span style="color:#f92672">-</span> self<span style="color:#f92672">.</span>centroids[i], axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)<span style="color:#f92672">.</span>sum() 
+</span></span><span style="display:flex;"><span>                       <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(self<span style="color:#f92672">.</span>K)]) <span style="color:#f92672">/</span> X<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> variance
+</span></span><span style="display:flex;"><span>        
+</span></span></code></pre></div><p>In addition to the <code>fit</code> function we also have the public method called <code>predict</code> that is required for the BaseEstimator and &ldquo;Mixin&rdquo; classes. The predict function predicts which cluster datapoints belong to by calling the <code>_update_labels</code> method under the hood. The fact were using <code>_update_centroids</code> for the <code>predict</code> method is why we still have this returning an array.</p>
+<p>In order for our KMeans class to be compatible with the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html"  class="external-link" target="_blank" rel="noopener">Pipeline</a> and the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html#sklearn.model_selection.GridSearchCV"  class="external-link" target="_blank" rel="noopener">GridSearchCV</a> we also need to a <code>score</code> method to measure the performance of the object. For our purposes the <code>score</code> function is just the simple <a href="https://hlab.stanford.edu/brian/error_sum_of_squares.html"  class="external-link" target="_blank" rel="noopener">sum of square errors</a>.</p>
+<p>We can now instantiate a k-means object and fit to the dataset.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>kmeans <span style="color:#f92672">=</span> KMeans(<span style="color:#ae81ff">3</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>kmeans <span style="color:#f92672">=</span> kmeans<span style="color:#f92672">.</span>fit(data)
+</span></span></code></pre></div><p>Note that the <code>fit</code> function returns itself, just as Sciki-learn estimators do!</p>
+<p>We can see the centroids,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>kmeans<span style="color:#f92672">.</span>centroids
+</span></span></code></pre></div><pre><code>array([[-4.99522247, -6.00323426],
+       [-9.99131782,  3.00841883],
+       [ 4.98813128,  5.98839757]])
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>figure()
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>scatter(data[:,<span style="color:#ae81ff">0</span>], data[:,<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> c <span style="color:#f92672">in</span> kmeans<span style="color:#f92672">.</span>centroids:
+</span></span><span style="display:flex;"><span>    plt<span style="color:#f92672">.</span>scatter(<span style="color:#f92672">*</span>c, color<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;red&#34;</span>)
+</span></span></code></pre></div><p><img src="/kmeans_files/kmeans_56_0.png" alt="png"></p>
+<p>And predict any number of values,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>kmeans<span style="color:#f92672">.</span>predict(np<span style="color:#f92672">.</span>array([<span style="color:#ae81ff">10.3242</span>, <span style="color:#ae81ff">5.321</span>]))
+</span></span></code></pre></div><pre><code>array([2., 2.])
+</code></pre>
+<p>Lastly we can find the SSE of the model with the score method,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>kmeans<span style="color:#f92672">.</span>score(data)
+</span></span></code></pre></div><pre><code>1.2630069857409725
+</code></pre>
+<h1 id="using-the-elbow-method-and-pipelines">
+  Using the elbow method and Pipelines <a class="anchor" id="fifth-bullet"></a>
+  <a class="heading-link" href="#using-the-elbow-method-and-pipelines">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h1>
+<hr>
+<p>We can attempt to compute the appropriate number of clusters <em>a-posterori</em> by using the elbow method over various numbers of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span>
+.</p>
+<p>The idea behind the elbow method is that as the number of clusters increases, the sum of internal variance or SSE decreases rapidly because samples are becoming more and more homogeneous. At a certain point (the elbow point) the clusters contain relatively homogeneous samples and the reduction in SSE is less significant as the number of clusters increases. This inflection point is thought to occur because we are longer seperating legitimate clusters, but rather arbitrarily splitting up clusters and the drop in SSE should be less meaningful.</p>
+<p>Let&rsquo;s show how this works on a well-known multi-class dataset where we know the number of cluster beforehand to test to see if the elbow method gives us a reasonable approximation for the number of clusters. We&rsquo;ll use the above dataset which clearly has 3 well-seperated clusters.</p>
+<p>Note the clustering is sensitive to scaling and therefore we use the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html"  class="external-link" target="_blank" rel="noopener">StandardScaler</a> class before applying the clustering model and therefore need to make a pipeline object!</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.pipeline <span style="color:#f92672">import</span> make_pipeline
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.preprocessing <span style="color:#f92672">import</span> StandardScaler
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>pipeline <span style="color:#f92672">=</span> make_pipeline(StandardScaler(), KMeans(K<span style="color:#f92672">=</span>k))
+</span></span><span style="display:flex;"><span>model <span style="color:#f92672">=</span> pipeline<span style="color:#f92672">.</span>fit(data)
+</span></span></code></pre></div><p>We can loop over a number of clusters and get the scores to use the elbow method to determine the number of clusters to use.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>K_max <span style="color:#f92672">=</span> <span style="color:#ae81ff">7</span>
+</span></span><span style="display:flex;"><span>scores <span style="color:#f92672">=</span> [make_pipeline(StandardScaler(), KMeans(K<span style="color:#f92672">=</span>k))<span style="color:#f92672">.</span>fit(data)<span style="color:#f92672">.</span>score(data) 
+</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">for</span> k <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">1</span>,K_max)]
+</span></span></code></pre></div><p>We can plot the number of clusters vs SSE to find the optimal number of clusters,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>plot(range(<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">7</span>), scores)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>xlabel(<span style="color:#e6db74">&#34;# of clustetrs&#34;</span>)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>ylabel(<span style="color:#e6db74">&#34;SSE&#34;</span>, rotation<span style="color:#f92672">=</span><span style="color:#ae81ff">90</span>)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>title(<span style="color:#e6db74">&#34;Elbo Curve&#34;</span>)
+</span></span></code></pre></div><pre><code>Text(0.5, 1.0, 'Elbo Curve')
+</code></pre>
+<p><img src="/kmeans_files/kmeans_67_1.png" alt="png"></p>
+<p>Since the 3 clusters are so well separated the elbow is pretty well defined at 3.</p>
+<p>Let&rsquo;s take another example where the clusters are not quite so well separated,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>new_data <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>concatenate((
+</span></span><span style="display:flex;"><span>    np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>randn(N<span style="color:#f92672">//</span><span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">2</span>) <span style="color:#f92672">+</span> np<span style="color:#f92672">.</span>array([<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">1</span>]),
+</span></span><span style="display:flex;"><span>    np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>randn(N<span style="color:#f92672">//</span><span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">2</span>) <span style="color:#f92672">+</span> np<span style="color:#f92672">.</span>array([<span style="color:#f92672">-</span><span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">0</span>]),
+</span></span><span style="display:flex;"><span>    np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>randn(N<span style="color:#f92672">//</span><span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">2</span>) <span style="color:#f92672">+</span> np<span style="color:#f92672">.</span>array([<span style="color:#ae81ff">12</span>,<span style="color:#ae81ff">5</span>]),
+</span></span><span style="display:flex;"><span>    np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>randn(N<span style="color:#f92672">//</span><span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">2</span>) <span style="color:#f92672">+</span> np<span style="color:#f92672">.</span>array([<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">8</span>]))
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>scatter(new_data[:,<span style="color:#ae81ff">0</span>], new_data[:,<span style="color:#ae81ff">1</span>])
+</span></span></code></pre></div><pre><code>&lt;matplotlib.collections.PathCollection at 0x1262be130&gt;
+</code></pre>
+<p><img src="/kmeans_files/kmeans_69_1.png" alt="png"></p>
+<p>This time we have 4 clusters, but two pairs are some what overlapping. We can retrain the k-means model for various values of <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span>
+ and plot the elbow curve again.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>K_max <span style="color:#f92672">=</span> <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>scores <span style="color:#f92672">=</span> [make_pipeline(StandardScaler(), KMeans(K<span style="color:#f92672">=</span>k))<span style="color:#f92672">.</span>fit(new_data)<span style="color:#f92672">.</span>score(new_data) 
+</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">for</span> k <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">1</span>,K_max)]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>plot(range(<span style="color:#ae81ff">1</span>,K_max), scores)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>xlabel(<span style="color:#e6db74">&#34;# of clustetrs&#34;</span>)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>ylabel(<span style="color:#e6db74">&#34;SSE&#34;</span>, rotation<span style="color:#f92672">=</span><span style="color:#ae81ff">90</span>)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>title(<span style="color:#e6db74">&#34;Elbo Curve&#34;</span>)
+</span></span></code></pre></div><pre><code>Text(0.5, 1.0, 'Elbo Curve')
+</code></pre>
+<p><img src="/kmeans_files/kmeans_71_1.png" alt="png"></p>
+<p>The optimal number of clusters could be 2, 3, 4. Obviously the seperating hyperplanes are not as well defined as it was in the prior case!</p>
+<p>Lastly let&rsquo;s talk about how to use use the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html#sklearn.model_selection.GridSearchCV"  class="external-link" target="_blank" rel="noopener">GridSearchCV</a> though again it doesnt make much sense in for unsupersived learning since there is no real metric were trying to optimize. Rather this is just to show the way we created customer estimators and how to use them with the rest of Sciki-learn&rsquo;s tooling.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.model_selection <span style="color:#f92672">import</span> GridSearchCV
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.pipeline <span style="color:#f92672">import</span> Pipeline
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>pipeline <span style="color:#f92672">=</span> Pipeline([
+</span></span><span style="display:flex;"><span>                (<span style="color:#e6db74">&#39;scaler&#39;</span>,StandardScaler()), 
+</span></span><span style="display:flex;"><span>                (<span style="color:#e6db74">&#39;model&#39;</span>, KMeans())
+</span></span><span style="display:flex;"><span>            ])
+</span></span></code></pre></div><p>Now we can define or grid of cluster sizes and then fit the data,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>params <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;model__K&#34;</span>: [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">5</span>]}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>grid <span style="color:#f92672">=</span> GridSearchCV(estimator<span style="color:#f92672">=</span>pipeline,
+</span></span><span style="display:flex;"><span>                    param_grid<span style="color:#f92672">=</span>params)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>results <span style="color:#f92672">=</span> grid<span style="color:#f92672">.</span>fit(data)
+</span></span></code></pre></div><p>And view the best fitting model,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>results<span style="color:#f92672">.</span>best_estimator_
+</span></span></code></pre></div><pre><code>Pipeline(steps=[('scaler', StandardScaler()), ('model', KMeans(K=1))])
+</code></pre>
+<p>Again the results dont make sense, since grid search is looking for the configuration that maximizes SSE it chooses 1 cluster. However, the main idea is to show how to make a Scikit-Learn compatible estimator!</p>
+<h1 id="summary--references">
+  Summary &amp; References <a class="anchor" id="sixth-bullet"></a>
+  <a class="heading-link" href="#summary--references">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h1>
+<hr>
+<p>In this blogpost we went over how to create a Scikit-learn compatible k-means clustering algorithm using NumPy and the elbow method to go try to determine how many clusters are in our dataset.</p>
+<p>I made extensive use of the following references for writing a k-means algorithm from scratch</p>
+<ul>
+<li><a href="https://towardsdatascience.com/k-means-from-scratch-with-numpy-74f79d2b1694"  class="external-link" target="_blank" rel="noopener">https://towardsdatascience.com/k-means-from-scratch-with-numpy-74f79d2b1694</a></li>
+<li><a href="https://blog.paperspace.com/speed-up-kmeans-numpy-vectorization-broadcasting-profiling/"  class="external-link" target="_blank" rel="noopener">https://blog.paperspace.com/speed-up-kmeans-numpy-vectorization-broadcasting-profiling/</a></li>
+<li><a href="https://nicholasvadivelu.com/2021/05/10/fast-k-means/"  class="external-link" target="_blank" rel="noopener">https://nicholasvadivelu.com/2021/05/10/fast-k-means/</a></li>
+</ul>
+<p>And Scikit-learn&rsquo;s own <a href="https://scikit-learn.org/stable/developers/develop.html"  class="external-link" target="_blank" rel="noopener">documentation</a> to write the Customer Estimator.</p>
+<p>I hope you enjoyed this post!</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+      <h3 id="see-also-in-scikit-learn">
+        See also in Scikit-Learn
+        <a class="heading-link" href="#see-also-in-scikit-learn">
+          <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+          <span class="sr-only">Link to heading</span>
+        </a>
+      </h3>
+      <nav>
+        <ul>
+        
+        
+          
+        
+          
+            <li>
+              <a href="/posts/greenbuildings3/">Green Buildings 3: Build &amp; Deploy Models With MLflow &amp; Docker</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/greenbuildings2/">Green Buildings 2: Imputing Missing Values With Scikit-Learn</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/greenbuildings1/">Green Buildings 1: Exploratory Analysis &amp; Outlier Removal</a>
+            </li>
+          
+        
+        </ul>
+      </nav>
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>

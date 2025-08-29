@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Text Classification 5: Fine Tuning BERT With HuggingFace · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="Fine Tuning BERT With HuggingFace">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Text Classification 5: Fine Tuning BERT With HuggingFace">
+  <meta name="twitter:description" content="Fine Tuning BERT With HuggingFace">
+
+<meta property="og:url" content="http://localhost:1313/posts/bert/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Text Classification 5: Fine Tuning BERT With HuggingFace">
+  <meta property="og:description" content="Fine Tuning BERT With HuggingFace">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-08-01T00:00:00+00:00">
+    <meta property="article:modified_time" content="2025-08-01T00:00:00+00:00">
+    <meta property="article:tag" content="LLMs">
+    <meta property="article:tag" content="Hugging Face">
+    <meta property="article:tag" content="NLP">
+      <meta property="og:see_also" content="http://localhost:1313/posts/jfk2/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/jfk1/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/nlp4/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/nlp3/">
+      <meta property="og:see_also" content="http://localhost:1313/posts/nlp1/">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/bert/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/bert/">
+              Text Classification 5: Fine Tuning BERT With HuggingFace
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2025-08-01T00:00:00Z">
+                August 1, 2025
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              15-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/llms/">LLMs</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/hugging-face/">Hugging Face</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/nlp/">NLP</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#first-bullet" >1. Introduction</a></strong></p>
+<p><strong><a href="#second-bullet" >2. Collecting Data</a></strong></p>
+<p><strong><a href="#third-bullet" >3. Hugging Face Datasets, Tokenizers &amp; Models</a></strong></p>
+<p><strong><a href="#fourth-bullet" >4. Fine Tuning BERT and Hugging Face Model Hub</a></strong></p>
+<p><strong><a href="#fifth-bullet" >5. Using The Model With Hugging Face Pipelines</a></strong></p>
+<p><strong><a href="#sixth-bullet" >6. Next Steps</a></strong></p>
+<h2 id="1-introduction">
+  1. Introduction <a class="anchor" id="first-bullet"></a>
+  <a class="heading-link" href="#1-introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this notebook, I will walk through the complete process of fine-tuning a <a href="https://en.wikipedia.org/wiki/BERT_%28language_model%29"  class="external-link" target="_blank" rel="noopener">BERT (Bidirectional Encoder Representations from Transformers)</a> model using the <a href="https://huggingface.co/"  class="external-link" target="_blank" rel="noopener">HuggingFace ecosystem</a>. BERT has become a cornerstone of modern NLP due to its ability to capture bidirectional context and deliver strong performance across a wide range of language understanding tasks such as classification, named entity resolution and question answering. In this post I will build off of <a href="https://michael-harmon.com/blog/NLP4.html"  class="external-link" target="_blank" rel="noopener">prior posts on text classification</a> by fine tuning a BERT model to classify the topic of papers in <a href="arxiv.org" >arxiv</a> by their abstract text. By the end of this post, I will have a working, fine-tuned BERT model ready for inference on the <a href="https://huggingface.co/models"  class="external-link" target="_blank" rel="noopener">Hugging Face Model Hub</a>.</p>
+<p>The first thing is I&rsquo;ll be using <a href="https://colab.research.google.com/"  class="external-link" target="_blank" rel="noopener">Google Colab</a> to get access to a free <a href="https://developer.nvidia.com/cuda-toolkit"  class="external-link" target="_blank" rel="noopener">CUDA</a> enabled GPU. On that platform I needed install the <a href="https://pypi.org/project/arxiv/"  class="external-link" target="_blank" rel="noopener">arxiv</a> and <a href="https://huggingface.co/docs/evaluate/en/index"  class="external-link" target="_blank" rel="noopener">evaluate</a> libraries since they are not pre-installed:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># !pip install arxiv</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># !pip install evaluate</span>
+</span></span></code></pre></div><p>Next I authenticate myself as my Google account user. This will be helpful since I will be storing the documents as json in <a href="https://cloud.google.com/storage?hl=en"  class="external-link" target="_blank" rel="noopener">Google Cloud Storage</a>. Authentication through <a href="https://colab.research.google.com/"  class="external-link" target="_blank" rel="noopener">Colab</a> means there&rsquo;s no extra steps or API keys needed for me to access the data!</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> google.colab <span style="color:#66d9ef">as</span> colab
+</span></span><span style="display:flex;"><span>colab<span style="color:#f92672">.</span>auth<span style="color:#f92672">.</span>authenticate_user()
+</span></span></code></pre></div><p>Now I can get started with collecting the data!</p>
+<p>Last note that I&rsquo;ll make is that all the output cells have been copied to markdown cells as Colab was giving me issues with rendering the notebook on GitHub.</p>
+<h2 id="2-collecting-the-data">
+  2. Collecting The Data <a class="anchor" id="second-bullet"></a>
+  <a class="heading-link" href="#2-collecting-the-data">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In <a href="https://michael-harmon.com/blog/NLP1.html"  class="external-link" target="_blank" rel="noopener">prior posts</a> I obtained documents for classification by collecting paper abstracts from <a href="https://arxiv.org/"  class="external-link" target="_blank" rel="noopener">arxiv</a>. I was going to reuse those same documents for subsequent posts, but over the years I lost them. :( So, instead I&rsquo;ll use the <a href="https://lukasschwab.me/arxiv.py/arxiv.html"  class="external-link" target="_blank" rel="noopener">arixv package</a> to create a new dataset for classification. I will use 3 classes or topics for the papers which I chose to be &lsquo;Artificial Intelligence&rsquo;, &lsquo;Information Retrieval&rsquo; and &lsquo;Robotics&rsquo;.</p>
+<p>First I collect 1,000 papers on &lsquo;Ariticial Intelligence&rsquo;, 1,000 papers on &lsquo;Information Retrieval&rsquo; and 100 on &lsquo;Robotics&rsquo; using a function I wrote called <a href="utils.py" >get_data</a>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> utils <span style="color:#f92672">import</span> get_arxiv_data
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>df <span style="color:#f92672">=</span> get_arxiv_data()
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df<span style="color:#f92672">.</span>head(<span style="color:#ae81ff">2</span>)
+</span></span></code></pre></div><table>
+  <thead>
+      <tr>
+          <th style="text-align: right"></th>
+          <th style="text-align: left">id</th>
+          <th style="text-align: left">code</th>
+          <th style="text-align: left">text</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: right">0</td>
+          <td style="text-align: left"><a href="http://arxiv.org/abs/cs/9308101v1"  class="external-link" target="_blank" rel="noopener">http://arxiv.org/abs/cs/9308101v1</a></td>
+          <td style="text-align: left">cs.AI</td>
+          <td style="text-align: left">Because of their occasional need to return to shallow points in a search &hellip;</td>
+      </tr>
+      <tr>
+          <td style="text-align: right">1</td>
+          <td style="text-align: left"><a href="http://arxiv.org/abs/cs/9308102v1"  class="external-link" target="_blank" rel="noopener">http://arxiv.org/abs/cs/9308102v1</a></td>
+          <td style="text-align: left">cs.AI</td>
+          <td style="text-align: left">Market price systems constitute a well-understood class of mechanisms that &hellip;</td>
+      </tr>
+  </tbody>
+</table>
+<p>In the above results the <code>id</code> is the url of the paper, the <code>code</code> is the class label and <code>text</code> is the abstract of the paper.</p>
+<p>I want to be able to predict the category of the abstract based of the text. This means we need to convert the category into a numerical value. <a href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html"  class="external-link" target="_blank" rel="noopener">Scikit-learn&rsquo;s LabelEncoder</a> is the tool for the job,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.preprocessing <span style="color:#f92672">import</span> LabelEncoder
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>labeler  <span style="color:#f92672">=</span> LabelEncoder()
+</span></span><span style="display:flex;"><span>df <span style="color:#f92672">=</span> df<span style="color:#f92672">.</span>assign(label<span style="color:#f92672">=</span>labeler<span style="color:#f92672">.</span>fit_transform(df[<span style="color:#e6db74">&#34;code&#34;</span>]))
+</span></span></code></pre></div><p>Now each text has an associated numerical value in the column <code>label</code> with values based on the <code>code</code> value,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df<span style="color:#f92672">.</span>head(<span style="color:#ae81ff">2</span>)
+</span></span></code></pre></div><table>
+  <thead>
+      <tr>
+          <th style="text-align: right"></th>
+          <th style="text-align: left">id</th>
+          <th style="text-align: left">code</th>
+          <th style="text-align: left">text</th>
+          <th style="text-align: right">label</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: right">0</td>
+          <td style="text-align: left"><a href="http://arxiv.org/abs/cs/9308101v1"  class="external-link" target="_blank" rel="noopener">http://arxiv.org/abs/cs/9308101v1</a></td>
+          <td style="text-align: left">cs.AI</td>
+          <td style="text-align: left">Because of their occasional need to return to shallow points in a search &hellip;</td>
+          <td style="text-align: right">0</td>
+      </tr>
+      <tr>
+          <td style="text-align: right">1</td>
+          <td style="text-align: left"><a href="http://arxiv.org/abs/cs/9308102v1"  class="external-link" target="_blank" rel="noopener">http://arxiv.org/abs/cs/9308102v1</a></td>
+          <td style="text-align: left">cs.AI</td>
+          <td style="text-align: left">Market price systems constitute a well-understood class of mechanisms that &hellip;</td>
+          <td style="text-align: right">0</td>
+      </tr>
+  </tbody>
+</table>
+<p>The numerical value for each code is given by the order in the <code>classes_</code> attribute of the labler. This means mapping between the code (for the paper topic) and the label can be found by the following,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>{v:k <span style="color:#66d9ef">for</span> k,v <span style="color:#f92672">in</span> enumerate(labeler<span style="color:#f92672">.</span>classes_)}
+</span></span></code></pre></div><pre tabindex="0"><code>{&#39;cs.AI&#39;: 0, &#39;cs.IR&#39;: 1, &#39;cs.RO&#39;: 2}
+</code></pre><p>Next I need to break the datasets into train, validation and test sets. I can do this with <a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html"  class="external-link" target="_blank" rel="noopener">Scikit-Learn&rsquo;s train_test_split</a> function.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> sklearn.model_selection <span style="color:#f92672">import</span> train_test_split
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>X_train, X_test, y_train, y_test <span style="color:#f92672">=</span> train_test_split(
+</span></span><span style="display:flex;"><span>                                            df[<span style="color:#e6db74">&#34;text&#34;</span>],
+</span></span><span style="display:flex;"><span>                                            df[<span style="color:#e6db74">&#34;label&#34;</span>],
+</span></span><span style="display:flex;"><span>                                            test_size<span style="color:#f92672">=</span><span style="color:#ae81ff">0.15</span>,
+</span></span><span style="display:flex;"><span>                                            random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">42</span>,
+</span></span><span style="display:flex;"><span>                                            stratify<span style="color:#f92672">=</span>df[<span style="color:#e6db74">&#34;label&#34;</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>X_train, X_val, y_train, y_val <span style="color:#f92672">=</span> train_test_split(X_train,
+</span></span><span style="display:flex;"><span>                                                  y_train,
+</span></span><span style="display:flex;"><span>                                                  test_size<span style="color:#f92672">=</span><span style="color:#ae81ff">0.20</span>,
+</span></span><span style="display:flex;"><span>                                                  random_state<span style="color:#f92672">=</span><span style="color:#ae81ff">42</span>,
+</span></span><span style="display:flex;"><span>                                                  stratify<span style="color:#f92672">=</span>y_train)
+</span></span></code></pre></div><p>The size of the datsets are,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>X_train<span style="color:#f92672">.</span>shape, X_val<span style="color:#f92672">.</span>shape, X_test<span style="color:#f92672">.</span>shape
+</span></span></code></pre></div><pre tabindex="0"><code>((1428,), (357,), (315,))
+</code></pre><p>These are small datasets, but luckily using fine tuning I can still build a high performance model! I know that Scikit-Learn uses stratified sampling by default, but I am going check to make sure the distribution of class labels is consistent between the train, validation and test sets.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> utils <span style="color:#f92672">import</span> plot_target_distribution_combined
+</span></span><span style="display:flex;"><span>plot_target_distribution_combined(y_train, y_val, y_test)
+</span></span></code></pre></div><figure>
+<img src="https://github.com/mdh266/FineTuning/blob/main/images/distribution.png?raw=1" alt="PERF" width="700" height="500" class="center">
+</figure>
+<p>You can see that it distribution of classes across each dataset is consistent.</p>
+<p>The last thing to do before modeling is combine <code>X</code> and <code>y</code> back into one dataframe and save them to <a href="https://cloud.google.com/storage?hl=en"  class="external-link" target="_blank" rel="noopener">Google Cloud Storage</a>. This is necessary so I can come back to this project over time and still work with the same data.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas <span style="color:#66d9ef">as</span> pd
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> datasets <span style="color:#f92672">import</span> Dataset
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># train</span>
+</span></span><span style="display:flex;"><span>(Dataset<span style="color:#f92672">.</span>from_pandas(
+</span></span><span style="display:flex;"><span>              pd<span style="color:#f92672">.</span>DataFrame({<span style="color:#e6db74">&#34;text&#34;</span>: X_train, <span style="color:#e6db74">&#34;label&#34;</span>: y_train}),
+</span></span><span style="display:flex;"><span>              preserve_index<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">.</span>save_to_disk(<span style="color:#e6db74">&#34;gs://harmon-arxiv/train_abstracts&#34;</span>)
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># validation</span>
+</span></span><span style="display:flex;"><span>(Dataset<span style="color:#f92672">.</span>from_pandas(
+</span></span><span style="display:flex;"><span>              pd<span style="color:#f92672">.</span>DataFrame({<span style="color:#e6db74">&#34;text&#34;</span>: X_val, <span style="color:#e6db74">&#34;label&#34;</span>: y_val}),
+</span></span><span style="display:flex;"><span>              preserve_index<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">.</span>save_to_disk(<span style="color:#e6db74">&#34;gs://harmon-arxiv/val_abstracts&#34;</span>)
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># test</span>
+</span></span><span style="display:flex;"><span>(Dataset<span style="color:#f92672">.</span>from_pandas(
+</span></span><span style="display:flex;"><span>              pd<span style="color:#f92672">.</span>DataFrame({<span style="color:#e6db74">&#34;text&#34;</span>: X_test, <span style="color:#e6db74">&#34;label&#34;</span>: y_test}),
+</span></span><span style="display:flex;"><span>              preserve_index<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">.</span>save_to_disk(<span style="color:#e6db74">&#34;gs://harmon-arxiv/test_abstracts&#34;</span>)
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><h2 id="3-huggingface-datasets-tokenizers--models">
+  3. HuggingFace Datasets, Tokenizers &amp; Models <a class="anchor" id="third-bullet"></a>
+  <a class="heading-link" href="#3-huggingface-datasets-tokenizers--models">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Now that I have the data in <a href="https://cloud.google.com/storage?hl=en"  class="external-link" target="_blank" rel="noopener">Google Cloud Storage</a> I can begin the fine tuning of my model. Since this is a classification problem I&rsquo;ll use a <a href="https://en.wikipedia.org/wiki/Transformer_%28deep_learning_architecture%29"  class="external-link" target="_blank" rel="noopener">Encoder model</a>; specifically a Bidirectional Encoder Representations from Transformers <a href="https://huggingface.co/docs/transformers/en/model_doc/bert"  class="external-link" target="_blank" rel="noopener">BERT</a> model. BERT&rsquo;s architecture is pictured below,</p>
+<figure>
+<img src="https://github.com/mdh266/FineTuning/blob/main/images/bert.png?raw=1" alt="BERT" width="300" height="500" class="center">
+<figcaption>From https://towardsdatascience.com/a-complete-guide-to-bert-with-code-9f87602e4a11/
+</figure>
+<p>I won&rsquo;t go over much about Encoders or Transformers as the internet has plently of excellent material. I found <a href="https://www.coursera.org/learn/nlp-sequence-models/paidmedia?specialization=deep-learning"  class="external-link" target="_blank" rel="noopener">Andrew Ng&rsquo;s Sequence Models</a> course along with the <a href="https://www.thelmbook.com/"  class="external-link" target="_blank" rel="noopener">100 Page Large Language Models Book</a> very helpful in understanding transformers.</p>
+<p>This post will focus on how to fine tune a BERT model for text classification using the <a href="https://huggingface.co/"  class="external-link" target="_blank" rel="noopener">Hugging Face API</a>. I have heard of Hugging Face for years, but never fully understood what it is. I am currently making my way through the <a href="https://huggingface.co/learn/llm-course/chapter1/1"  class="external-link" target="_blank" rel="noopener">Hugging Face LLM Course</a> and figured I would solidify my learnings by writing this post. Hugging Face is an open-soure platform and api for building and sharing artificial intelligence models (as well as datasets to build them). It is frequently called the &ldquo;Git Hub&rdquo; of AI models. With the Hugging Face API you can very easily download a pre-trained model, fine tune it for your problem and the push it back to their &ldquo;Model Hub&rdquo; where others in the community can use it. And I&rsquo;ll be doing just that in this post! The last thing I&rsquo;ll say about Hugging Face is that the Python library works as a high level wrapper around deep learning frameworks such as <a href="https://pytorch.org/"  class="external-link" target="_blank" rel="noopener">PyTorch</a> (which I&rsquo;ll use), <a href="https://www.tensorflow.org/"  class="external-link" target="_blank" rel="noopener">TensorFlow</a> and <a href="https://docs.jax.dev/en/latest/"  class="external-link" target="_blank" rel="noopener">JAX</a>.</p>
+<p>The first thing I do is import Pandas (to reload the data from cloud storage) as well as the necessary <a href="https://pytorch.org/"  class="external-link" target="_blank" rel="noopener">PyTorch</a> and Hugging Face modules.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># PyTorch imports</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> torch
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> torch.utils.data <span style="color:#f92672">import</span> DataLoader
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> torch.optim <span style="color:#f92672">import</span> AdamW
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Hugging Face imports</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> transformers
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> transformers <span style="color:#f92672">import</span> AutoTokenizer, AutoModelForSequenceClassification, DataCollatorWithPadding
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> datasets <span style="color:#f92672">import</span> Dataset, DatasetDict, load_from_disk
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> evaluate
+</span></span></code></pre></div><p>Now I can load the datasets from cloud storage the <code>load_from_disk</code> from the <a href="https://huggingface.co/docs/datasets/en/index"  class="external-link" target="_blank" rel="noopener">Hugging Face Datasets</a> library</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>train_dataset <span style="color:#f92672">=</span> load_from_disk(<span style="color:#e6db74">&#34;gs://harmon-arxiv/train_abstracts&#34;</span>)
+</span></span><span style="display:flex;"><span>val_dataset <span style="color:#f92672">=</span> load_from_disk(<span style="color:#e6db74">&#34;gs://harmon-arxiv/val_abstracts&#34;</span>)
+</span></span><span style="display:flex;"><span>test_dataset <span style="color:#f92672">=</span> load_from_disk(<span style="color:#e6db74">&#34;gs://harmon-arxiv/test_abstracts&#34;</span>)
+</span></span></code></pre></div><p>Then combine them into a <a href="https://huggingface.co/docs/datasets/v4.0.0/en/package_reference/main_classes#datasets.DatasetDict"  class="external-link" target="_blank" rel="noopener">DatasetDict</a> obect. This is not necessary, but it is convenient since applying a transformation to the DatasetDict applies it all the Datasets. This avoids repeating the same transformations across each dataset individually.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>dataset_dict <span style="color:#f92672">=</span> DatasetDict({
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;train&#34;</span>: train_dataset,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;validation&#34;</span>: val_dataset,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;test&#34;</span>: test_dataset
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>Next I download the <a href="https://huggingface.co/docs/transformers/en/model_doc/bert"  class="external-link" target="_blank" rel="noopener">BERT</a> model from <a href="https://huggingface.co/models"  class="external-link" target="_blank" rel="noopener">HuggingFace&rsquo;s Model Hub</a> as well as its associated <a href="https://huggingface.co/docs/transformers/en/main_classes/tokenizer"  class="external-link" target="_blank" rel="noopener">Tokenizer</a>. To do so, I use the <a href="https://huggingface.co/docs/transformers/en/model_doc/auto"  class="external-link" target="_blank" rel="noopener">AutoTokenizer and AutoModelForSequenceClassification classes</a> as they allow me to swap out models easily. Notice that the tokenizer has to match the model and we have to use the <a href="https://www.geeksforgeeks.org/python/classmethod-in-python/"  class="external-link" target="_blank" rel="noopener">from_pretrained class methods</a> for each class. This ensures that the tokenizer and weights for the model are both initialized from the same point in pre-training.</p>
+<p>Lastly, notice I move the model to the GPU and that I have to put the number of classes in <code>AutoModelForSequenceClassification</code> during instantiation. Addint the number of classes adds a linear layer with softmax on top of the foundational BERT model.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>checkpoint <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;google-bert/bert-base-uncased&#34;</span>
+</span></span><span style="display:flex;"><span>device<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;cuda&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>tokenizer <span style="color:#f92672">=</span> AutoTokenizer<span style="color:#f92672">.</span>from_pretrained(checkpoint)
+</span></span><span style="display:flex;"><span>model <span style="color:#f92672">=</span> AutoModelForSequenceClassification<span style="color:#f92672">.</span>from_pretrained(checkpoint, num_labels<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>)
+</span></span><span style="display:flex;"><span>model <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>to(device)
+</span></span></code></pre></div><p>One thing I will call out is that the tokenizer here is not a word level tokenization like I have used in <a href="https://michael-harmon.com/blog/NLP1.html"  class="external-link" target="_blank" rel="noopener">prior blog posts</a> that used the <a href="https://en.wikipedia.org/wiki/Bag-of-words_model"  class="external-link" target="_blank" rel="noopener">bag of words</a> model. Instead BERT uses a <a href="https://huggingface.co/learn/llm-course/chapter6/6?fw=pt"  class="external-link" target="_blank" rel="noopener">sub-word tokenization method</a>. The <a href="https://www.thelmbook.com/"  class="external-link" target="_blank" rel="noopener">100 Page Large Language Models Book</a> had a good explanation on this topic, albiet it focused on <a href="https://huggingface.co/learn/llm-course/en/chapter6/5?fw=pt"  class="external-link" target="_blank" rel="noopener">Byte-Pair Encoding tokenization</a> while BERT uses a <a href="https://huggingface.co/learn/llm-course/en/chapter6/6"  class="external-link" target="_blank" rel="noopener">WordPiece tokenization</a>.</p>
+<p>I can see that the model I have downloaded is a BERT model by looking at its type:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>type(model)
+</span></span></code></pre></div><p>it returns,</p>
+<pre tabindex="0"><code>transformers.models.bert.modeling_bert.BertForSequenceClassification
+</code></pre><p>and</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(model)
+</span></span></code></pre></div><p>which will return,</p>
+<pre tabindex="0"><code>BertForSequenceClassification(
+  (bert): BertModel(
+    (embeddings): BertEmbeddings(
+      (word_embeddings): Embedding(30522, 768, padding_idx=0)
+      (position_embeddings): Embedding(512, 768)
+      (token_type_embeddings): Embedding(2, 768)
+      (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+      (dropout): Dropout(p=0.1, inplace=False)
+    )
+    (encoder): BertEncoder(
+      (layer): ModuleList(
+        (0-11): 12 x BertLayer(
+          (attention): BertAttention(
+            (self): BertSdpaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): BertSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): BertIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): BertOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+    )
+    (pooler): BertPooler(
+      (dense): Linear(in_features=768, out_features=768, bias=True)
+      (activation): Tanh()
+    )
+  )
+  (dropout): Dropout(p=0.1, inplace=False)
+  (classifier): Linear(in_features=768, out_features=3, bias=True)
+)
+</code></pre><p>The &ldquo;classifier&rdquo; layer (aka the &ldquo;classification head&rdquo;) is the linear that was added to the model when I downloaded it. The <code>out_features</code> parameter that shows the output has 3 classes.</p>
+<p>Now I can tokenize the datsets by creating a <code>tokenize_function</code> and applying it to the DataDict with the <code>map</code> method.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">tokenize_function</span>(example):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> tokenizer(example[<span style="color:#e6db74">&#34;text&#34;</span>], truncation<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>tokenized_datasets <span style="color:#f92672">=</span> dataset_dict<span style="color:#f92672">.</span>map(tokenize_function, batched<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span></code></pre></div><p>Notice that I have the parameter <code>batched=True</code>, however, we have not used any padding. I will use <a href="https://huggingface.co/learn/llm-course/en/chapter3/2#dynamic-padding"  class="external-link" target="_blank" rel="noopener">Dynamic Padding</a> which will determine the maximum length of documents per batch. The maximum length of documents will determine the amount of padding to be used at a batch level. If I did not use batching with Dynamic Padding all batches would have to have the same padding would have to be read in to determine the length of the longest document. Once this has been determined the padding size for each document can be ascertained. In my case, this is not such a big deal since the dataset is already in memory, but when reading large datasets from disk it can critical as loading the entire dataset in memory would be infeasible.</p>
+<p>To use Dynamic Padding I use the <a href="https://huggingface.co/docs/transformers/en/main_classes/data_collator"  class="external-link" target="_blank" rel="noopener">DataCollatorWithPadding</a> class:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>data_collator <span style="color:#f92672">=</span> DataCollatorWithPadding(tokenizer<span style="color:#f92672">=</span>tokenizer)
+</span></span></code></pre></div><p>This will be used later on during training since it&rsquo;s just adding 0&rsquo;s at the beginning or at end of the tokenized vector (<code>token_ids</code>) within each batch. I can see the schema of the datasets by looking at the columns:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>tokenized_datasets[<span style="color:#e6db74">&#34;test&#34;</span>]<span style="color:#f92672">.</span>features
+</span></span></code></pre></div><pre tabindex="0"><code>{&#39;text&#39;: Value(&#39;string&#39;),
+ &#39;label&#39;: Value(&#39;int64&#39;),
+ &#39;input_ids&#39;: List(Value(&#39;int32&#39;)),
+ &#39;token_type_ids&#39;: List(Value(&#39;int8&#39;)),
+ &#39;attention_mask&#39;: List(Value(&#39;int8&#39;))}
+</code></pre><p>HuggingFace requires that the datasets only have the following columns:</p>
+<ul>
+<li>
+<p><code>labels</code>: The class for the text.</p>
+</li>
+<li>
+<p><code>input_ids</code>: Vector of integers for the numerical representation of tokenized text.</p>
+</li>
+<li>
+<p><code>attention_mask</code>: List of 0&rsquo;s or 1&rsquo;s for the model to infer if it should &ldquo;attend&rdquo; to this token in the attention mechanism.</p>
+</li>
+</ul>
+<p>In order to get the dataset to meet this requirements I will drop the &ldquo;text&rdquo; column and rename the &ldquo;label&rdquo; column to &ldquo;labels&rdquo;,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>tokenized_datasets <span style="color:#f92672">=</span> tokenized_datasets<span style="color:#f92672">.</span>remove_columns(<span style="color:#e6db74">&#34;text&#34;</span>)
+</span></span><span style="display:flex;"><span>tokenized_datasets <span style="color:#f92672">=</span> tokenized_datasets<span style="color:#f92672">.</span>rename_column(<span style="color:#e6db74">&#34;label&#34;</span>, <span style="color:#e6db74">&#34;labels&#34;</span>)
+</span></span></code></pre></div><p>Since I will be using <a href="https://pytorch.org/"  class="external-link" target="_blank" rel="noopener">PyTorch</a> as a backend I have to convert the arrays in the datasets into PyTorch tensors.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>tokenized_datasets <span style="color:#f92672">=</span> tokenized_datasets<span style="color:#f92672">.</span>with_format(<span style="color:#e6db74">&#34;torch&#34;</span>)
+</span></span></code></pre></div><p>Lastly, I can confirm the schema,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(tokenized_datasets[<span style="color:#e6db74">&#34;test&#34;</span>]<span style="color:#f92672">.</span>features)
+</span></span></code></pre></div><pre tabindex="0"><code>{&#39;labels&#39;: Value(&#39;int64&#39;),
+&#39;input_ids&#39;: List(Value(&#39;int32&#39;)),
+&#39;token_type_ids&#39;: List(Value(&#39;int8&#39;)),
+&#39;attention_mask&#39;: List(Value(&#39;int8&#39;))}
+</code></pre><p>and the size of the datasets</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(tokenized_datasets<span style="color:#f92672">.</span>num_rows)
+</span></span></code></pre></div><pre tabindex="0"><code>{&#39;train&#39;: 1428, &#39;validation&#39;: 357, &#39;test&#39;: 315}
+</code></pre><h2 id="4-fine-tuning-bert-and-hugging-face-model-hub">
+  4. Fine Tuning BERT and Hugging Face Model Hub <a class="anchor" id="fourth-bullet"></a>
+  <a class="heading-link" href="#4-fine-tuning-bert-and-hugging-face-model-hub">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Now I can finally turn to fine tuning the model to classify arxiv papers as either &ldquo;Artificial Intelligence&rdquo;, &ldquo;Informationl Retrieval&rdquo; or &ldquo;Robotics.&rdquo; Fine tuning is process of fixing the weights in deeper layers of the Encoder, but updating the weights of the classification head as well as some shallow layers. Fine tuning will make use of the patterns learned in during pre-training in the foundational model and use them to predict the topics of the documents.</p>
+<p>After fine tuning the model I&rsquo;ll upload it to the model hub. So the first thing I need to do is log in to Hugging Face Hub,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> huggingface_hub <span style="color:#f92672">import</span> notebook_login
+</span></span><span style="display:flex;"><span>notebook_login()
+</span></span></code></pre></div><p>Next, I chose the multiclass <a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic"  class="external-link" target="_blank" rel="noopener">ROC-AUC</a> metric to measure the performance of the model. This is a pretty standard metric for classification problems since it in essence measures &ldquo;how well the model call separate the classes.&rdquo; Though it should be noted the ROC-AUC curve can be misleading when you have imbalanced classes as I discussed in a <a href="https://michael-harmon.com/blog/NLP1.html"  class="external-link" target="_blank" rel="noopener">prior post</a>.</p>
+<p>In order to use metrics to evaluate the performance of Hugging Face models users must use the <a href="https://huggingface.co/docs/evaluate/en/index"  class="external-link" target="_blank" rel="noopener">evaluate</a> library from Hugging Face. I use the <a href="https://huggingface.co/spaces/evaluate-metric/roc_auc"  class="external-link" target="_blank" rel="noopener">one vs. rest multi-class ROC-AUC</a>. In order to pass it into the Hugging Face fine tunning library I have to define the following function:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> typing <span style="color:#f92672">import</span> Tuple
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">compute_metrics</span>(eval_preds):
+</span></span><span style="display:flex;"><span>    roc_auc_score <span style="color:#f92672">=</span> evaluate<span style="color:#f92672">.</span>load(<span style="color:#e6db74">&#34;roc_auc&#34;</span>, <span style="color:#e6db74">&#34;multiclass&#34;</span>)
+</span></span><span style="display:flex;"><span>    preds, labels <span style="color:#f92672">=</span> eval_preds
+</span></span><span style="display:flex;"><span>    scores <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>nn<span style="color:#f92672">.</span>functional<span style="color:#f92672">.</span>softmax(torch<span style="color:#f92672">.</span>tensor(preds), dim<span style="color:#f92672">=-</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> roc_auc_score<span style="color:#f92672">.</span>compute(prediction_scores<span style="color:#f92672">=</span>scores, references<span style="color:#f92672">=</span>labels, multi_class<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;ovr&#34;</span>)
+</span></span></code></pre></div><p>Since I&rsquo;ll be pushing the model to the <a href="https://huggingface.co/models"  class="external-link" target="_blank" rel="noopener">Hugging Face Model Hub</a> I&rsquo;ll need to create a repo and I can do it by going to my profile and clicking on the <code>+ New Model</code> tab. I&rsquo;ll see the new model repo form shown below:</p>
+<figure>
+<img src="https://github.com/mdh266/FineTuning/blob/main/images/repo.png?raw=1" alt="REPO" width="900" height="650" class="center">
+</figure>
+<p>Now that I have created the repo, I&rsquo;ll need to create the model. During the fine tuning process I&rsquo;ll update versions of the model to the Model Hub and need to specity where to push the results. I also need to define the training parameters of fine tuning. I&rsquo;ll do all this in the <code>TrainingAgruments</code> object below</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> transformers <span style="color:#f92672">import</span> TrainingArguments
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>training_args <span style="color:#f92672">=</span> TrainingArguments(
+</span></span><span style="display:flex;"><span>    output_dir<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;./results&#34;</span>,
+</span></span><span style="display:flex;"><span>    learning_rate<span style="color:#f92672">=</span><span style="color:#ae81ff">1e-4</span>,
+</span></span><span style="display:flex;"><span>    per_device_train_batch_size<span style="color:#f92672">=</span><span style="color:#ae81ff">16</span>,
+</span></span><span style="display:flex;"><span>    per_device_eval_batch_size<span style="color:#f92672">=</span><span style="color:#ae81ff">8</span>,
+</span></span><span style="display:flex;"><span>    num_train_epochs<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>,
+</span></span><span style="display:flex;"><span>    weight_decay<span style="color:#f92672">=</span><span style="color:#ae81ff">0.01</span>,
+</span></span><span style="display:flex;"><span>    eval_strategy<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;epoch&#34;</span>,
+</span></span><span style="display:flex;"><span>    logging_strategy<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;epoch&#34;</span>,
+</span></span><span style="display:flex;"><span>    save_strategy<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;epoch&#34;</span>,
+</span></span><span style="display:flex;"><span>    load_best_model_at_end<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>,
+</span></span><span style="display:flex;"><span>    push_to_hub<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>,
+</span></span><span style="display:flex;"><span>    hub_model_id<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;mdh266/arxivist&#34;</span>,
+</span></span><span style="display:flex;"><span>    report_to<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;none&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>These parameters train the model with 16 examples per batch from the training dataset and evaluate it with 8 examples per batch from the validation dataset. It checkpoints models both to the the <a href="https://huggingface.co/models"  class="external-link" target="_blank" rel="noopener">Hugging Face Model Hub</a> (<code>push_to_hub=True</code>, specifically to the repo <code>hub_model_id=&quot;mdh266/arxivist&quot;</code>) as well as to the local dicetory <code>output_dir=./results</code>. The checkpointing occurs at the end of each epoch (<code>save_strategy=&quot;epoch&quot;</code>) when the model is evaluated (<code>eval_strategy=&quot;epoch&quot;</code>). I&rsquo;ll point out  that the last parameter <code>report_to=&quot;none&quot;</code> turned off the auto logging to <a href="https://wandb.ai/site/"  class="external-link" target="_blank" rel="noopener">Weights and Biases</a>, for some reason this occurred on Colab, but not on my laptop.</p>
+<p>Next the trainer needs to be defined which includes the model, tokenizer, training agruments object datasets, metrics to compute and the data collator for dynamic padding.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> transformers <span style="color:#f92672">import</span> Trainer
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>trainer <span style="color:#f92672">=</span> Trainer(
+</span></span><span style="display:flex;"><span>    model,
+</span></span><span style="display:flex;"><span>    training_args,
+</span></span><span style="display:flex;"><span>    train_dataset<span style="color:#f92672">=</span>tokenized_datasets[<span style="color:#e6db74">&#34;train&#34;</span>],
+</span></span><span style="display:flex;"><span>    eval_dataset<span style="color:#f92672">=</span>tokenized_datasets[<span style="color:#e6db74">&#34;validation&#34;</span>],
+</span></span><span style="display:flex;"><span>    data_collator<span style="color:#f92672">=</span>data_collator,
+</span></span><span style="display:flex;"><span>    processing_class<span style="color:#f92672">=</span>tokenizer,
+</span></span><span style="display:flex;"><span>    compute_metrics<span style="color:#f92672">=</span>compute_metrics
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>Then we can begin the fine tuning process with the command below!</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>output <span style="color:#f92672">=</span> trainer<span style="color:#f92672">.</span>train()
+</span></span></code></pre></div><p>The results are below,</p>
+<figure>
+<img src="https://github.com/mdh266/FineTuning/blob/main/images/performances.png?raw=1" alt="PERF" width="500" height="300" class="center">
+</figure>
+<p>Finally there is one last push to the Model Hub I need to do. This push will upload all the metadata associated with fine tuning and create a basic <a href="https://huggingface.co/docs/hub/en/model-cards"  class="external-link" target="_blank" rel="noopener">Hugging Face model card</a>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>trainer<span style="color:#f92672">.</span>push_to_hub(<span style="color:#e6db74">&#34;mdh266/arxivist&#34;</span>)
+</span></span></code></pre></div><p>Now the model will predict text classes 0,1,2, however, in order to get the model to predict the class names &ldquo;Artificial Intelligence&rdquo;, &ldquo;Information Retrieval&rdquo; and &ldquo;Robotics&rdquo; the model object needs to be modified and uploaded individually. So I will grab the model,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>model <span style="color:#f92672">=</span> trainer<span style="color:#f92672">.</span>model
+</span></span></code></pre></div><p>In order to get the class labels I need to add the mappings between the labels and the class numbers to the model configuration:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>model<span style="color:#f92672">.</span>config<span style="color:#f92672">.</span>label2id <span style="color:#f92672">=</span> {v:k <span style="color:#66d9ef">for</span> k,v <span style="color:#f92672">in</span> enumerate([<span style="color:#e6db74">&#39;Artificial Intelligence&#39;</span>,<span style="color:#e6db74">&#39;Information Retrieval&#39;</span>, <span style="color:#e6db74">&#39;Robotics&#39;</span>])}
+</span></span><span style="display:flex;"><span>model<span style="color:#f92672">.</span>config<span style="color:#f92672">.</span>id2label <span style="color:#f92672">=</span> {k:v <span style="color:#66d9ef">for</span> k,v <span style="color:#f92672">in</span> enumerate([<span style="color:#e6db74">&#39;Artificial Intelligence&#39;</span>,<span style="color:#e6db74">&#39;Information Retrieval&#39;</span>, <span style="color:#e6db74">&#39;Robotics&#39;</span>])}
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># push to model hub</span>
+</span></span><span style="display:flex;"><span>model<span style="color:#f92672">.</span>push_to_hub(<span style="color:#e6db74">&#34;mdh266/arxivist&#34;</span>)
+</span></span></code></pre></div><p>I&rsquo;ll also upload the tokenizer as well:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>tokenizer <span style="color:#f92672">=</span> trainer<span style="color:#f92672">.</span>processing_class
+</span></span><span style="display:flex;"><span>tokenizer<span style="color:#f92672">.</span>push_to_hub(<span style="color:#e6db74">&#34;mdh266/arxivist&#34;</span>)
+</span></span></code></pre></div><h2 id="5-using-the-model-with-hugging-face-pipelines">
+  5. Using the model With Hugging Face Pipelines <a class="anchor" id="fifth-bullet"></a>
+  <a class="heading-link" href="#5-using-the-model-with-hugging-face-pipelines">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Now I can test the model out by downloading from Model Hub using the <a href="https://huggingface.co/docs/transformers/en/main_classes/pipelines"  class="external-link" target="_blank" rel="noopener">Hugging Face Pipeline</a> class that bundles the tokenizer, model and post processing (to map the class numbers to class labels). This will allow end users to go from text to model class label.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> transformers <span style="color:#f92672">import</span> pipeline
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>classifier <span style="color:#f92672">=</span> pipeline(<span style="color:#e6db74">&#34;text-classification&#34;</span>, model<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;mdh266/arxivist&#34;</span>)
+</span></span></code></pre></div><p>Now I&rsquo;ll grab abstracts from the <a href="https://arxiv.org/"  class="external-link" target="_blank" rel="noopener">arxiv.org</a> to test with the model I created.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># https://arxiv.org/abs/2508.06296</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># artificial intelligence</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#34;../texts/ai.txt&#34;</span>, <span style="color:#e6db74">&#34;r&#34;</span>) <span style="color:#66d9ef">as</span> f:
+</span></span><span style="display:flex;"><span>    text <span style="color:#f92672">=</span> f<span style="color:#f92672">.</span>read()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>classifier(text)
+</span></span></code></pre></div><p><code>[{'label': 'Artificial Intelligence', 'score': 0.979738712310791}]</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># https://arxiv.org/abs/2508.05633</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># information retrieval</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#34;../texts/ir.txt&#34;</span>, <span style="color:#e6db74">&#34;r&#34;</span>) <span style="color:#66d9ef">as</span> f:
+</span></span><span style="display:flex;"><span>    text <span style="color:#f92672">=</span> f<span style="color:#f92672">.</span>read()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>classifier(text)
+</span></span></code></pre></div><p><code>[{'label': 'Information Retrieval', 'score': 0.9323310852050781}]</code></p>
+<p>The pipeline class gives the class label (<code>label</code>) as well the probability the model gave that prediction (<code>score</code>).</p>
+<p>I can even do predictions on the test set by converting it to a list of texts:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>classifier(test_df[<span style="color:#e6db74">&#34;text&#34;</span>]<span style="color:#f92672">.</span>sample(<span style="color:#ae81ff">2</span>)<span style="color:#f92672">.</span>to_list())
+</span></span></code></pre></div><pre tabindex="0"><code>[{&#39;label&#39;: &#39;Robotics&#39;, &#39;score&#39;: 0.9148617386817932},
+ {&#39;label&#39;: &#39;Information Retrieval&#39;, &#39;score&#39;: 0.9640209674835205}]
+</code></pre><p>To get the ROC-AUC score on the test set I need to write a function that will calculate it using the <a href="https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html"  class="external-link" target="_blank" rel="noopener">DataLoader</a> class from PyTorch to enable dynamic padding. The function is below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> typing <span style="color:#f92672">import</span> Dict
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> torch.utils.data <span style="color:#f92672">import</span> DataLoader
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">calculate_roc_auc</span>(model, loader: DataLoader) <span style="color:#f92672">-&gt;</span> Dict[str, np<span style="color:#f92672">.</span>float64]:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  roc_auc_score <span style="color:#f92672">=</span> evaluate<span style="color:#f92672">.</span>load(<span style="color:#e6db74">&#34;roc_auc&#34;</span>, <span style="color:#e6db74">&#34;multiclass&#34;</span>)
+</span></span><span style="display:flex;"><span>  model<span style="color:#f92672">.</span>eval()
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">for</span> batch <span style="color:#f92672">in</span> loader:
+</span></span><span style="display:flex;"><span>      batch <span style="color:#f92672">=</span> {k: v<span style="color:#f92672">.</span>to(device) <span style="color:#66d9ef">for</span> k, v <span style="color:#f92672">in</span> batch<span style="color:#f92672">.</span>items()}
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">with</span> torch<span style="color:#f92672">.</span>no_grad():
+</span></span><span style="display:flex;"><span>          outputs <span style="color:#f92672">=</span> model(<span style="color:#f92672">**</span>batch)
+</span></span><span style="display:flex;"><span>          scores <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>nn<span style="color:#f92672">.</span>functional<span style="color:#f92672">.</span>softmax(outputs<span style="color:#f92672">.</span>logits, dim<span style="color:#f92672">=-</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>          roc_auc_score<span style="color:#f92672">.</span>add_batch(references<span style="color:#f92672">=</span>batch[<span style="color:#e6db74">&#34;labels&#34;</span>],
+</span></span><span style="display:flex;"><span>                                prediction_scores<span style="color:#f92672">=</span>scores)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> roc_auc_score<span style="color:#f92672">.</span>compute(multi_class<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;ovr&#34;</span>)
+</span></span></code></pre></div><p>Since I need the actual class probabilities for all classes for ROC-AUC then I cannot use the pipeline classifier directly, but instead I must get the model directly,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>model <span style="color:#f92672">=</span> classifier<span style="color:#f92672">.</span>model
+</span></span></code></pre></div><p>Then I can just use the <code>DataLoader</code> class as before and pass it to the above function.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>testset_dataloader <span style="color:#f92672">=</span> DataLoader(
+</span></span><span style="display:flex;"><span>    tokenized_datasets[<span style="color:#e6db74">&#34;test&#34;</span>], batch_size<span style="color:#f92672">=</span><span style="color:#ae81ff">8</span>, collate_fn<span style="color:#f92672">=</span>data_collator
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>calculate_roc_auc(model, testset_dataloader)
+</span></span></code></pre></div><pre tabindex="0"><code>{&#39;roc_auc&#39;: np.float64(0.9821414141414141)}
+</code></pre><p>A pretty good ROC-AUC!!</p>
+<h2 id="6-next-steps">
+  6. Next Steps <a class="anchor" id="sixth-bullet"></a>
+  <a class="heading-link" href="#6-next-steps">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this notebook, I successfully fine-tuned a BERT model using the HuggingFace transformers library and achieved strong performance, with a ROC-AUC score of approximately 0.98 on the test set. This demonstrates BERT’s ability to generalize well when trained with high-quality data and an appropriate fine-tuning strategy.</p>
+<p>We covered the full pipeline from dataset preparation to model evaluation and showcased how to use the model for inference. This approach can be easily adapted to a variety of other NLP tasks such as sentiment analysis. One thing I will explore in the future is adding weights to a custom loss function through PyTorch to help deal with the imbalance of classes in the dataset.</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+      <h3 id="see-also-in-nlp">
+        See also in NLP
+        <a class="heading-link" href="#see-also-in-nlp">
+          <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+          <span class="sr-only">Link to heading</span>
+        </a>
+      </h3>
+      <nav>
+        <ul>
+        
+        
+          
+        
+          
+            <li>
+              <a href="/posts/jfk2/">Creating An AI-Based JFK Speech Writer: Part 2</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/jfk1/">Creating An AI-Based JFK Speech Writer: Part 1</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/nlp4/">Text Classification 4: Deep Learning With Tensorflow &amp; Optuna</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/nlp3/">Text Classification 3: A Machine Learning Powered Web App</a>
+            </li>
+          
+        
+          
+            <li>
+              <a href="/posts/nlp1/">Text Classification 1: Imbalanced Data</a>
+            </li>
+          
+        
+        </ul>
+      </nav>
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>
