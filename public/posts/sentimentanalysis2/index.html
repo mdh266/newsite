@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Sentiment Analysis 2: Machine Learning With Spark On Google Cloud · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+1. Introduction
+2. Creating A GCP Hadoop Cluster 
+3. Getting Data From An Atlas Cluter
+4. Basic Models With Spark ML Pipelines
+5. Stemming With Custom Transformers
+6. N-Grams &amp; Parameter Tunning Using A Grid Search
+7. Conclusions
+
+  Introduction  
+  
+    
+    Link to heading
+  
+
+
+In the first part of this two part blog post I went over the basics of ETL with PySpark and MongoDB.  In this second part I will go over the actual machine learning aspects of sentiment analysis using SparkML (aka MLlib, it seems the name is changing).  Specifically, we&rsquo;ll be using ML Pipelines and Logistic Regression to build a basic linear classifier for sentiment analysis. Many people use Support Vector Machines (SVM) because they handle high dimensional data well (which NLP problems definitely are) and allow for the use of non-linear kernels.  However, given the number of samples in our dataset and the fact Spark&rsquo;s SVM only supports linear Kernels (which have comparable performance to logistic regression) I decided to just stick with the simpler model, aka logistic regression.">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Sentiment Analysis 2: Machine Learning With Spark On Google Cloud">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. Creating A GCP Hadoop Cluster 3. Getting Data From An Atlas Cluter
+4. Basic Models With Spark ML Pipelines
+5. Stemming With Custom Transformers
+6. N-Grams &amp; Parameter Tunning Using A Grid Search
+7. Conclusions
+Introduction Link to heading In the first part of this two part blog post I went over the basics of ETL with PySpark and MongoDB. In this second part I will go over the actual machine learning aspects of sentiment analysis using SparkML (aka MLlib, it seems the name is changing). Specifically, we’ll be using ML Pipelines and Logistic Regression to build a basic linear classifier for sentiment analysis. Many people use Support Vector Machines (SVM) because they handle high dimensional data well (which NLP problems definitely are) and allow for the use of non-linear kernels. However, given the number of samples in our dataset and the fact Spark’s SVM only supports linear Kernels (which have comparable performance to logistic regression) I decided to just stick with the simpler model, aka logistic regression.">
+
+<meta property="og:url" content="http://localhost:1313/posts/sentimentanalysis2/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Sentiment Analysis 2: Machine Learning With Spark On Google Cloud">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. Creating A GCP Hadoop Cluster 3. Getting Data From An Atlas Cluter
+4. Basic Models With Spark ML Pipelines
+5. Stemming With Custom Transformers
+6. N-Grams &amp; Parameter Tunning Using A Grid Search
+7. Conclusions
+Introduction Link to heading In the first part of this two part blog post I went over the basics of ETL with PySpark and MongoDB. In this second part I will go over the actual machine learning aspects of sentiment analysis using SparkML (aka MLlib, it seems the name is changing). Specifically, we’ll be using ML Pipelines and Logistic Regression to build a basic linear classifier for sentiment analysis. Many people use Support Vector Machines (SVM) because they handle high dimensional data well (which NLP problems definitely are) and allow for the use of non-linear kernels. However, given the number of samples in our dataset and the fact Spark’s SVM only supports linear Kernels (which have comparable performance to logistic regression) I decided to just stick with the simpler model, aka logistic regression.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2019-05-09T00:00:00+00:00">
+    <meta property="article:modified_time" content="2019-05-09T00:00:00+00:00">
+    <meta property="article:tag" content="PySpark">
+    <meta property="article:tag" content="Hadoop">
+    <meta property="article:tag" content="Google Cloud">
+    <meta property="article:tag" content="Sentiment Analysis">
+    <meta property="article:tag" content="MongoDB">
+      <meta property="og:see_also" content="http://localhost:1313/posts/sentimentanalysis1/">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/sentimentanalysis2/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/sentimentanalysis2/">
+              Sentiment Analysis 2: Machine Learning With Spark On Google Cloud
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2019-05-09T00:00:00Z">
+                May 9, 2019
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              29-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/pyspark/">PySpark</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/hadoop/">Hadoop</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/google-cloud/">Google Cloud</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/sentiment-analysis/">Sentiment Analysis</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/mongodb/">MongoDB</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#bullet1" >1. Introduction</a></strong></p>
+<p><strong><a href="#bullet2" >2. Creating A GCP Hadoop Cluster </a></strong></p>
+<p><strong><a href="#bullet3" >3. Getting Data From An Atlas Cluter</a></strong></p>
+<p><strong><a href="#bullet4" >4. Basic Models With Spark ML Pipelines</a></strong></p>
+<p><strong><a href="#bullet5" >5. Stemming With Custom Transformers</a></strong></p>
+<p><strong><a href="#bullet6" >6. N-Grams &amp; Parameter Tunning Using A Grid Search</a></strong></p>
+<p><strong><a href="#bullet7" >7. Conclusions</a></strong></p>
+<h2 id="introduction">
+  Introduction  <a class="anchor" id="bullet1"></a>
+  <a class="heading-link" href="#introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In the <a href="http://michael-harmon.com/posts/sentimentanalysis1">first part</a> of this two part blog post I went over the basics of ETL with PySpark and MongoDB.  In this second part I will go over the actual machine learning aspects of sentiment analysis using <a href="https://spark.apache.org/docs/latest/ml-guide.html">SparkML</a> (aka MLlib, it seems the name is changing).  Specifically, we&rsquo;ll be using <a href="https://spark.apache.org/docs/latest/ml-pipeline.html">ML Pipelines</a> and <a href="https://en.wikipedia.org/wiki/Logistic_regression">Logistic Regression</a> to build a basic linear classifier for sentiment analysis. Many people use Support Vector Machines (SVM) because they handle high dimensional data well (which NLP problems definitely are) and allow for the use of non-linear kernels.  However, given the number of samples in our dataset and the fact Spark&rsquo;s <a href="https://spark.apache.org/docs/2.3.2/ml-classification-regression.html#linear-support-vector-machine">SVM</a> only supports linear Kernels (which have comparable performance to logistic regression) I decided to just stick with the simpler model, aka logistic regression.</p>
+<p>After we build a baseline model for sentiment analysis, I&rsquo;ll introduce techniques to improve performance like removing stop words and using N-grams. I also introduce a custom Spark <a href="https://spark.apache.org/docs/1.6.2/ml-guide.html#transformers">Transformer</a> class that uses the <a href="https://www.nltk.org/">NLTK</a> to perform stemming.  Lastly, we&rsquo;ll review <a href="https://spark.apache.org/docs/latest/ml-tuning.html">hyper-parameter tunning</a> with cross-validation to optimize our model. The point of this post <em>is not too build the best classifier on a huge dataset, but rather to show how to piece together advanced concepts using PySpark&hellip; and at the same time get reasonable results.</em></p>
+<p>That said we will continue to use the 1.6 million <a href="https://www.kaggle.com/kazanova/sentiment140">tweets</a> from Kaggle which I loaded into my <a href="https://www.mongodb.com/cloud/atlas">Atlas MongoDB</a> cluster with the Spark ETL job that was discussed in the previous <a href="http://michael-harmon.com/blog/SentimentAnalysisP1.html">post</a>.  While 1.6 million tweets doesn&rsquo;t necessitate a distributed environment, using PySpark on this datset was a little too much for my whimpy 2013 Macbook Air and I needed to use a more powerful machine.  Luckily <a href="https://cloud.google.com/">Google Cloud Platform</a> (GCP) gives everyone free credits to start using their platform and I was able to use Spark on a <a href="https://hadoop.apache.org/">Hadoop</a> cluster using <a href="https://cloud.google.com/dataproc/">dataproc</a> and <a href="https://cloud.google.com/datalab/">datalab</a>.</p>
+<p>Let&rsquo;s get started!</p>
+<h2 id="creating-a-gcp-hadoop-cluster">
+  Creating A GCP Hadoop Cluster  <a class="anchor" id="bullet2"></a>
+  <a class="heading-link" href="#creating-a-gcp-hadoop-cluster">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>I have been using Hadoop and Spark for quite some time now, but have never spun up my own cluster and gained a new found respect for Hadoop admins.  While Google does make the process easier, I still had to ask a friend for help to get things to work the way I wanted them to.  Between getting the correct version of Python as well as the correct version of NLTK on both the driver and worker nodes, the correct MongoDB connection for PySpark 2.3.2 and the time it takes to spin up and spin down a cluster I was very much done configuting Hadoop clusters on my own.  I want to say that made me a better person or at least a better data scientist, but I&rsquo;m not so sure. :)</p>
+<p>To start up the Hadoop cluster with two worker nodes (with the GCP free trial I could only use two worker nodes) I used the command below:</p>
+<img src="https://github.com/mdh266/TwitterSentimentAnalysis/blob/master/images/CreateCluster.png?raw=1">
+<p>You can see dataproc image version, the string for the MongoDB connection, as well as the version of Python in the above commands.  The bash scripts that I reference in my Google storage bucket for this project can be obtain from my repo <a href="https://github.com/mdh266/SentimentAnalysis/tree/master/GCP">here</a>.  After the cluster is created we can ssh onto the master node by going to the console and clicking on &ldquo;<em>Compute Engine</em>&rdquo; tab.  You will see a page like the one below:</p>
+<img src="https://github.com/mdh266/TwitterSentimentAnalysis/blob/master/images/MasterNode.png?raw=1">
+<p>We can ssh on the master node using the ssh tab to the right of the instance named <strong>mikescluster-m</strong>.  The &ldquo;-m&rdquo; signifies it is the master node while the other instances have &ldquo;-w&rdquo; signifiying they are worker nodes. After connecting to the mater node you can see all the <a href="https://data-flair.training/blogs/top-hadoop-hdfs-commands-tutorial/">Hadoop commands</a> available:</p>
+<img src="https://github.com/mdh266/TwitterSentimentAnalysis/blob/master/images/HDFS.png?raw=1">
+<p>We won&rsquo;t work on our Hadoop cluster through command line, but rather connect to the cluster through Jupyter notebooks using Google <a href="https://cloud.google.com/datalab/">datalab</a>. To do this involves creating an ssh-tunnel and proxy for Chrome, both of which I had no idea how to do, but luckily the same friend from before walked me through it.  The bash scripts I used to do these last two procedures are located in my repo <a href="https://github.com/mdh266/SentimentAnalysis/tree/master/GCP">here</a>. After those steps were completed we can enter the address into our web browser to see the Jupyter notebooks,</p>
+<pre><code>http://mikescluster-m:8080
+</code></pre>
+<p>Note that the notebooks are running on the master node using port 8080 and that <a href="https://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-site/YARN.html">YARN</a> can be seen from the same web address, but using port 8088.  I&rsquo;ll come back to YARN a little later.  Now that we have our Hadoop cluster up and running on Google Cloud we can talk about how to access our data.</p>
+<h2 id="getting-the-dataset-from-an-atlas-cluster">
+  Getting The Dataset From An Atlas Cluster <a class="anchor" id="bullet3"></a>
+  <a class="heading-link" href="#getting-the-dataset-from-an-atlas-cluster">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>As I mentioned in the introduction I loaded the cleaned Twitter dataset into my Atlas MongoDB cluster as I discussed in the previous <a href="http://michael-harmon.com/blog/SentimentAnalysisP1.html">post</a>.  In this post I won&rsquo;t go over the ETL process again, but will show how to connect PySpark to the Atlas cluster.  One thing to highlight here is that in order to keep my collection within the memory limits of the free tier I had to store the data as strings instead of tokens as I showed in the previous post. (See the ETL job here <a href="https://github.com/mdh266/SentimentAnalysis/blob/master/ETL/BasicETL.py">here</a> for details)  Therefore we&rsquo;ll do have to tokenize our strings again here.</p>
+<p>The first step to connecting to the database is to create a connection url string that contains the cluster address, user info, password as well as database and collection name in the dictionary below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mongo_conn <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;address&#34;</span>    : <span style="color:#e6db74">&#34;harmoncluster-xsarp.mongodb.net/&#34;</span>, 
+</span></span><span style="display:flex;"><span>              <span style="color:#e6db74">&#34;db_name&#34;</span>    : <span style="color:#e6db74">&#34;db_twitter&#34;</span>,
+</span></span><span style="display:flex;"><span>              <span style="color:#e6db74">&#34;collection&#34;</span> : <span style="color:#e6db74">&#34;tweets&#34;</span>,
+</span></span><span style="display:flex;"><span>              <span style="color:#e6db74">&#34;user&#34;</span>       : <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>              <span style="color:#e6db74">&#34;password&#34;</span>   : <span style="color:#e6db74">&#34;&#34;</span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>url   <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;mongodb+srv://</span><span style="color:#e6db74">{user}</span><span style="color:#e6db74">:</span><span style="color:#e6db74">{password}</span><span style="color:#e6db74">@</span><span style="color:#e6db74">{address}{db_name}</span><span style="color:#e6db74">.</span><span style="color:#e6db74">{collection}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(<span style="color:#f92672">**</span>mongo_conn)
+</span></span></code></pre></div><p>Then we create a dataframe from the documents in the collection using the <code>spark.read</code> command, passing in the connection url as our option and specifying that we are using MongoDB as the format:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df <span style="color:#f92672">=</span> spark<span style="color:#f92672">.</span>read\
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">.</span>format(<span style="color:#e6db74">&#34;com.mongodb.spark.sql.DefaultSource&#34;</span>)\
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">.</span>option(<span style="color:#e6db74">&#34;uri&#34;</span>,url)\
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">.</span>load()
+</span></span></code></pre></div><p>At this point while the collection on the Atlas cluster has not been pulled to our Hadoop cluster yet, we would see an error if there was a mistake in our connection string.  Additionally, at this point the dataframe allows us to see some metadata on the collection, i.e. the &ldquo;schema&rdquo;,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df<span style="color:#f92672">.</span>printSchema()
+</span></span></code></pre></div><pre><code>root
+ |-- _id: struct (nullable = true)
+ |    |-- oid: string (nullable = true)
+ |-- sentiment: integer (nullable = true)
+ |-- tweet_clean: string (nullable = true)
+</code></pre>
+<p>You can see that each document has an <code>id</code>, <code>sentiment</code> and cleaneed tweet.  Let&rsquo;s just pull the <code>tweet_clean</code> as well as <code>sentiment</code> fields and rename <code>sentiment</code> to <code>label</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>df2 <span style="color:#f92672">=</span> df<span style="color:#f92672">.</span>select(<span style="color:#e6db74">&#34;tweet_clean&#34;</span>,<span style="color:#e6db74">&#34;sentiment&#34;</span>)\
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">.</span>withColumnRenamed(<span style="color:#e6db74">&#34;sentiment&#34;</span>, <span style="color:#e6db74">&#34;label&#34;</span>)
+</span></span></code></pre></div><p>Then let&rsquo;s split the dataframe into training and testing sets (using 80% of the data for training and 20% for testing) with a seed (1234),</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>train, test <span style="color:#f92672">=</span> df2<span style="color:#f92672">.</span>randomSplit([<span style="color:#ae81ff">0.80</span>, <span style="color:#ae81ff">0.20</span>], <span style="color:#ae81ff">1234</span>)
+</span></span></code></pre></div><p>Now we can look at the number of tweets in the training set that have positive and negative sentiment. Note, since we will be using this dataframe many times below we will cache it to achieve better runtime performance.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>train<span style="color:#f92672">.</span>cache()
+</span></span></code></pre></div><pre><code>DataFrame[tweet_clean: string, label: int]
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>train<span style="color:#f92672">.</span>groupby(<span style="color:#e6db74">&#34;label&#34;</span>)\
+</span></span><span style="display:flex;"><span>     <span style="color:#f92672">.</span>count()\
+</span></span><span style="display:flex;"><span>     <span style="color:#f92672">.</span>show()
+</span></span></code></pre></div><pre><code>+-----+------+
+|label| count|
++-----+------+
+|    1|637317|
+|    0|639237|
++-----+------+
+</code></pre>
+<p>We can see that the two classes are well balanced, with over half a million positive and negative teets.  We do the same for the testing set:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>test<span style="color:#f92672">.</span>cache()
+</span></span></code></pre></div><pre><code>DataFrame[tweet_clean: string, label: int]
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>test<span style="color:#f92672">.</span>groupby(<span style="color:#e6db74">&#34;label&#34;</span>)\
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">.</span>count()\
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">.</span>show()
+</span></span></code></pre></div><pre><code>+-----+------+
+|label| count|
++-----+------+
+|    1|159635|
+|    0|159840|
++-----+------+
+</code></pre>
+<p>Again, the classes are well balanced.  This is great because we don&rsquo;t have to worry about dealing with imbalanced classes and <em>accuracy and ROC&rsquo;s area under the curve (AUC) are good metrics to see how well our models are performing.</em></p>
+<p>Now let&rsquo;s build our baseline model.</p>
+<h2 id="basic-models-with-spark-ml-pipelines">
+  Basic Models With Spark ML Pipelines <a class="anchor" id="bullet4"></a>
+  <a class="heading-link" href="#basic-models-with-spark-ml-pipelines">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this section I&rsquo;ll go over how to build a basic logistic regression model using Spark <a href="https://spark.apache.org/docs/latest/ml-pipeline.html">ML Pipelines</a>.  ML Pipelines are similar to <a href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html">Scikit-learn Pipelines</a>. We import the basic modules:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark.ml <span style="color:#f92672">import</span> Pipeline
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark.ml.feature <span style="color:#f92672">import</span> Tokenizer, HashingTF, IDF
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark.ml.classification <span style="color:#f92672">import</span> LogisticRegression
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark.ml.evaluation <span style="color:#f92672">import</span> BinaryClassificationEvaluator
+</span></span></code></pre></div><p>Next we instantiate our classification evalutor class and pass the label of the output column (the prediction column) from the model:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>evaluator <span style="color:#f92672">=</span> BinaryClassificationEvaluator(rawPredictionCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;rawPrediction&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># get the name of the metric used</span>
+</span></span><span style="display:flex;"><span>evaluator<span style="color:#f92672">.</span>getMetricName()
+</span></span></code></pre></div><pre><code>'areaUnderROC'
+</code></pre>
+<p>We&rsquo;ll be using the <a href="https://en.wikipedia.org/wiki/Bag-of-words_model">bag of words (BOW) model</a> to build features from tweets for our model.  <em>In the bag-of-words model, a document (in this case tweet) is represented as &ldquo;bag&rdquo; or list of its words, disregarding grammar and ordering, but keeping the multiplicity of the words.</em>  A two document example is:</p>
+<ul>
+<li>
+<p><strong>D1:</strong>  Hi, I am Mike and I like Boston.</p>
+</li>
+<li>
+<p><strong>D2:</strong>  Boston is a city and people in Boston like the Red Sox.</p>
+</li>
+</ul>
+<p>From these two documents, a list, or &lsquo;bag-of-words&rsquo; is constructed</p>
+<pre><code>bag = ['Hi', 'I', 'am', 'Mike', 'and', 'like', 'Boston', 'is', 
+       'a', 'city, 'and', 'people', 'in', 'the', 'red', 'sox]
+</code></pre>
+<p>Notice how in our bag-of-words we have dropped repetitions of the words &lsquo;I&rsquo;, &lsquo;is&rsquo; and &lsquo;Mike&rsquo;. I will show how multiplicity of words enters into our model next.</p>
+<p>After transforming the text (all documents) into a &ldquo;bag of words&rdquo; we generate a vector for each document that represents the number of times each word (or more generally token) in the BOW appears in the text. The order of entries in the BOW vector corresponds to the order of the entries in the bag-of-words list.  For example, document D1 would have a vector,</p>
+<pre><code>[1, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0 ,0, 0, 0, 0, 0]
+</code></pre>
+<p>while the second document, D2, would have the vector,</p>
+<pre><code>[0, 0, 0, 0, 0, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1]
+</code></pre>
+<p>Each entry of the lists refers to frequency or count of the corresponding entry in the bag-of-words list.  When we have a stacked collection of (row) vectors, or matrix, where each row corresponds to a document (vector), and each column corresponds to a word in the bag-of-words list, then this will be known as our <strong>term-frequency (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf</mtext></mrow><annotation encoding="application/x-tex">\text{tf}</annotation></semantics></math></span>
+) <a href="https://en.wikipedia.org/wiki/Document-term_matrix"  class="external-link" target="_blank" rel="noopener">document matrix</a></strong>. The general formula for an entry in the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf</mtext></mrow><annotation encoding="application/x-tex">\text{tf}</annotation></semantics></math></span>
+ matrix is,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>tf</mtext><mo stretchy="false">(</mo><mi>d</mi><mo separator="true">,</mo><mi>t</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>=</mo><mtext> </mtext><msub><mi>f</mi><mrow><mi>t</mi><mo separator="true">,</mo><mi>d</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\text{tf}(d,t) \,  = \, f_{t,d}</annotation></semantics></math></span>
+<p>where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>f</mi><mrow><mi>t</mi><mo separator="true">,</mo><mi>d</mi></mrow></msub></mrow><annotation encoding="application/x-tex">f_{t,d}</annotation></semantics></math></span>
+ is the number of times the term <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span>
+ occurs in document <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mo>∈</mo><mi mathvariant="script">D</mi></mrow><annotation encoding="application/x-tex">d \in \mathcal{D}</annotation></semantics></math></span>
+, where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">D</mi></mrow><annotation encoding="application/x-tex">\mathcal{D}</annotation></semantics></math></span>
+ is our text corpus.  We can create a term-frequency matrix using Spark&rsquo;s <a href="https://spark.apache.org/docs/latest/ml-features.html#tf-idf">HashingTF</a> class. To see the difference between HashingTF and <a href="https://spark.apache.org/docs/latest/ml-features.html#countvectorizer">CounterVectorizer</a> see this <a href="https://stackoverflow.com/questions/35205865/what-is-the-difference-between-hashingtf-and-countvectorizer-in-spark">stackoverflow post</a>.</p>
+<p>Most often term-frequency alone is not a good measure of the importance of a word/term to a document&rsquo;s sentiment.  Very common words like &ldquo;the&rdquo;, &ldquo;a&rdquo;, &ldquo;to&rdquo; are almost always the terms with the highest frequency in the text. Thus, having a high raw count of the number of times a term appears in a document does not necessarily mean that the corresponding word is more important to the sentiment of the document.</p>
+<p>To circumvent the limination of term-frequency, we often normalize it by the <strong>inverse document frequency (idf)</strong>.  This results in the <strong>term frequency-inverse document frequency (tf-idf)</strong> matrix.  The <em>inverse document frequency is a measure of how much information the word provides, that is, whether the term is common or rare across all documents in the corpus</em>.  We can give a formal defintion of the inverse-document-frequency by letting <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">D</mi></mrow><annotation encoding="application/x-tex">\mathcal{D}</annotation></semantics></math></span>
+ be the corpus or the set of all documents and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>N</mi><mi mathvariant="script">D</mi></msub></mrow><annotation encoding="application/x-tex">N_{\mathcal{D}}</annotation></semantics></math></span>
+ is the number of documents in the corpus and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>N</mi><mrow><mi>t</mi><mo separator="true">,</mo><mi>D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">N_{t,D}</annotation></semantics></math></span>
+ be the number of documents that contain the term <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span>
+ then,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>i</mi><mi>d</mi><mi>f</mi><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi mathvariant="script">D</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>=</mo><mtext> </mtext><mi>log</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><msub><mi>N</mi><mi mathvariant="script">D</mi></msub><mrow><mn>1</mn><mo>+</mo><msub><mi>N</mi><mrow><mi>t</mi><mo separator="true">,</mo><mi mathvariant="script">D</mi></mrow></msub></mrow></mfrac><mo fence="true">)</mo></mrow><mtext> </mtext><mo>=</mo><mtext> </mtext><mo>−</mo><mi>log</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mfrac><mrow><mn>1</mn><mo>+</mo><msub><mi>N</mi><mrow><mi>t</mi><mo separator="true">,</mo><mi mathvariant="script">D</mi></mrow></msub></mrow><msub><mi>N</mi><mi mathvariant="script">D</mi></msub></mfrac><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">idf(t,\mathcal{D}) \, = \,  \log\left(\frac{N_{\mathcal{D}}}{1 + N_{t,\mathcal{D}}}\right) \, = \, -  \log\left(\frac{1 + N_{t,\mathcal{D}}}{N_{\mathcal{D}}}\right) </annotation></semantics></math></span>
+<p>The reason for the presence of the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn></mrow><annotation encoding="application/x-tex">1</annotation></semantics></math></span>
+ is for smoothing.  Without it, if the term/word did not appear in any training documents, then its inverse-document-frequency would be <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mi>d</mi><mi>f</mi><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi mathvariant="script">D</mi><mo stretchy="false">)</mo><mo>=</mo><mi mathvariant="normal">∞</mi></mrow><annotation encoding="application/x-tex">idf(t,\mathcal{D}) = \infty</annotation></semantics></math></span>
+.  However, with the presense of the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn></mrow><annotation encoding="application/x-tex">1</annotation></semantics></math></span>
+ it will now have <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mi>d</mi><mi>f</mi><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi mathvariant="script">D</mi><mo stretchy="false">)</mo><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">idf(t,\mathcal{D}) = 0</annotation></semantics></math></span>
+.</p>
+<p>Now we can formally define the term frequnecy-inverse document frequency as a normalized version of term-frequency,</p>
+
+<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>tf-idf</mtext><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi>d</mi><mo stretchy="false">)</mo><mtext> </mtext><mo>=</mo><mtext> </mtext><mi>t</mi><mi>f</mi><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi>d</mi><mo stretchy="false">)</mo><mo>⋅</mo><mi>i</mi><mi>d</mi><mi>f</mi><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi mathvariant="script">D</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{tf-idf}(t,d) \, = \, tf(t,d) \cdot idf(t,\mathcal{D}) </annotation></semantics></math></span>
+<p>Like the term-frequency, the term frequency-inverse document frequency is a sparse matrix, where again, each row is a document in our training corpus (<span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">D</mi></mrow><annotation encoding="application/x-tex">\mathcal{D}</annotation></semantics></math></span>
+) and each column corresponds to a term/word in the bag-of-words list.  The <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>tf-idf</mtext></mrow><annotation encoding="application/x-tex">\text{tf-idf}</annotation></semantics></math></span>
+ matrix can be constructed using the <a href="https://spark.apache.org/docs/latest/ml-features.html#tf-idf">SparkML IDF</a> class.</p>
+<p>Now that we have gotten the definition of TF-IDF out of the way we can discuss the steps in building a basic pipeline.   These include,</p>
+<pre><code>- tokenization
+- creating term frequency
+- creating term frequency inverse document frequency 
+- fitting a logistic regression model to the BOW created from the previous steps
+</code></pre>
+<p>This is all done (amazingly!) in the short few lines below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># create tokens from tweets</span>
+</span></span><span style="display:flex;"><span>tk <span style="color:#f92672">=</span> Tokenizer(inputCol<span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;tweet_clean&#34;</span>, outputCol <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;tokens&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># create term frequencies for each of the tokens</span>
+</span></span><span style="display:flex;"><span>tf1 <span style="color:#f92672">=</span> HashingTF(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;tokens&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;rawFeatures&#34;</span>, numFeatures<span style="color:#f92672">=</span><span style="color:#ae81ff">1e5</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># create tf-idf for each of the tokens</span>
+</span></span><span style="display:flex;"><span>idf <span style="color:#f92672">=</span> IDF(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;rawFeatures&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;features&#34;</span>, minDocFreq<span style="color:#f92672">=</span><span style="color:#ae81ff">2.0</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># create basic logistic regression model</span>
+</span></span><span style="display:flex;"><span>lr <span style="color:#f92672">=</span> LogisticRegression(maxIter<span style="color:#f92672">=</span><span style="color:#ae81ff">20</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># create entire pipeline</span>
+</span></span><span style="display:flex;"><span>basic_pipeline <span style="color:#f92672">=</span> Pipeline(stages<span style="color:#f92672">=</span>[tk, tf1, idf, lr])
+</span></span></code></pre></div><p>The setting <code>numFeatures=1e5</code> means that our bag-of-words &ldquo;vocabulary&rdquo; contains 100,000 words (see above listed stackeroverflow comment for explanation of what this means). The filter <code>minDocFreq=2.0</code> requires that a word or token must appear a minimum of 2 documents to be counted as a feature (column).  <strong>This parameter can act as form a of regularization.  Setting this value to larger integers increases the regularization by reducing the number of words we consider.</strong> This helps to combat overfitting by eliminating words which occur very rarely so that they do not influence our model.</p>
+<p>Now we can execute the entire pipleine of tokenization, feature extraction (tf-idf) and train the model all with the following command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>model1         <span style="color:#f92672">=</span> basic_pipeline<span style="color:#f92672">.</span>fit(train)
+</span></span></code></pre></div><p>Once we have trained the pipeline model we can predict it&rsquo;s perfromance on the testing set using the <code>transform</code> method and the <code>evaluate</code> method of the evaluator object.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># predict on test set</span>
+</span></span><span style="display:flex;"><span>predictions1   <span style="color:#f92672">=</span> model1<span style="color:#f92672">.</span>transform(test)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># get the performance on the test set</span>
+</span></span><span style="display:flex;"><span>score1         <span style="color:#f92672">=</span> evaluator<span style="color:#f92672">.</span>evaluate(predictions1)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;AUC SCORE: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(score1))
+</span></span></code></pre></div><pre><code>AUC SCORE: 0.8851466578396061
+</code></pre>
+<p>We can also get the accuracy on the testing set. I couldn&rsquo;t really find any good documentation about how to do this without using the old MLlib (RDD based) library.  What made this process even more confusing is that I had to use <a href="https://spark.apache.org/docs/2.3.2/mllib-evaluation-metrics.html">MulticlassMetrics</a> class to evualate the binary outcome ( the <code>BinaryClassificationMetrics</code> class only had area under the curve (AUC) and for ROC curve and AUC for Precision-Recall curve).  The code snippet to get the accuracy on the testing set is:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>predictedAndLabels <span style="color:#f92672">=</span> predictions1<span style="color:#f92672">.</span>select([<span style="color:#e6db74">&#34;prediction&#34;</span>,<span style="color:#e6db74">&#34;label&#34;</span>])\
+</span></span><span style="display:flex;"><span>                                 <span style="color:#f92672">.</span>rdd<span style="color:#f92672">.</span>map(<span style="color:#66d9ef">lambda</span> r : (float(r[<span style="color:#ae81ff">0</span>]), float(r[<span style="color:#ae81ff">1</span>])))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark.mllib.evaluation <span style="color:#f92672">import</span> MulticlassMetrics
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>metrics <span style="color:#f92672">=</span> MulticlassMetrics(predictedAndLabels)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Test Set Accuracy: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(metrics<span style="color:#f92672">.</span>accuracy))
+</span></span></code></pre></div><pre><code>Test Set Accuracy: 0.8138070271539244
+</code></pre>
+<p>A score of 0.885 for the AUC of the ROC curve and 81% accuracy is pretty good for Twitter sentiment analyis, but let&rsquo;s see if we can make any improvements using more techniques from natural language processing.</p>
+<h3 id="removing-stop-words">
+  Removing Stop Words
+  <a class="heading-link" href="#removing-stop-words">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>One trick people use as a prepocessing step in NLP is to remove stop words, i.e. common words that do not add any additional information into the model.  Examples of stop words are: &lsquo;a&rsquo;, &rsquo;the&rsquo;, &lsquo;and&rsquo;, etc.  We will remove stops from our tokens by using the <a href="https://spark.apache.org/docs/2.3.2/ml-features.html#stopwordsremover">StopWordsRemover</a> class.  We import it below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark.ml.feature <span style="color:#f92672">import</span> StopWordsRemover
+</span></span></code></pre></div><p>Then instantiate a new StopWordsRemover object setting input column to be result of the tokenization procedure.  Notice that the input column name for the HashingTF object is the same as the output column name for the StopWordRemover:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sw  <span style="color:#f92672">=</span> StopWordsRemover(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;tokens&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;filtered&#34;</span>)
+</span></span><span style="display:flex;"><span>tf2 <span style="color:#f92672">=</span> HashingTF(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;filtered&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;rawFeatures&#34;</span>, numFeatures<span style="color:#f92672">=</span><span style="color:#ae81ff">1e5</span>)
+</span></span></code></pre></div><p>We can define our pipeline, train the new model and evaluate its performance on the testing set:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sw_pipleline  <span style="color:#f92672">=</span> Pipeline(stages<span style="color:#f92672">=</span>[tk, sw, tf2, idf, lr])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>model2        <span style="color:#f92672">=</span> stopwords_pipleline<span style="color:#f92672">.</span>fit(train)
+</span></span><span style="display:flex;"><span>predictions2  <span style="color:#f92672">=</span> model2<span style="color:#f92672">.</span>transform(test)
+</span></span><span style="display:flex;"><span>score2        <span style="color:#f92672">=</span> evaluator<span style="color:#f92672">.</span>evaluate(predictions2)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;AUC SCORE: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(score2))
+</span></span></code></pre></div><pre><code>AUC SCORE: 0.8725249381777652
+</code></pre>
+<p>Notice how easy it was to add a new stage to our ML Pipeline model!</p>
+<p>We can see that the AUC for our ROC went down by a little over 1.5%.  At first I was pretty puzzled by this and spent a lot of time trying to fix it only to learn that blindly removing stop words isn&rsquo;t always the best practice for sentiment analysis, especially when it comes to <a href="http://www.lrec-conf.org/proceedings/lrec2014/pdf/292_Paper.pdf">tweets</a>.  Since removing stopped words gave our model worse performanace, we won&rsquo;t use it going forward.  However, it&rsquo;s worthwhile to see examples of the words that were removed:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>predictions2<span style="color:#f92672">.</span>select([<span style="color:#e6db74">&#34;tweet_clean&#34;</span>,<span style="color:#e6db74">&#34;tokens&#34;</span>,<span style="color:#e6db74">&#34;filtered&#34;</span>])<span style="color:#f92672">.</span>show(<span style="color:#ae81ff">5</span>)
+</span></span></code></pre></div><pre><code>+--------------------+--------------------+--------------------+
+|         tweet_clean|              tokens|            filtered|
++--------------------+--------------------+--------------------+
+|a and yr old both...|[a, and, yr, old,...|[yr, old, girls, ...|
+|a baby bird fell ...|[a, baby, bird, f...|[baby, bird, fell...|
+|a baby llama was ...|[a, baby, llama, ...|[baby, llama, bor...|
+|a beautiful day t...|[a, beautiful, da...|[beautiful, day, ...|
+|a bicyclist was j...|[a, bicyclist, wa...|[bicyclist, hit, ...|
++--------------------+--------------------+--------------------+
+only showing top 5 rows
+</code></pre>
+<p>We can see that words like, &lsquo;a&rsquo;, &lsquo;and&rsquo;, &lsquo;was&rsquo;, and &lsquo;both&rsquo; were removed.  Removing stop words is more helpful for the case of <a href="http://michael-harmon.com/blog/NLP.html">document classification</a>, where often the class a document belongs to is determined by a few key words and removing stop words can help to understand what those key words are.</p>
+<h2 id="stemming-with-customer-tranformers">
+  Stemming With Customer Tranformers <a class="anchor" id="bullet5"></a>
+  <a class="heading-link" href="#stemming-with-customer-tranformers">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Another technique for preprocessing in NLP is stemming.  We will use the Natural Language Tool Kit (<a href="https://www.nltk.org/">NLTK</a> ) with the Porter Stemmer for stemming.  Stemming is the process of reducing words down to their root; for example from Wikipedia:</p>
+<p>&hellip;the Porter algorithm reduces, argue, argued, argues, arguing, and argus all get reduced to the stem argu</p>
+<p>Stemming is used as an approximate method for grouping words with a similar basic meaning together.  For NLP and the bag-of-words model this reduces the dimension of our feature space since variations in words that would normally be counted seperately are reduced to one word that is counted collectively.</p>
+<p>For some reason gcloud kept installing the wrong version of NLTK and inorder to get the correct version on both the driver and the workers I had to install within the notebook.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">%</span>sh
+</span></span><span style="display:flex;"><span>pip install <span style="color:#f92672">-</span>U nltk<span style="color:#f92672">==</span><span style="color:#ae81ff">3.4</span>
+</span></span></code></pre></div><pre><code>Collecting nltk==3.4
+  Downloading https://files.pythonhosted.org/packages/6f/ed/9c755d357d33bc1931e157f537721efb5b88d2c583fe593cc09603076cc3/nltk-3.4.zip (1.4MB)
+Requirement already satisfied, skipping upgrade: six in /usr/local/envs/py3env/lib/python3.5/site-packages (from nltk==3.4) (1.10.0)
+Collecting singledispatch (from nltk==3.4)
+  Downloading https://files.pythonhosted.org/packages/c5/10/369f50bcd4621b263927b0a1519987a04383d4a98fb10438042ad410cf88/singledispatch-3.4.0.3-py2.py3-none-any.whl
+Building wheels for collected packages: nltk
+  Running setup.py bdist_wheel for nltk: started
+  Running setup.py bdist_wheel for nltk: finished with status 'done'
+  Stored in directory: /root/.cache/pip/wheels/4b/c8/24/b2343664bcceb7147efeb21c0b23703a05b23fcfeaceaa2a1e
+Successfully built nltk
+Installing collected packages: singledispatch, nltk
+  Found existing installation: nltk 3.2.1
+    Uninstalling nltk-3.2.1:
+      Successfully uninstalled nltk-3.2.1
+Successfully installed nltk-3.4 singledispatch-3.4.0.3
+</code></pre>
+<p>Now we can import the NLTK to and check its version is correct.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> nltk
+</span></span><span style="display:flex;"><span>print(nltk<span style="color:#f92672">.</span>__version__)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> nltk.stem.porter <span style="color:#f92672">import</span> PorterStemmer
+</span></span></code></pre></div><pre><code>3.4
+</code></pre>
+<p>Before we dive into using NLTK with PySpark let&rsquo;s go over an example how stemming with the NLTK works on a simple sentence.  First we instantiate the PorterStemmer object and tokenize a sentence:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>stemmer <span style="color:#f92672">=</span> PorterStemmer()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>tokens  <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;my feelings having studied all day&#34;</span><span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#34; &#34;</span>)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;raw tokens: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(tokens))
+</span></span></code></pre></div><pre><code>raw tokens: ['my', 'feelings', 'having', 'studied', 'all', 'day']
+</code></pre>
+<p>Then we can apply the stemmer&rsquo;s stem function to each token in the array:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>tokens_stemmed <span style="color:#f92672">=</span> [stemmer<span style="color:#f92672">.</span>stem(token) <span style="color:#66d9ef">for</span> token <span style="color:#f92672">in</span> tokens]
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;clean tokens: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(tokens_stemmed))
+</span></span></code></pre></div><pre><code>clean tokens: ['my', 'feel', 'have', 'studi', 'all', 'day']
+</code></pre>
+<p>We can see that the word &lsquo;feelings&rsquo; has been reduced to &lsquo;feel&rsquo;, &lsquo;having&rsquo; to &lsquo;has&rsquo; and &lsquo;studied&rsquo; to &lsquo;studi&rsquo;.  I should note that stemming, like stop word removal, might not always be helpful in deciding the sentiment since the way a word is used might effect the sentiment.</p>
+<p>Inorder to use the Porter stemmer within a ML Pipeline we must create a custom <a href="https://spark.apache.org/docs/latest/ml-pipeline.html#transformers">Transformer</a>.  The Transformer class will allow us to apply non-Spark functions and transformations as stages within our ML Pipeline.  We create a customer <code>PortersStemming</code> class which extends the PySpark&rsquo;s Transformer class, HasInputCol class and HasOutputCol class; see <a href="https://github.com/apache/spark/blob/master/python/pyspark/ml/param/shared.py">here</a> for these class definitions.  This was also the first time I have used <a href="https://www.programiz.com/python-programming/multiple-inheritance">multiple inheritence</a> in Python which is pretty cool!</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark <span style="color:#f92672">import</span> keyword_only
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> pyspark.sql.functions <span style="color:#66d9ef">as</span> F
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark.sql <span style="color:#f92672">import</span> DataFrame
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark.sql.types <span style="color:#f92672">import</span> ArrayType, StringType
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark.ml <span style="color:#f92672">import</span> Transformer
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark.ml.param.shared <span style="color:#f92672">import</span> HasInputCol, HasOutputCol, Param
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">PorterStemming</span>(Transformer, HasInputCol, HasOutputCol):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    PosterStemming class using the NLTK Porter Stemmer
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    This comes from https://stackoverflow.com/questions/32331848/create-a-custom-transformer-in-pyspark-ml
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Adapted to work with the Porter Stemmer from NLTK.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@keyword_only</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, 
+</span></span><span style="display:flex;"><span>                 inputCol  : str <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>, 
+</span></span><span style="display:flex;"><span>                 outputCol : str <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>, 
+</span></span><span style="display:flex;"><span>                 min_size  : int <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>):
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        Constructor takes in the input column name, output column name,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        plus the minimum legnth of a token (min_size)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># call Transformer classes constructor since were extending it.</span>
+</span></span><span style="display:flex;"><span>        super(Transformer, self)<span style="color:#f92672">.</span><span style="color:#a6e22e">__init__</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># set Parameter objects minimum token size</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>min_size <span style="color:#f92672">=</span> Param(self, <span style="color:#e6db74">&#34;min_size&#34;</span>, <span style="color:#e6db74">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>_setDefault(min_size<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># set the input keywork arguments</span>
+</span></span><span style="display:flex;"><span>        kwargs <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>_input_kwargs
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>setParams(<span style="color:#f92672">**</span>kwargs)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># initialize Stemmer object</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>stemmer  <span style="color:#f92672">=</span> PorterStemmer()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@keyword_only</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">setParams</span>(self, 
+</span></span><span style="display:flex;"><span>                  inputCol  : str <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>, 
+</span></span><span style="display:flex;"><span>                  outputCol : str <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>, 
+</span></span><span style="display:flex;"><span>                  min_size  : int <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span>      ) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        Function to set the keyword arguemnts
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        kwargs <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>_input_kwargs
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>_set(<span style="color:#f92672">**</span>kwargs)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_stem_func</span>(self, words  : list) <span style="color:#f92672">-&gt;</span> list:
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        Stemmer function call that performs stemming on a
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        list of tokens in words and returns a list of tokens
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        that have meet the minimum length requiremnt.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># We need a way to get min_size and cannot access it </span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># with self.min_size</span>
+</span></span><span style="display:flex;"><span>        min_size       <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>getMinSize()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># stem that actual tokens by applying </span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># self.stemmer.stem function to each token in </span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># the words list</span>
+</span></span><span style="display:flex;"><span>        stemmed_words  <span style="color:#f92672">=</span> map(self<span style="color:#f92672">.</span>stemmer<span style="color:#f92672">.</span>stem, words)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># now create the new list of tokens from</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># stemmed_words by filtering out those</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># that are not of legnth &gt; min_size</span>
+</span></span><span style="display:flex;"><span>        filtered_words <span style="color:#f92672">=</span> filter(<span style="color:#66d9ef">lambda</span> x: len(x) <span style="color:#f92672">&gt;</span> min_size, stemmed_words)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> list(filtered_words)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_transform</span>(self, df: DataFrame) <span style="color:#f92672">-&gt;</span> DataFrame:
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        Transform function is the method that is called in the 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        MLPipleline.  We have to override this function for our own use
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        and have it call the _stem_func.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        Notice how it takes in a type DataFrame and returns type Dataframe
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># Get the names of the input and output columns to use</span>
+</span></span><span style="display:flex;"><span>        out_col       <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>getOutputCol()
+</span></span><span style="display:flex;"><span>        in_col        <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>getInputCol()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># create the stemming function UDF by wrapping the stemmer </span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># method function</span>
+</span></span><span style="display:flex;"><span>        stem_func_udf <span style="color:#f92672">=</span> F<span style="color:#f92672">.</span>udf(self<span style="color:#f92672">.</span>_stem_func, ArrayType(StringType()))
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># now apply that UDF to the column in the dataframe to return</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># a new column that has the same list of words after being stemmed</span>
+</span></span><span style="display:flex;"><span>        df2           <span style="color:#f92672">=</span> df<span style="color:#f92672">.</span>withColumn(out_col, stem_func_udf(df[in_col]))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> df2
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">setMinSize</span>(self,value):
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        This method sets the minimum size value
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        for the _paramMap dictionary.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>_paramMap[self<span style="color:#f92672">.</span>min_size] <span style="color:#f92672">=</span> value
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> self
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">getMinSize</span>(self) <span style="color:#f92672">-&gt;</span> int:
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        This method uses the parent classes (Transformer)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        .getOrDefault method to get the minimum
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        size of a token.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>getOrDefault(self<span style="color:#f92672">.</span>min_size)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        
+</span></span></code></pre></div><p>After looking at the PySpark <a href="https://github.com/apache/spark/blob/master/python/pyspark/ml/base.py">source code</a> I learned that the Tranformer class is an <a href="https://docs.python.org/3/glossary.html#term-abstract-base-class">abstract base class</a> that specifically requires users to override the <code>_transform</code> method. After a lot of trial and error I found that the key steps to creating a custom transformer are:</p>
+<ul>
+<li>
+<p>Creating a <code>Param</code> object (see <a href="https://github.com/apache/spark/blob/master/python/pyspark/ml/param/__init__.py">here</a> for class definition) for each paramster in the constructor that will hold the user defined parameter names, values and default values.</p>
+</li>
+<li>
+<p>Create the <code>_input_kwargs</code> member variable and set it.</p>
+</li>
+<li>
+<p>Write a new defintion for the <code>_transform</code> method that applies a customer transformation to the <code>inputCol</code> of the dataframe and returns the same dataframe with a new column named <code>outputCol</code> that is the result of the transformation defined in this code block.</p>
+</li>
+</ul>
+<p>I was also was curious about the <code>keyword_only</code> decorator and after <a href="http://spark.apache.org/docs/2.2.0/api/python/_modules/pyspark.html">digging deeper</a> found it is &ldquo;a decorator that forces keyword arguments in the wrapped method and saves actual input keyword arguments in <code>_input_kwargs</code>.&rdquo;</p>
+<h3 id="stemming-with-the-nltks-porterstemmer">
+  Stemming with the NLTK&rsquo;s PorterStemmer
+  <a class="heading-link" href="#stemming-with-the-nltks-porterstemmer">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Let&rsquo;s apply stemming to our problem without removing stop words to see if it improves the performance of our model.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>stem2 <span style="color:#f92672">=</span> PorterStemming(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;tokens&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;stemmed&#34;</span>)
+</span></span></code></pre></div><p>We&rsquo;ll do things a little differently this time for the sake of runtime performance.  Stemming is an expensive operation because it requires the use of a custom transformer.  Anytime we introduce custom functions like UDFs or special Python functions outside of the SparkSQL functions we pay a runtime <a href="https://medium.com/teads-engineering/spark-performance-tuning-from-the-trenches-7cbde521cf60">penalty</a>.  Therefore we want to be performing operations with custom functions as little as possible.</p>
+<p>Since we will use stemming on multiple different models we will create new training and testing datasets that are already pre-stemmed.  This avoids repeatedly having to tokenize and stem our datasets each time we train and test one of our models.  We define a pipeline for creating the new datatset below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>stem_pipeline <span style="color:#f92672">=</span> Pipeline(stages<span style="color:#f92672">=</span> [tk, stem2])<span style="color:#f92672">.</span>fit(train)
+</span></span></code></pre></div><p>Then we transform the training and testing set and cache them so they are in memory and can be used without having to recreate them,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>train_stem <span style="color:#f92672">=</span> stem_pipeline<span style="color:#f92672">.</span>transform(train)\
+</span></span><span style="display:flex;"><span>                          <span style="color:#f92672">.</span>where(F<span style="color:#f92672">.</span>size(F<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;stemmed&#34;</span>)) <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>test_stem  <span style="color:#f92672">=</span> stem_pipeline<span style="color:#f92672">.</span>transform(test)\
+</span></span><span style="display:flex;"><span>                          <span style="color:#f92672">.</span>where(F<span style="color:#f92672">.</span>size(F<span style="color:#f92672">.</span>col(<span style="color:#e6db74">&#34;stemmed&#34;</span>)) <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># cache them to avoid running stemming </span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># each iteration in the grid search</span>
+</span></span><span style="display:flex;"><span>train_stem<span style="color:#f92672">.</span>cache()
+</span></span><span style="display:flex;"><span>test_stem<span style="color:#f92672">.</span>cache()
+</span></span></code></pre></div><pre><code>DataFrame[tweet_clean: string, label: int, tokens: array&lt;string&gt;, stemmed: array&lt;string&gt;]
+</code></pre>
+<p>Let&rsquo;s see some of the results of stemming the tweets:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>test_stem<span style="color:#f92672">.</span>show(<span style="color:#ae81ff">5</span>)
+</span></span></code></pre></div><pre><code>+--------------------+-----+--------------------+--------------------+
+|         tweet_clean|label|              tokens|             stemmed|
++--------------------+-----+--------------------+--------------------+
+|a and yr old both...|    1|[a, and, yr, old,...|[a, and, yr, old,...|
+|a baby bird fell ...|    0|[a, baby, bird, f...|[a, babi, bird, f...|
+|a baby llama was ...|    0|[a, baby, llama, ...|[a, babi, llama, ...|
+|a beautiful day t...|    1|[a, beautiful, da...|[a, beauti, day, ...|
+|a bicyclist was j...|    0|[a, bicyclist, wa...|[a, bicyclist, wa...|
++--------------------+-----+--------------------+--------------------+
+only showing top 5 rows
+</code></pre>
+<p>We can see that the words &lsquo;baby&rsquo; and &lsquo;beautiful&rsquo; are reduced to &lsquo;babi&rsquo; and &lsquo;beauti&rsquo; respectively.</p>
+<p>Let&rsquo;s now build our second pipeline (using TF-IDF and logistic regression) based off the pre-stemmed training dataset and test it on the pre-stemmed testing set.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># create the new pipline</span>
+</span></span><span style="display:flex;"><span>idf                 <span style="color:#f92672">=</span> IDF(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;rawFeatures&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;features&#34;</span>, minDocFreq<span style="color:#f92672">=</span><span style="color:#ae81ff">2.0</span>)
+</span></span><span style="display:flex;"><span>lr                  <span style="color:#f92672">=</span> LogisticRegression(maxIter<span style="color:#f92672">=</span><span style="color:#ae81ff">20</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>stemming_pipeline2  <span style="color:#f92672">=</span> Pipeline(stages<span style="color:#f92672">=</span> [tf3, idf, lr])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># fit and get predictions</span>
+</span></span><span style="display:flex;"><span>model4         <span style="color:#f92672">=</span> stemming_pipeline2<span style="color:#f92672">.</span>fit(train_stem)
+</span></span><span style="display:flex;"><span>predictions4   <span style="color:#f92672">=</span> model4<span style="color:#f92672">.</span>transform(test_stem)
+</span></span><span style="display:flex;"><span>score4         <span style="color:#f92672">=</span> evaluator<span style="color:#f92672">.</span>evaluate(predictions4)
+</span></span></code></pre></div><p>The AUC of the new model on the test set is,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;AUC SCORE: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(score4))
+</span></span></code></pre></div><pre><code>AUC SCORE: 0.88040135203641
+</code></pre>
+<p>We can see that adding stemming degrades the AUC slightly compared to the baseline model, but <em>we&rsquo;ll keep using stemming in our future models since the jury&rsquo;s not out on whether it will improve future models</em>.  One thing I will mention here is that I did try using stop word removal and stemming together, but this resulted in worse performance than just stop word removal alone.</p>
+<p>As I mentioned previously, stemming using a customer Transformer is expensive.  One way I could see that it is an expensive operation is by going to <a href="https://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-site/YARN.html">YARN</a> (on our cluster this is the address: http://mikescluster-m:8088) shown below:</p>
+<img src="https://github.com/mdh266/TwitterSentimentAnalysis/blob/master/images/YARN.png?raw=1">
+<p>Then clicking on ApplicationMaster in the bottom right hand corner.  This leads you to the <a href="https://jaceklaskowski.gitbooks.io/mastering-apache-spark/spark-webui.html">Spark Web UI </a>page:</p>
+<img src="https://github.com/mdh266/TwitterSentimentAnalysis/blob/master/images/SparkUI.png?raw=1">
+<p>Clicking on stages we can see the time and memory it takes for each stage in our pipelines (or more generally jobs). I used the Spark Web UI constantly to track the progress of my jobs and noticed that stemming caused the TF-IDF stages to take much longer than they did without it.</p>
+<h2 id="n-grams-and-parameter-tunning-with-cross-validation">
+  N-Grams And Parameter Tunning With Cross Validation <a class="anchor" id="bullet6"></a>
+  <a class="heading-link" href="#n-grams-and-parameter-tunning-with-cross-validation">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>The last preprocessing technique we&rsquo;ll try to improve the predictive power of our model is to use N-grams.  This technique is used to capture combinations of words that effect the sentiment of the document.  For instance the sentence,</p>
+<pre><code>the food is not bad
+</code></pre>
+<p>is naturally assumed to have a positive sentiment, or atleast non-negative sentiment. After tokenizing the sentence we would have the list,</p>
+<pre><code>[&quot;the&quot;, &quot;food&quot;, &quot;is&quot;, &quot;not&quot;, &quot;bad&quot;]
+</code></pre>
+<p>Using the normal bag-of-words with TF-IDF, our model would see the word &lsquo;bad&rsquo; and most likely assume the that the sentence has negative sentiment.  This is because the presence of the token &lsquo;bad&rsquo; is usually associated with a negative sentiment.  What our model fails to ascertain is that the presence of the word &rsquo;not&rsquo; before &lsquo;bad&rsquo; leads to the combination &rsquo;not bad&rsquo; which normally coincides with a positive sentiment. In order to pick up these types of combinations of words we introduce n-grams.  Bigrams combine consecutive pairs of words in our bag-of-words model.  Using bigrams the previous example sentence would be,</p>
+<pre><code>[[&quot;the&quot;, &quot;food&quot;], [&quot;food, &quot;is&quot;], [&quot;is&quot;, &quot;not&quot;], [&quot;not,&quot;bad&quot;]]
+</code></pre>
+<p>Using bigrams our model will see be the combination <code>[&quot;not&quot;, &quot;bad&quot;]</code> and be able to ascertain that sentiment of the sentence is postive. Bigrams use consecutive pairs of words to form tokens for our model, N-grams generalize this process to combine N consecutive words to form tokens for our bag-of-words model.</p>
+<p>Another thing I should point out is that <strong>while using bigrams introduces consecutive pairs of words in documents as tokens in the bag-of-words model the order of those bigrams in the document is not taken into consideration. Each tweet is reduced to a set of bigrams and the bag-of-words model treats those bigrams similar to categorial features/one-hot encoding.</strong>  The difference with bag-of-words and one-hot encoding being that instead of the value in each column for a token being 0 or 1 based on its presence in the tweet, the value is 0-N with N being how many times the token appears in the tweet.</p>
+<h3 id="basic-model-with-bigrams">
+  Basic model with bigrams
+  <a class="heading-link" href="#basic-model-with-bigrams">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>We import the NGram class from the features module and use bigrams (<code>n=2</code>) for our model,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark.ml.feature <span style="color:#f92672">import</span> NGram
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>bigram <span style="color:#f92672">=</span> NGram(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;tokens&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;bigrams&#34;</span>, n<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>)
+</span></span></code></pre></div><p>Then we form a pipeline by first tokenizing the words in the sentence, forming bigrams, performing TF-IDF and then fitting the logistic regressionm model.  One thing to note is that introducing bigrams means that our bag-of-words model has features that are based on pairs of word instead of individual words.  Since the number of combinations of pairs of words is &ldquo;larger&rdquo; than the number of individual words we increase the number of features in our model to <code>200,000</code> instead of <code>100,000</code>.</p>
+<p>We define the new pipeline, train, test and evaluate the model:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>tf5   <span style="color:#f92672">=</span> HashingTF(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;bigrams&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;rawFeatures&#34;</span>, numFeatures<span style="color:#f92672">=</span><span style="color:#ae81ff">2e5</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>bigram_pipeline  <span style="color:#f92672">=</span> Pipeline(stages<span style="color:#f92672">=</span> [tk, bigram, tf5, idf, lr])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>model5           <span style="color:#f92672">=</span> bigram_pipeline<span style="color:#f92672">.</span>fit(train)
+</span></span><span style="display:flex;"><span>predictions5     <span style="color:#f92672">=</span> model5<span style="color:#f92672">.</span>transform(test)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>score5           <span style="color:#f92672">=</span> evaluator<span style="color:#f92672">.</span>evaluate(predictions5)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;AUC SCORE: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(score5))
+</span></span></code></pre></div><pre><code>AUC SCORE: 0.890927326083407
+</code></pre>
+<p>We can see that using bigrams provides an improvement to the basic model!</p>
+<h3 id="stemming-with-bigrams">
+  Stemming with bigrams
+  <a class="heading-link" href="#stemming-with-bigrams">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>While using stemming alone did not lead to an improvement over our baseline model, using stemming with bigrams might lead to an improvement.  My reason for believing this is that while bigrams improve the performance of our model, they also increases the dimension of our problem. By introducing stemming we would reduce the number of variations of the word pairs, (the variance in our data) and also the reduce the dimension of our feature space.</p>
+<p>We create our new pipeline on the pre-stemmed training and testing datasets as well as evaulate the model:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>bigram2 <span style="color:#f92672">=</span> NGram(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;stemmed&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;bigrams&#34;</span>, n<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>tf6     <span style="color:#f92672">=</span> HashingTF(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;bigrams&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;rawFeatures&#34;</span>, numFeatures<span style="color:#f92672">=</span><span style="color:#ae81ff">2e5</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>idf     <span style="color:#f92672">=</span> IDF(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;rawFeatures&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;features&#34;</span>, minDocFreq<span style="color:#f92672">=</span><span style="color:#ae81ff">2.0</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>lr      <span style="color:#f92672">=</span> LogisticRegression(maxIter<span style="color:#f92672">=</span><span style="color:#ae81ff">20</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>stem_bigram_pipeline  <span style="color:#f92672">=</span> Pipeline(stages<span style="color:#f92672">=</span> [bigram2, tf6, idf, lr])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>model6                <span style="color:#f92672">=</span> stem_bigram_pipeline<span style="color:#f92672">.</span>fit(train_stem)
+</span></span><span style="display:flex;"><span>predictions6          <span style="color:#f92672">=</span> model6<span style="color:#f92672">.</span>transform(test_stem)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>score6                <span style="color:#f92672">=</span> evaluator<span style="color:#f92672">.</span>evaluate(predictions6)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;AUC SCORE: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(score)) 
+</span></span></code></pre></div><pre><code>AUC SCORE: 0.8929975456358279
+</code></pre>
+<p>We can see that using bigrams and stemming leads to not only an improvement over the baseline model, but also the bigram model! My intuition was right! :)</p>
+<p>Let&rsquo;s take a look at examples of what each stage in the above pipeline did to the tweet:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>predictions6<span style="color:#f92672">.</span>select([<span style="color:#e6db74">&#34;tweet_clean&#34;</span>,<span style="color:#e6db74">&#34;tokens&#34;</span>,<span style="color:#e6db74">&#34;stemmed&#34;</span>,<span style="color:#e6db74">&#34;bigrams&#34;</span>])<span style="color:#f92672">.</span>show(<span style="color:#ae81ff">5</span>)
+</span></span></code></pre></div><pre><code>+--------------------+--------------------+--------------------+--------------------+
+|         tweet_clean|              tokens|             stemmed|             bigrams|
++--------------------+--------------------+--------------------+--------------------+
+|a and yr old both...|[a, and, yr, old,...|[a, and, yr, old,...|[a and, and yr, y...|
+|a baby bird fell ...|[a, baby, bird, f...|[a, babi, bird, f...|[a babi, babi bir...|
+|a baby llama was ...|[a, baby, llama, ...|[a, babi, llama, ...|[a babi, babi lla...|
+|a beautiful day t...|[a, beautiful, da...|[a, beauti, day, ...|[a beauti, beauti...|
+|a bicyclist was j...|[a, bicyclist, wa...|[a, bicyclist, wa...|[a bicyclist, bic...|
++--------------------+--------------------+--------------------+--------------------+
+only showing top 5 rows
+</code></pre>
+<h3 id="parameter-tunning-using-a-grid-search">
+  Parameter Tunning Using A Grid Search
+  <a class="heading-link" href="#parameter-tunning-using-a-grid-search">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Now let&rsquo;s try to improve the performance of the stemming-bigram model by tunning the hyperparameters in some of the stages in the pipeline.  Tunning the hyperparameters in our model involves using a grid search which evaluates all hyperparameters we want to consider and returns the model with the best results.  In order to get the best results from our model for out-of-sample performance we perform <a href="https://en.wikipedia.org/wiki/Cross-validation_(statistics)">cross-validation</a> within each of the parameter values in the grid search.  Using cross validation within the grid search reduces the chances of overfitting our model and will hopefully give us the best performance on the test set.</p>
+<p>In order to perform a grid search with cross validation we import the classes,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> pyspark.ml.tuning <span style="color:#f92672">import</span> CrossValidator, ParamGridBuilder
+</span></span></code></pre></div><p>Then define the model pipeline,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>bigram2 <span style="color:#f92672">=</span> NGram(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;stemmed&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;bigrams&#34;</span>, n<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>tf6     <span style="color:#f92672">=</span> HashingTF(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;bigrams&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;rawFeatures&#34;</span>, numFeatures<span style="color:#f92672">=</span><span style="color:#ae81ff">2e5</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>idf     <span style="color:#f92672">=</span> IDF(inputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;rawFeatures&#34;</span>, outputCol<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;features&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>lr      <span style="color:#f92672">=</span> LogisticRegression(maxIter<span style="color:#f92672">=</span><span style="color:#ae81ff">20</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>stem_bigram_pipeline  <span style="color:#f92672">=</span> Pipeline(stages<span style="color:#f92672">=</span> [bigram2, tf6, idf, lr])
+</span></span></code></pre></div><p>Next we declare the &lsquo;hyperparamter grid&rsquo; we want to search over using the <code>ParamGridBuilder</code> class,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>paramGrid <span style="color:#f92672">=</span> ParamGridBuilder() \
+</span></span><span style="display:flex;"><span>                        <span style="color:#f92672">.</span>addGrid(idf<span style="color:#f92672">.</span>minDocFreq, [<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">5</span>]) \
+</span></span><span style="display:flex;"><span>                        <span style="color:#f92672">.</span>addGrid(lr<span style="color:#f92672">.</span>regParam, [<span style="color:#ae81ff">0.0</span>, <span style="color:#ae81ff">0.1</span>]) \
+</span></span><span style="display:flex;"><span>                        <span style="color:#f92672">.</span>build()
+</span></span></code></pre></div><p>This is a small grid because the training time on tiny 2-node Hadoop cluster is somewhat long. Again, the point of this blogpost is not to get the best performance possibles, but rather to show how the pieces of the SparkML library fit together.  I will remark that these hyperparameter choices just seeing what level or regularization we want to apply in feature generation stage (<code>idf.minDocFreq</code>) and model fitting stage (<code>lr.regParam</code>) of our ML Pipeline.</p>
+<p>Now lets&rsquo;s define the grid search with cross validation using the <code>CrossValidator</code> class,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>crossval <span style="color:#f92672">=</span> CrossValidator(estimator          <span style="color:#f92672">=</span> stem_bigram_pipeline,
+</span></span><span style="display:flex;"><span>                          estimatorParamMaps <span style="color:#f92672">=</span> paramGrid,
+</span></span><span style="display:flex;"><span>                          evaluator          <span style="color:#f92672">=</span> BinaryClassificationEvaluator(),
+</span></span><span style="display:flex;"><span>                          numFolds           <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>)
+</span></span></code></pre></div><p>Notice for that we need</p>
+<ul>
+<li>the Spark ML Pipeline</li>
+<li>the parameter grid values</li>
+<li>the metric used to evulate the performance of the models</li>
+<li>the size of the fold&rsquo;s (k) in cross validation</li>
+</ul>
+<p>While values of <code>k=5</code> or <code>k=10</code> are most often used in cross validation we have large sample size in our training set and the time it takes to train on the cluster is long so I chose a smaller value of 3.  We could also have used the <code>TrainValidationSplit</code> class which only evaluates each parameter choice once instead of multiple times over each of the <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span>
+ folds in <code>CrossValidator</code>.  This estimator is not as expensive as cross validation,
+but can produce less reliable results when dataset isn&rsquo;t large enough.  See the <a href="https://spark.apache.org/docs/latest/ml-tuning.html#train-validation-split">documenation</a> for more infromation.</p>
+<p>Now we can perform the grid search!</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>model    <span style="color:#f92672">=</span> crossval<span style="color:#f92672">.</span>fit(train_stem)
+</span></span></code></pre></div><p>Then make predictions on testing set to get the model performance,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>predictions   <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>transform(test_stem)
+</span></span><span style="display:flex;"><span>score         <span style="color:#f92672">=</span> evaluator<span style="color:#f92672">.</span>evaluate(predictions)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;AUC SCORE: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(score))
+</span></span></code></pre></div><pre><code>AUC SCORE: 0.8914174745931814
+</code></pre>
+<p>Notice that while this result is better than baseline model, it is not as good as the stemmed-bigram model we first came up with.  We could ostensibly try more parameter values and larger <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span>
+ values to get a better score, but the performance of this model is good enough.</p>
+<p>Next let&rsquo;s get the accuracy of the model on the testing set.  We do this by first getting the best model from the grid search,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>bestModel <span style="color:#f92672">=</span> model<span style="color:#f92672">.</span>bestModel
+</span></span></code></pre></div><p>Then we can get the accuracy just as we did with the baseline model,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>predictedAndLabels <span style="color:#f92672">=</span> predictions<span style="color:#f92672">.</span>select([<span style="color:#e6db74">&#34;prediction&#34;</span>,<span style="color:#e6db74">&#34;label&#34;</span>])\
+</span></span><span style="display:flex;"><span>                                <span style="color:#f92672">.</span>rdd<span style="color:#f92672">.</span>map(<span style="color:#66d9ef">lambda</span> r : (float(r[<span style="color:#ae81ff">0</span>]), float(r[<span style="color:#ae81ff">1</span>])))
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>metrics <span style="color:#f92672">=</span> MulticlassMetrics(predictedAndLabels)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Test Set Accuracy: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(metrics<span style="color:#f92672">.</span>accuracy))
+</span></span></code></pre></div><pre><code>Test Set Accuracy: 0.8153407934893184
+</code></pre>
+<p>81.5% accuracy with a AUC of 0.891 is pretty good for Twitter sentiment analysis!</p>
+<p>Let&rsquo;s now find out what the parameters from the gridsearch are that resulted in the best model.  We can see the various stages in the model pipeline by using the <code>.stages</code> command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>bestModel<span style="color:#f92672">.</span>stages
+</span></span></code></pre></div><pre><code>[NGram_40759d058add92d09ae5,
+ HashingTF_4a6e8ba9ed3f963b503d,
+ IDF_46d39c742a5e256dfe52,
+ LogisticRegression_452b8fd5858100e48a64]
+</code></pre>
+<p>Then within each stage we can get the hyperparameter value by passing the name to the <code>explainParam</code> method:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>bestModel<span style="color:#f92672">.</span>stages[<span style="color:#ae81ff">2</span>]<span style="color:#f92672">.</span>explainParam(<span style="color:#e6db74">&#39;minDocFreq&#39;</span>)
+</span></span></code></pre></div><pre><code>'minDocFreq: minimum number of documents in which a term should appear for filtering (&gt;= 0) (default: 0, current: 5)'
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>bestModel<span style="color:#f92672">.</span>stages[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]<span style="color:#f92672">.</span>explainParam(<span style="color:#e6db74">&#39;regParam&#39;</span>)
+</span></span></code></pre></div><pre><code>'regParam: regularization parameter (&gt;= 0) (default: 0.0, current: 0.1)'
+</code></pre>
+<p>We can see that the best model came from a result of having <code>minDocFreq=5</code> and <code>regParam=0.1</code> in the IDF and Logistic Regression stage of our pipeline respectively.</p>
+<p>The last thing we&rsquo;ll do is get an idea of the ROC curve for our best model.  I could only do this for the training set by getting the logistic regression stages&rsquo; summary:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>summary <span style="color:#f92672">=</span> bestModel<span style="color:#f92672">.</span>stages[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]<span style="color:#f92672">.</span>summary
+</span></span></code></pre></div><p>Then getting the True Postive Rate and False Positive Rate below and plotting them against one another:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> matplotlib.pyplot <span style="color:#66d9ef">as</span> plt
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>figure(figsize<span style="color:#f92672">=</span>(<span style="color:#ae81ff">6</span>,<span style="color:#ae81ff">6</span>))
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>plot([<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>], [<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>], <span style="color:#e6db74">&#39;r--&#39;</span>)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>plot(summary<span style="color:#f92672">.</span>roc<span style="color:#f92672">.</span>select(<span style="color:#e6db74">&#39;FPR&#39;</span>)<span style="color:#f92672">.</span>collect(),
+</span></span><span style="display:flex;"><span>         summary<span style="color:#f92672">.</span>roc<span style="color:#f92672">.</span>select(<span style="color:#e6db74">&#39;TPR&#39;</span>)<span style="color:#f92672">.</span>collect())
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>xlabel(<span style="color:#e6db74">&#39;False Positive Rare&#39;</span>)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>ylabel(<span style="color:#e6db74">&#39;True Positive Rate&#39;</span>)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>title(<span style="color:#e6db74">&#34;ROC Curve&#34;</span>)
+</span></span><span style="display:flex;"><span>plt<span style="color:#f92672">.</span>show()
+</span></span></code></pre></div><pre><code>/usr/local/envs/py3env/lib/python3.5/site-packages/matplotlib/font_manager.py:1320: UserWarning: findfont: Font family ['sans-serif'] not found. Falling back to DejaVu Sans
+  (prop.get_family(), self.defaultFamily[fontext]))
+</code></pre>
+<p><img src="/sentimentanalysis2_files/sentimentanalysis2_97_1.png" alt="png"></p>
+<h2 id="conclusions">
+  Conclusions <a class="anchor" id="bullet7"></a>
+  <a class="heading-link" href="#conclusions">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>In this two part blog post we went over how to perform Extract-Transform-Load (ETL) for NLP using Spark and MongoDB and then how to build a machine learning model for sentiment analysis using SparkML on the Google Cloud Platform (GCP).  In this post we focused on creating a machine learning model using <a href="https://spark.apache.org/docs/latest/ml-pipeline.html">ML Pipelines</a> starting out with a basic model using TF-IDF and logistic regression. We added different stages to our ML Pipeline such as removing stop words, stemming and using bigrams to see which procedure would improve the predictive performance of our model. In the process we also went over how to write our own custom transformer in PySpark.  Once we settled on using stemming and bigrams in our model we performed a grid search using cross validation to obtain a model that has a AUC of 0.891 in the ROC curve and 81.5% accuracy which is not too shabby! One thing I didn&rsquo;t go over that is valuable is how to persist the ML Pipeline model to use again later without having to retrain, for that see <a href="https://spark.apache.org/docs/latest/ml-pipeline.html#ml-persistence-saving-and-loading-pipelines">here</a>.</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+      <h3 id="see-also-in-spark">
+        See also in Spark
+        <a class="heading-link" href="#see-also-in-spark">
+          <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+          <span class="sr-only">Link to heading</span>
+        </a>
+      </h3>
+      <nav>
+        <ul>
+        
+        
+          
+        
+          
+            <li>
+              <a href="/posts/sentimentanalysis1/">Sentiment Analysis 1:  ETL With PySpark and MongoDB</a>
+            </li>
+          
+        
+        </ul>
+      </nav>
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>
