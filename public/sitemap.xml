@@ -275,13 +275,13 @@
     <loc>http://localhost:1313/tags/vim/</loc>
     <lastmod>2017-10-05T00:00:00+00:00</lastmod>
   </url><url>
+    <loc>http://localhost:1313/series/airflow/</loc>
+    <lastmod>2017-08-20T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/tags/apache-airflow/</loc>
     <lastmod>2017-08-20T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/tags/apis/</loc>
-    <lastmod>2017-08-20T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/series/data-engineering/</loc>
     <lastmod>2017-08-20T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/posts/airflow/</loc>
@@ -289,6 +289,15 @@
   </url><url>
     <loc>http://localhost:1313/tags/postgres/</loc>
     <lastmod>2017-08-20T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/collaborative-filtering/</loc>
+    <lastmod>2017-04-19T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/series/recommender-systems/</loc>
+    <lastmod>2017-04-19T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/posts/recommender/</loc>
+    <lastmod>2017-04-19T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/posts/sqlwars/</loc>
     <lastmod>2017-04-13T00:00:00+00:00</lastmod>
