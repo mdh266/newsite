@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Git on Mike Harmon</title>
+    <link>http://localhost:1313/tags/git/</link>
+    <description>Recent content in Git on Mike Harmon</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Thu, 05 Oct 2017 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/git/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Linux Tools For Data Science</title>
+      <link>http://localhost:1313/posts/linuxtools/</link>
+      <pubDate>Thu, 05 Oct 2017 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/posts/linuxtools/</guid>
+      <description>&lt;h2 id=&#34;contents&#34;&gt;&#xA;  Contents&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#contents&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#Introduction&#34; &gt;1. Introduction&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#Basics&#34; &gt;2. Basic Commands&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;&lt;strong&gt;Topics:&lt;/strong&gt; ls (-a, -al), pwd, mv, cd, cp, ps, top, kill, htop, history, man&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#Files&#34; &gt;3. Files And Vim&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;&lt;strong&gt;Topics:&lt;/strong&gt; mkdir, rmdir, touch, rm (-rf), less, grep, vi, chmod&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#Network&#34; &gt;4. Working Over A Network&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;&lt;strong&gt;Topics:&lt;/strong&gt; ssh, tar, sftp, screen&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#Git&#34; &gt;5. A Word On Working With Git&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;#More&#34; &gt;6. Conclusion And More Resources&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

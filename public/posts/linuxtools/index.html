@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Linux Tools For Data Science · Mike Harmon
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Mike Harmon">
+<meta name="description" content="
+  Contents
+  
+    
+    Link to heading
+  
+
+
+1. Introduction
+2. Basic Commands
+
+Topics: ls (-a, -al), pwd, mv, cd, cp, ps, top, kill, htop, history, man
+
+3. Files And Vim
+
+Topics: mkdir, rmdir, touch, rm (-rf), less, grep, vi, chmod
+
+4. Working Over A Network
+
+Topics: ssh, tar, sftp, screen
+
+5. A Word On Working With Git
+6. Conclusion And More Resources">
+<meta name="keywords" content="blog,data,ai">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Linux Tools For Data Science">
+  <meta name="twitter:description" content="Contents Link to heading 1. Introduction
+2. Basic Commands
+Topics: ls (-a, -al), pwd, mv, cd, cp, ps, top, kill, htop, history, man 3. Files And Vim
+Topics: mkdir, rmdir, touch, rm (-rf), less, grep, vi, chmod 4. Working Over A Network
+Topics: ssh, tar, sftp, screen 5. A Word On Working With Git
+6. Conclusion And More Resources">
+
+<meta property="og:url" content="http://localhost:1313/posts/linuxtools/">
+  <meta property="og:site_name" content="Mike Harmon">
+  <meta property="og:title" content="Linux Tools For Data Science">
+  <meta property="og:description" content="Contents Link to heading 1. Introduction
+2. Basic Commands
+Topics: ls (-a, -al), pwd, mv, cd, cp, ps, top, kill, htop, history, man 3. Files And Vim
+Topics: mkdir, rmdir, touch, rm (-rf), less, grep, vi, chmod 4. Working Over A Network
+Topics: ssh, tar, sftp, screen 5. A Word On Working With Git
+6. Conclusion And More Resources">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2017-10-05T00:00:00+00:00">
+    <meta property="article:modified_time" content="2017-10-05T00:00:00+00:00">
+    <meta property="article:tag" content="Linux">
+    <meta property="article:tag" content="Terminal">
+    <meta property="article:tag" content="Shell Scripting">
+    <meta property="article:tag" content="Git">
+    <meta property="article:tag" content="Vim">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/linuxtools/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder.css" media="screen">
+  
+
+  
+  
+    
+    
+    <link rel="stylesheet" href="/scss/coder-dark.css" media="screen">
+  
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      Mike Harmon
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/projects/">Projects</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/contact/">Contact me</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/linuxtools/">
+              Linux Tools For Data Science
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2017-10-05T00:00:00Z">
+                October 5, 2017
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              14-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/mike-harmon/">Mike Harmon</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/linux/">Linux</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/terminal/">Terminal</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/shell-scripting/">Shell Scripting</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/git/">Git</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/vim/">Vim</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="contents">
+  Contents
+  <a class="heading-link" href="#contents">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><strong><a href="#Introduction" >1. Introduction</a></strong></p>
+<p><strong><a href="#Basics" >2. Basic Commands</a></strong></p>
+<ul>
+<li><strong>Topics:</strong> ls (-a, -al), pwd, mv, cd, cp, ps, top, kill, htop, history, man</li>
+</ul>
+<p><strong><a href="#Files" >3. Files And Vim</a></strong></p>
+<ul>
+<li><strong>Topics:</strong> mkdir, rmdir, touch, rm (-rf), less, grep, vi, chmod</li>
+</ul>
+<p><strong><a href="#Network" >4. Working Over A Network</a></strong></p>
+<ul>
+<li><strong>Topics:</strong> ssh, tar, sftp, screen</li>
+</ul>
+<p><strong><a href="#Git" >5. A Word On Working With Git</a></strong></p>
+<p><strong><a href="#More" >6. Conclusion And More Resources</a></strong></p>
+<h2 id="introduction">
+  Introduction <a class="anchor" id="Introduction"></a>
+  <a class="heading-link" href="#introduction">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Knowing Unix tools and Bash commands is not the sexiest part of data science and is often the most overlooked skills.  During my time as a Ph.D. student in Computational Science/Applied Mathematics I picked up a bunch of unix commands that were life savers and I&rsquo;m going to go over a few here. Learning these skills is definitely can seem a little bit boring, but I cannot emphasize how useful they are. Setting up my unix environment and linking various libraries was one of the most frustrating parts of graduate school, but I believe I am much more productive as a data scientist having learned these valuable lessons.</p>
+<p>Most of the commands and concepts I will be going over don&rsquo;t require any special libraries and when they do I&rsquo;ll provide links to them.  In fact most of the unix commands can be run from <a href="http://jupyter.org/">Jupyter Notebook</a>.  When they don&rsquo;t, I will run them from the <a href="https://en.wikipedia.org/wiki/Terminal_(macOS)">Terminal</a>, which is the MacOS version of the <a href="https://en.wikipedia.org/wiki/Unix_shell">Unix/Linux shell</a>.</p>
+<h2 id="basic-commands">
+  Basic Commands <a class="anchor" id="Basics"></a>
+  <a class="heading-link" href="#basic-commands">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>One of my favorite resources for learning various scientific computing concepts during graduate school was the <a href="http://www.math.colostate.edu/~bangerth/videos.html">deal.ii video lecture series</a>.  While these videos were made for scientific computing using their library, they still are extremely good resources for data scinentist beause the authors are incredibly thorough and amazing educators.  For videos on command basics see this <a href="http://www.math.colostate.edu/~bangerth/videos.676.2.9.html">link</a>.</p>
+<p>The first command to we&rsquo;ll go over in this post is,</p>
+<ul>
+<li><strong><code> ls </code></strong></li>
+</ul>
+<p><code>ls</code> lists all the files in the current <em>directory</em> (this is just a fancier way of saying &ldquo;folder&rdquo;):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls
+</span></span></code></pre></div><pre><code>[34mDirec1[m[m/           Unix_Tools.ipynb  file1
+</code></pre>
+<p>We see that there is a directory called <code>Direc1/</code> (the forward slash after the name gives away that it is a directory instead of a file) and two files: this notebook (<code>Unix_Tools.ipynb</code>) as well as a file called <code>file1</code>. We can view the &ldquo;hidden files&rdquo; (those with a . infront of them) using a <strong><code>/-a</code></strong> after the  <code>ls</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls <span style="color:#f92672">-</span>a
+</span></span></code></pre></div><pre><code>[34m.[m[m/                  [34m.ipynb_checkpoints[m[m/ Unix_Tools.ipynb
+[34m..[m[m/                 [34mDirec1[m[m/             file1
+</code></pre>
+<p>The </code>.ipynb_checkpoints/</code> is a &ldquo;hidden directory.&rdquo;  The <code>./</code> stands for the current directory (we could also use <code>ls .</code> instead of <code>ls</code>). And the <code>../</code> stands for the parent directory (the directory containing this directory).</p>
+<p>We can get more information on the files and directories using the <code>ls -al</code> command (this will give us information on all the files, if we wanted just non hidden ones we would use <code>ls -al</code>):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls <span style="color:#f92672">-</span>al
+</span></span></code></pre></div><pre><code>total 24
+drwxr-xr-x   6 Mike  staff   204 Jul 16 20:54 [34m.[m[m/
+drwxr-xr-x  14 Mike  staff   476 Jul 16 14:30 [34m..[m[m/
+drwxr-xr-x   3 Mike  staff   102 Jul 16 14:03 [34m.ipynb_checkpoints[m[m/
+drwxr-xr-x   4 Mike  staff   136 Jul 16 20:45 [34mDirec1[m[m/
+-rw-r--r--   1 Mike  staff  9944 Jul 16 20:52 Unix_Tools.ipynb
+-rw-r--r--   1 Mike  staff     0 Jul 16 20:54 file1
+</code></pre>
+<p>Each row now corresponds to a file or directory. It also gives us information on the permisions for the file/directory, number of links, owner name, group name, number of bytes in the file, abbreviated month, day-of-month file was last modified, hour file last modified, minute file last modified, and the pathname/file name.</p>
+<p>We can also view the path to the current directory using,</p>
+<ul>
+<li>** <code> pwd </code> **</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>pwd
+</span></span></code></pre></div><pre><code>u'/Users/Mike/Documents/DS_Projects/Unix_Tools'
+</code></pre>
+<p>You can see that in jupyter notebooks the path is returned as unicode. We can also use <code>ls</code> to view the contents of other directories than our current one.  We can see the contents of <code>Direc1/</code> by typing:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls Direc1
+</span></span></code></pre></div><p>Nothing happened here because that directory is emtpy.  We can move the file, <code>file1</code>, into <code>Direc1/</code> by using the command</p>
+<ul>
+<li>** <code>mv </code>**</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mv file1 Direc1<span style="color:#f92672">/</span>
+</span></span></code></pre></div><p>We can now see the contents of <code>Direc1</code> again to see that the file has moved there:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls Direc1<span style="color:#f92672">/</span>
+</span></span></code></pre></div><pre><code>file1
+</code></pre>
+<p>We can then go into to <code>Direc1</code> by using,</p>
+<ul>
+<li><strong><code>cd</code></strong></li>
+</ul>
+<p>which stands for &ldquo;change directory,&rdquo;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cd Direc1<span style="color:#f92672">/</span>
+</span></span></code></pre></div><pre><code>/Users/Mike/Documents/DS_Projects/Unix_Tools/Direc1
+</code></pre>
+<p>We can also use <code>mv</code> to <em>change the name of a file or directory</em>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mv file1 file2
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls 
+</span></span></code></pre></div><pre><code>file2
+</code></pre>
+<p>We can copy the contents of <code>file2</code> into <code>file1</code> using the command,</p>
+<ul>
+<li><strong><code>cp</code></strong></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cp file2 file1
+</span></span></code></pre></div><p>We can then go back to the the parent (original) directory using,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cd <span style="color:#f92672">..</span>
+</span></span></code></pre></div><pre><code>/Users/Mike/Documents/DS_Projects
+</code></pre>
+<p>We can see the process that are running in this directory,</p>
+<ul>
+<li><strong></code>ps</code></strong></li>
+</ul>
+<p>This one we will have to use in the terminal,</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/ps.png?raw=1">
+<p>The <code>PID</code> is the process id and is important because we can use it to help us <a href="https://en.wikipedia.org/wiki/Kill_(command)">kill</a> the <em>process</em> or <em>command</em> if we need to. The <code>Time</code> is how long the process has been running and <code>CMD</code> is the name of the <em>command</em> or process that is running.  The <code>TTY</code> isn&rsquo;t something that I have ever have had to use.</p>
+<p>We can also use the command,</p>
+<ul>
+<li><strong><code>top</code></strong></li>
+</ul>
+<p>to see all the processes running on our computer, the results from my terminal are below,</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/top.png?raw=1">
+<p>As you can see theres a lot more information that is provided by <code>top</code> including the ammount of memory each process is using.  One tool I liked using in graduate school is,</p>
+<ul>
+<li><strong><a href="http://hisham.hm/htop/">htop</a></strong></li>
+</ul>
+<p>which provides an interactive version of of <code>top</code>.  I liked it because when writing multi-threaded applications you can see directly how much work each core/thread is using (you can get a similar effect using  <code>top</code> by pressing <code>1</code> while <code>top</code> is running).  An example on my computer of the results of <code>htop</code> are shown below,</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/htop.png?raw=1">
+<p>The last two basic commands I&rsquo;ll mention are,</p>
+<ul>
+<li><strong><code>history</code></strong></li>
+</ul>
+<p>which shows use a list of all the commands you have used recently.  As well as,</p>
+<ul>
+<li><strong><a href="https://en.wikipedia.org/wiki/Man_page">man</a></strong></li>
+</ul>
+<p>which can be used to show the manual page of specific unix commands.</p>
+<p>Now that we have on the basics of unix commands we can move on to dealing with directories and files more concretely.</p>
+<h2 id="files-and-vim">
+  Files And Vim<a class="anchor" id="Files"></a>
+  <a class="heading-link" href="#files-and-vim">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<h3 id="working-with-files">
+  Working with Files:
+  <a class="heading-link" href="#working-with-files">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>We can create directories using the,</p>
+<ul>
+<li><strong><code>mkdir</code></strong></li>
+</ul>
+<p>command.  Say we want to create a new directory called <code>Direc2/</code>, we can do this by the command,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>mkdir Direc2<span style="color:#f92672">/</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls
+</span></span></code></pre></div><pre><code>[34mDirec1[m[m/           README.md         file1
+[34mDirec2[m[m/           Unix_Tools.ipynb  [34mimages[m[m/
+</code></pre>
+<p>We can remove empty directories by using,</p>
+<ul>
+<li><strong><code>rmdir</code></strong></li>
+</ul>
+<p>as we see below,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>rmdir Direc2<span style="color:#f92672">/</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls
+</span></span></code></pre></div><pre><code>[34mDirec1[m[m/           Unix_Tools.ipynb  [34mimages[m[m/
+README.md         file1
+</code></pre>
+<p>Next let&rsquo;s go into directory <code>Direc1/</code> and create a file.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cd Direc1<span style="color:#f92672">/</span>
+</span></span></code></pre></div><pre><code>/Users/Mike/Documents/DS_Projects/Unix_Tools/Direc1
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls <span style="color:#f92672">.</span>
+</span></span></code></pre></div><pre><code>file1  file2
+</code></pre>
+<p>We can make an empty by using the command,</p>
+<ul>
+<li><strong><code>touch</code></strong></li>
+</ul>
+<p>Let&rsquo;s make a file called <code>file3.txt</code> using the terminal,</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/touch.png?raw=1">
+<p>We can delete files by using the command,</p>
+<ul>
+<li><strong><code>rm</code></strong></li>
+</ul>
+<p>Let&rsquo;s delete <code>file3.txt</code> in the jupyter notebook,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls
+</span></span></code></pre></div><pre><code>file1      file2      file3.txt
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>rm file3<span style="color:#f92672">.</span>txt
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls
+</span></span></code></pre></div><pre><code>file1  file2
+</code></pre>
+<p>You can delete multiple files by just having a space between the files after <code>rm</code>. We can view the contents a file using the command,</p>
+<ul>
+<li><strong><code>less</code></strong></li>
+</ul>
+<p>Let&rsquo;s take a look at the contents of <code>file1</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>less file1
+</span></span></code></pre></div><p>The results of typing this into the terminal are seen below:</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/less.png?raw=1">
+<p>We can scroll through the lines of the file by pressing the <code>enter</code> button.  We can exit the file by typing <code>q</code>.</p>
+<p>Finally, let&rsquo;s show how to delete all a non-empty file.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cd <span style="color:#f92672">..</span>
+</span></span></code></pre></div><pre><code>/Users/Mike/Documents/DS_Projects/Unix_Tools
+</code></pre>
+<p>If we just try to delete <code>Direc1/</code>, we&rsquo;ll get a warning that it is not empty and it won&rsquo;t delete the directory,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>rmdir Direc1<span style="color:#f92672">/</span>
+</span></span></code></pre></div><pre><code>rmdir: Direc1/: Directory not empty
+</code></pre>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls
+</span></span></code></pre></div><pre><code>[34mDirec1[m[m/           Unix_Tools.ipynb  [34mimages[m[m/
+README.md         file1
+</code></pre>
+<p>To delete this directory and everything inside we can use the command,</p>
+<ul>
+<li><strong><code>rm -rf</code></strong></li>
+</ul>
+<p>The <code>-r</code>after the <code>rm</code> stands for recursive. We could also use <code>cp -r direc1 direc2</code> to copy all the contents of <code>direct1</code> to <code>direct2</code>.  The <code>-f</code> forces command to take place.  Let&rsquo;s try it:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>rm <span style="color:#f92672">-</span>rf Direc1<span style="color:#f92672">/</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ls
+</span></span></code></pre></div><pre><code>README.md         Unix_Tools.ipynb  file1             [34mimages[m[m/
+</code></pre>
+<p>It worked!  One last tool that for working with files in Unix that is extremely helpful is,</p>
+<p><a href="https://www.gnu.org/software/grep/manual/grep.html">grep</a></p>
+<p>grep is a utility that searches any given input files or directory, selecting lines that match one or more patterns using <a href="https://en.wikipedia.org/wiki/Regular_expression">regular expression</a>.</p>
+<p>An example migh tbe to <em>search and list all the files in a directory that end with the word <code>.json</code>.</em> You can see an example where I do this on my Destkop below:</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/grep.png?raw=1">
+<p>There are lot more useful things that grep can do and for more examples see this <a href="http://www.thegeekstuff.com/2009/03/15-practical-unix-grep-command-examples">article</a>.</p>
+<p>Now that we&rsquo;ve got that under our belt lets see how we can edit files.</p>
+<h2 id="vim">
+  Vim
+  <a class="heading-link" href="#vim">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Vim (or <a href="https://en.wikipedia.org/wiki/Vi">Vi</a> as it is sometimes known as) is a file editor that is on every Unix/Linux and Mac computer by default. There is a historical debate between developers who perfer Vi vs. Emacs vs. some newer editor.  I think it&rsquo;s is important to know the basics of Vim, solely because on you may have to make a few changes on a machine where there are no other editors to use except vi.</p>
+<p>If you type,</p>
+<ul>
+<li><strong><code>vi</code></strong></li>
+</ul>
+<p>in to the terminal you can see that we have new window with <code>no name</code> displayed at the bottom of the screen; this means that we are working with an unnammed file.  To quit vi without saving the file (that we&rsquo;re editing) we first press the <code>esp</code> key followed by a colon (:) and then use,</p>
+<ul>
+<li><strong><code>q!</code></strong></li>
+</ul>
+<p>We can create a file with a specific name and open it using vi using the following one line command,</p>
+<pre><code>vi hello.py
+</code></pre>
+<p>This creates a file called <code>hello.py</code> as seen below:</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/hello.py1.png?raw=1">
+<p>We can edit the file by typing,</p>
+<ul>
+<li><strong><code> i </code></strong></li>
+</ul>
+<p>for insert. We do this and write the following,</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/vi_saving.png?raw=1">
+<p>We can save the edits to the file using the command,</p>
+<ul>
+<li><strong><code> w </code></strong></li>
+</ul>
+<p>which stands for <em>write</em>. We save our edits by pressing the <code>esp</code> key, then <code>:w</code>and hit enter.  You can scroll up and down lines in the file using the up and down arrows and scroll left or right across the screen using the left and right arrows. We can then exit editing the fiel in vi by using,</p>
+<ul>
+<li><strong><code> q </code></strong></li>
+</ul>
+<p>by again first using the <code>esp</code> then <code>:q</code> (one could also save and quit by using <code>esp</code> then <code>:wq</code>).</p>
+<p>We then can excute the contents of this file using the command from the terminal,</p>
+<pre><code>python hello.py
+</code></pre>
+<p>We see the results below:</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/results.png?raw=1">
+<p>Now, let&rsquo;s go back and edit our <code>hello.py</code> file by adding the following on top:</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/hello.py2.png?raw=1">
+<p>And then exit and type <code>ls -al </code> into our terminal we will see the following for <code>hello.py</code>:</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/permissions1.png?raw=1">
+<p>You can see the <code>-rw-r&ndash;r&ndash;</code>.  The <code>r</code> stands that fact we have for <em>read</em> permissions to the file, the <code>w</code> stands for the fact we have <em>write</em> permissions to the file, and if we had a <code>x</code> that would mean we could <em>excute</em> the file. We can give ourselves the ability to execute the file using the command</p>
+<ul>
+<li><strong><code>chmod</code></strong></li>
+</ul>
+<p>We&rsquo;ll simply give anyone access to read, write and execute this file by typing,</p>
+<pre><code>chmod 777 hello.py
+</code></pre>
+<p>into the terminmal.  Now if you type <code>ls -al </code> you can see we have the ability to execute the file as well:</p>
+<p><img src="images/permissions2.png" alt=""></p>
+<p>I&rsquo;ve skipped a bunch of detiails, so for more information on chmod, see <a hre="https://en.wikipedia.org/wiki/Chmod">here</a>. We can npw execute the file by typing,</p>
+<pre><code>./hello.py
+</code></pre>
+<p>The results are shown below:</p>
+<p><img src="images/results2.png" alt=""></p>
+<p>Note that if we did not add the line</p>
+<pre><code>#!/usr/bin/env python
+</code></pre>
+<p>on to the top of the <code>hello.py</code> file it wouldn&rsquo;t be executable, to understand why this is so check out this <a href="https://stackoverflow.com/questions/2429511/why-do-people-write-usr-bin-env-python-on-the-first-line-of-a-python-script">post</a>.</p>
+<p>There are tons more commands you can use in Vi (for more see <a href="https://docs.oracle.com/cd/E19683-01/806-7612/6jgfmsvqn/index.html">here</a>), but if you just looking to quickly open and edit a file this is pretty much all you need to know.  One reason why you would use Vi over another editor is that you may be working over a network and not have the ability to use any advance editors like <a href="https://www.sublimetext.com/3">sublime</a> which require a graphical interface.  This point segways directly into the next topic which is working over a network.</p>
+<h2 id="working-over-a-network">
+  Working Over A Network <a class="anchor" id="Network"></a>
+  <a class="heading-link" href="#working-over-a-network">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>Working over a network to access a computer or cluster is something you will often have to do as a data scientist.  The basic way to &ldquo;log on&rdquo; to another unix computer is with using</p>
+<p>-<strong><code>ssh</code></strong></p>
+<p><a href="https://en.wikipedia.org/wiki/Secure_Shell">ssh</a> stands for secure shell and is a way to operate network services/computers securely over a non-secure network. The way you would access a computer with an address or ip address <code>computer_address</code> using your login name <code>login_name</code> is by the command,</p>
+<pre><code>ssh login_name@computer_address
+</code></pre>
+<p>you&rsquo;ll then be prompted for your password and after typing it in you can hit <code>enter</code>.  Once on the computer/cluster you can nativate through directories and edit files as we learned above.</p>
+<p>Now, how do you get files back to your own computer from the cluster or put files from your computer on the cluster? There are many ways to do this, the easiest involve three things:</p>
+<ol>
+<li>Creating a compressed archive</li>
+<li>Transferring the archive</li>
+<li>File extraction from the archive</li>
+</ol>
+<p>To create an archive, or a one file collection of directory/folder, as well as compress and extract (uncompress) the archive we will use the,</p>
+<ul>
+<li><strong><a href="http://linuxcommand.org/man_pages/tar1.html">tar</a></strong></li>
+</ul>
+<p>command. We can create compressed version of the directory with the command,</p>
+<pre><code>tar -cvzf compressed_file_name.tar.gz directory_name
+</code></pre>
+<p>To uncompress or extract the &ldquo;tar file&rdquo; we use the command,</p>
+<pre><code>tar -xvzf compressed_file_name.tar.gz
+</code></pre>
+<p>We compress and uncompress the file/directories before and after transfering to reduce the amount of data that must be sent as well as the time it takes to transfer it. In order to get files to and from a cluster or machine we use,</p>
+<ul>
+<li><strong><a href="https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol">sftp</a></strong></li>
+</ul>
+<p>which stands for <strong>secure file transfer protocol.</strong>  You can use <code>sftp</code> just like <code>ssh</code>,</p>
+<pre><code>sftp login_name@computer_address
+</code></pre>
+<p>we can then nativate the cluster or computer using the commands we disucussed above.  Once we get to the directory with the file we can say,</p>
+<pre><code>get file_name
+</code></pre>
+<p>If we want to get an entire directory we use the command,</p>
+<pre><code>get -r directory_name
+</code></pre>
+<p>The file(s) will be transfered to the our local machine in the directory we called <code>sftp</code> from. In order to transfer a file from your local macine to a remote machine we first <code>cd</code> to the directory that contains the file we wish to transfer and then call <code>sftp</code> from there.  We then write,</p>
+<pre><code>put file_name
+</code></pre>
+<p>If we want to push an entire directory we use the command,</p>
+<pre><code>put -r directory_name
+</code></pre>
+<p>We can quit of <code>sftp</code> by typing <code>exit</code> from the command line.</p>
+<p>One last tool that is useful while working over a netwtork is,</p>
+<ul>
+<li><strong><a href="https://www.gnu.org/software/screen/manual/screen.html">screen</a></strong></li>
+</ul>
+<p>Screen can be used to run programs (on a remote computer using ssh) even after you disconnected from the computer and closed the ssh session. You can also reattach to that sesssion at a later time and continue working from where you left off!  <a href="https://en.wikipedia.org/wiki/Nohup">Nohup</a> and <a href="https://en.wikipedia.org/wiki/Tmux">tmux</a> are also solutions for persisting programs if you are intested in other options. Screen can do much more than just persist a running program, but I won&rsquo;t cover that here.  Instead let&rsquo;s quickly go over how to create a session and then reattach that session.</p>
+<p>First we create a screen session by typing,</p>
+<pre><code>screen
+</code></pre>
+<p>and we then get a terminal pretty much like the one we had before.  We can then run our program of choice and detach the screen session by holding the <code>control button</code>, the <code>a</code> button and the <code>d</code> button.  After we doing this, we then  see in our terminal,</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/detached.png?raw=1">
+<p>which tells us that the session has been detached.  The program we ran will still be running on the background, even if we close our ssh connection.  We can reattach the screen session by typing,</p>
+<pre><code>screen -list 
+</code></pre>
+<p>and get a list of all the active screen sessions and their id numbers.  We find the session we want and re-attach to it using the command,</p>
+<pre><code>screen -r &lt;session_id&gt;
+</code></pre>
+<p>Finally, we can kill the screen session by simply typing,</p>
+<pre><code>exit
+</code></pre>
+<p>into the terminal.  You can see the example of me detaching and re-attaching to a screen session below:</p>
+<img src="https://github.com/mdh266/Unix_Tools/blob/master/images/detached-attached.png?raw=1">
+<h2 id="a-word-on-working-with-git">
+  A Word On Working With Git <a class="anchor" id="Git"></a>
+  <a class="heading-link" href="#a-word-on-working-with-git">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p>The last thing that you need to know is how to work with <a href="https://en.wikipedia.org/wiki/Git">git</a>.  You don&rsquo;t have to use git, but you should be working with some type of version/source control.  Version control is essential and has saved me countless times.  However, version control is useless unless you work with it properly. This means commiting often and having meaningful messages when you commit.  It also means when you move files around that you do it within the git framework, i.e.</p>
+<pre><code>git mv file_name directory_name
+</code></pre>
+<p>or</p>
+<pre><code>git rm file_name
+</code></pre>
+<p>instead of</p>
+<pre><code>mv file_name directory_name
+</code></pre>
+<p>and</p>
+<pre><code>rm file_name
+</code></pre>
+<p>In order to learn about git and <a href="https://github.com/">github</a> I used a lot of the videos on the deal.ii <a href="http://www.math.colostate.edu/~bangerth/videos.html">website</a>.</p>
+<h2 id="conclusion-and-more-resources">
+  Conclusion And More Resources <a class="anchor" id="More"></a>
+  <a class="heading-link" href="#conclusion-and-more-resources">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>In this blog post we went over some of the basics of using command line tools.  There are a lot other things out there to learn.  Some things that I didnt cover which are important are,</p>
+<ul>
+<li>
+<p><strong><a href="https://www.tutorialspoint.com/unix/unix-environment.htm">environment variables</a></strong></p>
+</li>
+<li>
+<p><strong><a href="https://en.wikibooks.org/wiki/Bash_Shell_Scripting"> Bash Scritpts</a></strong></p>
+</li>
+<li>
+<p><strong><a href="https://en.wikibooks.org/wiki/Bash_Shell_Scripting"> bashrc files</a></strong></p>
+</li>
+</ul>
+<p>You should definitely invest in using <a href="https://en.wikipedia.org/wiki/Package_manager">package managers</a> as they make your life much easier by installing and updating libraries and figure out dependencies between libraries. The package mananager I use is <a href="https://brew.sh/">homebrew</a> and for Python I use <a href="https://packaging.python.org/tutorials/installing-packages/">pip</a> and <a href="https://www.continuum.io/">Anaconda</a>.  That&rsquo;s it for now.</p>
+<p>Happy hacking!</p>
+
+      </div>
+
+
+      <footer>
+        
+
+<section class="see-also">
+  
+    
+    
+    
+  
+</section>
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2016 -
+    
+    2025
+     Mike Harmon 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+</html>
