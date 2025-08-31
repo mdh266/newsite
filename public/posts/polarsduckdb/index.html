@@ -284,7 +284,7 @@ Introduction Link to heading In the last few years there has been an explosion o
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas <span style="color:#66d9ef">as</span> pd
 </span></span><span style="display:flex;"><span>pd_df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>read_csv(<span style="color:#e6db74">&#34;https://data.cityofnewyork.us/resource/h9gi-nx95.csv&#34;</span>)
 </span></span><span style="display:flex;"><span>pd_df<span style="color:#f92672">.</span>groupby(<span style="color:#e6db74">&#34;borough&#34;</span>)<span style="color:#f92672">.</span>count()
-</span></span></code></pre></div><div>
+</span></span></code></pre></div><div style="overflow-x: auto;">
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -605,7 +605,8 @@ dtype: int64
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> polars <span style="color:#66d9ef">as</span> pl
 </span></span><span style="display:flex;"><span>df <span style="color:#f92672">=</span> pl<span style="color:#f92672">.</span>read_csv(<span style="color:#e6db74">&#34;https://data.cityofnewyork.us/resource/h9gi-nx95.csv&#34;</span>)
 </span></span><span style="display:flex;"><span>df<span style="color:#f92672">.</span>head(<span style="color:#ae81ff">2</span>)
-</span></span></code></pre></div><div><style>
+</span></span></code></pre></div><div style="overflow-x: auto;">
+<style>
 .dataframe > thead > tr > th,
 .dataframe > tbody > tr > td {
   text-align: right;
@@ -1191,7 +1192,8 @@ InvalidOperationError: unsupported SQL function: lag
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>daily_df<span style="color:#f92672">.</span>collect()<span style="color:#f92672">.</span>write_parquet(<span style="color:#e6db74">&#34;daily_crashes.parquet&#34;</span>)
 </span></span></code></pre></div><p><a href="https://parquet.apache.org/"  class="external-link" target="_blank" rel="noopener">Apache Parquet</a> is a compressed columnar-stored file format that is great for analytical queries. Column-based formats are particularly good for <a href="https://aws.amazon.com/what-is/olap/"  class="external-link" target="_blank" rel="noopener">OLAP</a> queries since columns can subsetted and be read in continuously allowing for aggregations to be easily performed on them. The datatypes for each column in Parquet are known which allows the format to be compressed. Since the columns and datatypes are known metadata we can read them in with the following query:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>duckdb<span style="color:#f92672">.</span>sql(<span style="color:#e6db74">&#34;SELECT * FROM parquet_schema(daily_crashes.parquet)&#34;</span>)<span style="color:#f92672">.</span>pl()
-</span></span></code></pre></div><div><style>
+</span></span></code></pre></div><div style="overflow-x: auto;">
+<style>
 .dataframe > thead > tr > th,
 .dataframe > tbody > tr > td {
   text-align: right;

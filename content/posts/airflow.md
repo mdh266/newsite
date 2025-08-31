@@ -9,7 +9,7 @@ tags = [
     "Postgres",
     "APIs"
 ]
-series = ["Data Engineering"]
+series = ["Airflow"]
 aliases = ["migrate-from-jekyl"]
 +++
 

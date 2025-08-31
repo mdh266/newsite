@@ -58,7 +58,7 @@ pd_df.groupby("borough").count()
 
 
 
-<div>
+<div style="overflow-x: auto;">
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -437,7 +437,9 @@ df.head(2)
 
 
 
-<div><style>
+
+<div style="overflow-x: auto;">
+<style>
 .dataframe > thead > tr > th,
 .dataframe > tbody > tr > td {
   text-align: right;
@@ -1281,7 +1283,9 @@ duckdb.sql("SELECT * FROM parquet_schema(daily_crashes.parquet)").pl()
 
 
 
-<div><style>
+
+<div style="overflow-x: auto;">
+<style>
 .dataframe > thead > tr > th,
 .dataframe > tbody > tr > td {
   text-align: right;

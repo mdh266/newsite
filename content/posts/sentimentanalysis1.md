@@ -283,7 +283,7 @@ df2.select(["date","date_array"])\
 
 
 
-<div>
+<div style="overflow-x: auto;">
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -415,7 +415,8 @@ df3.limit(2).toPandas()
 
 
 
-<div>
+
+<div style="overflow-x: auto;">
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -508,7 +509,7 @@ df4.limit(2).toPandas()
 
 
 
-<div>
+<div style="overflow-x: auto;">
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -645,7 +646,7 @@ df6.limit(2).toPandas()
 
 
 
-<div>
+<div style="overflow-x: auto;">
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;

@@ -128,7 +128,7 @@ df_2016_2.drop(temp_cols_to_drop, axis=1)\
 
 
 
-<div>
+<div style="overflow-x: auto;">
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -330,7 +330,7 @@ Violators.head()
 
 
 
-<div>
+<div style="overflow-x: auto;">
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -528,7 +528,7 @@ gdf.head(2)
 
 
 
-<div>
+<div style="overflow-x: auto;">
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -627,7 +627,7 @@ gdf.head(2)
 
 
 
-<div>
+<div style="overflow-x: auto;">
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -962,7 +962,7 @@ X.describe()
 
 
 
-<div>
+<div style="overflow-x: auto;">
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;

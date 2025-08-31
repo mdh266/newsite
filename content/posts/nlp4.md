@@ -712,7 +712,8 @@ study.trials_dataframe().sort_values("value", ascending=False).head(3)
 
 
 
-<div>
+
+<div style="overflow-x: auto;">
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
