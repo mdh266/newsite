@@ -1,7 +1,7 @@
 {
 	"version": 3,
 	"file": "coder.css",
-	"sourceRoot": "/Users/gfeldman/mikesite",
+	"sourceRoot": "/Users/mikeharmon/Desktop/newsite",
 	"sources": [
 		"assets/scss/coder.scss",
 		"assets/scss/css/normalize.css",

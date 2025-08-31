@@ -224,6 +224,24 @@
     <loc>http://localhost:1313/tags/singular-value-decomposition/</loc>
     <lastmod>2019-12-11T00:00:00+00:00</lastmod>
   </url><url>
+    <loc>http://localhost:1313/tags/etl/</loc>
+    <lastmod>2019-04-23T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/mongodb/</loc>
+    <lastmod>2019-04-23T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/nosql/</loc>
+    <lastmod>2019-04-23T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/pyspark/</loc>
+    <lastmod>2019-04-23T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/posts/sentimentanalysis1/</loc>
+    <lastmod>2019-04-23T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/series/spark/</loc>
+    <lastmod>2019-04-23T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/posts/greenbuildings1/</loc>
     <lastmod>2018-05-12T00:00:00+00:00</lastmod>
   </url><url>

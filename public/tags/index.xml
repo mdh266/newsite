@@ -331,6 +331,34 @@
       <description></description>
     </item>
     <item>
+      <title>ETL</title>
+      <link>http://localhost:1313/tags/etl/</link>
+      <pubDate>Tue, 23 Apr 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/etl/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>MongoDB</title>
+      <link>http://localhost:1313/tags/mongodb/</link>
+      <pubDate>Tue, 23 Apr 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/mongodb/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>NoSQL</title>
+      <link>http://localhost:1313/tags/nosql/</link>
+      <pubDate>Tue, 23 Apr 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/nosql/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>PySpark</title>
+      <link>http://localhost:1313/tags/pyspark/</link>
+      <pubDate>Tue, 23 Apr 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/tags/pyspark/</guid>
+      <description></description>
+    </item>
+    <item>
       <title>Postgres</title>
       <link>http://localhost:1313/tags/postgres/</link>
       <pubDate>Thu, 13 Apr 2017 00:00:00 +0000</pubDate>
