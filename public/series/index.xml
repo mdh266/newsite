@@ -78,5 +78,12 @@
       <guid>http://localhost:1313/series/recommender-systems/</guid>
       <description></description>
     </item>
+    <item>
+      <title>Time Series</title>
+      <link>http://localhost:1313/series/time-series/</link>
+      <pubDate>Wed, 15 Mar 2017 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/series/time-series/</guid>
+      <description></description>
+    </item>
   </channel>
 </rss>
