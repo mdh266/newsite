@@ -27,7 +27,7 @@ __[4. Next Steps](#fourth-bullet)__
 ## Introduction <a class="anchor" id="first-bullet"></a>
 -------------
 	
-This is the second post in a series of blog posts about building a predictive model of green house gas emissions of buildings in NYC. In my [first post](http://michael-harmon.com/posts/greenbuildings1) I covered how to perform
+This is the second post in a series of blog posts about building a predictive model of green house gas emissions of buildings in NYC. In my [first post](http://mdh266.github.io/posts/greenbuildings1) I covered how to perform
 
 - Exploratory data analysis
 - Identify and remove outliers
@@ -201,7 +201,7 @@ sns.barplot(data=frac_nulls_df2,
     
 
 
-This is a much more meaningful comparison!  Note that we are using the data *without any outliers*, that is the table resulting from the [last post](http://michael-harmon.com/blog/GreenBuildings1.html). We can see that,
+This is a much more meaningful comparison!  Note that we are using the data *without any outliers*, that is the table resulting from the [last post](http://mdh266.github.io/posts/greenbuildings1). We can see that,
 
 - Water intensity (`WI`) is the field with highest percentage of missing values
 
@@ -678,4 +678,4 @@ pandas_gbq.to_gbq(X_fin_df,"db_gb.clean_data")
 ## Next Steps  <a class="anchor" id="fourth-bullet"></a>
 ---------------
 
-In this post we covered techniques for imputing the missing values using Scikit-learn's [impute module](https://scikit-learn.org/stable/modules/impute.html). In the [previous post](http://michael-harmon.com/blog/GreenBuildings1.html) we covered the topics of exploratory analysis and removing outliers. These three topics are the bedrock of wrangling and cleaning data and form a solid basis for any modeling effort. In the next post we will build off this work and move toward advanced regression methods for predicting the green house gas emission intensity of buildings from this dataset.
+In this post we covered techniques for imputing the missing values using Scikit-learn's [impute module](https://scikit-learn.org/stable/modules/impute.html). In the [previous post](http://mdh266.github.io/posts/greenbuildings1) we covered the topics of exploratory analysis and removing outliers. These three topics are the bedrock of wrangling and cleaning data and form a solid basis for any modeling effort. In the next post we will build off this work and move toward advanced regression methods for predicting the green house gas emission intensity of buildings from this dataset.

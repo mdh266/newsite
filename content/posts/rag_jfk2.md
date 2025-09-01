@@ -33,7 +33,7 @@ __[5. Conclusions](fifth-bullet)__
 ### 1. Introduction to RAG <a class="anchor" id="first-bullet"></a>
 ------------------------------
 
-In my [last post](http://michael-harmon.com/blog/ragjfk1.html) on RAG I discussed how to ingest President Kennedy's speeches into a [Pinecone](https://www.pinecone.io/) vector database and perform semantic search  using both Pinecone's API as well as using the [Langchain](https://www.langchain.com/) API. I used Pinecone for a vector database since its cloud based, fully managed and of course has a free tier. In this post I will expand upon my prior work and build out a [Retrivial Augmented Generation (RAG)](https://en.wikipedia.org/wiki/Retrieval-augmented_generation) pipeline using Langchain. I will deploy this as a [Streamlit](https://streamlit.io/) application to be able to answer questions on President Kennedy.
+In my [last post](https://mdh266.github.io/posts/rag_jfk1) on RAG I discussed how to ingest President Kennedy's speeches into a [Pinecone](https://www.pinecone.io/) vector database and perform semantic search  using both Pinecone's API as well as using the [Langchain](https://www.langchain.com/) API. I used Pinecone for a vector database since its cloud based, fully managed and of course has a free tier. In this post I will expand upon my prior work and build out a [Retrivial Augmented Generation (RAG)](https://en.wikipedia.org/wiki/Retrieval-augmented_generation) pipeline using Langchain. I will deploy this as a [Streamlit](https://streamlit.io/) application to be able to answer questions on President Kennedy.
 
 You may ask what is the point of RAG pipelines? Don't [Large Language Models (LLMs)](https://en.wikipedia.org/wiki/Large_language_model) know answers to everything? The answer is most LLMs take a long time to train and are often trained on data that is out of date when people begin to use the model. In order to incorporate more recent data into our LLM we could use fine-tuning, but this can still be time consuming and costly. The other option is to use [Retrivial Augmented Generation (RAG)](https://en.wikipedia.org/wiki/Retrieval-augmented_generation). RAG takes your original question and  "retrieves" documents from a vector database that are most most semantically related to your qeustion. RAG is able to do semantic search by converting the text in your question and the documents to a numerical vectors using an [embedding](https://developers.google.com/machine-learning/crash-course/embeddings). The closeness of the document vectors to the question vector (with resepect to a norm) measures the semantic similarity. The original question and the retrieved documents are incorporated into a prompt which is fed into the LLM where they are used as "context" to generate an answer. The entire process is depicted below,
 
@@ -433,7 +433,7 @@ Now in order to deploy this in a [Streamlit App](https://streamlit.io/) I'll cre
      class="center" />
 </center>
 
-I won't go through the process of deploying this app to [Google Cloud Run](https://cloud.google.com/run?hl=en) as I have covered that pretty extensively in a [prior post](http://michael-harmon.com/blog/chatbot2.html).
+I won't go through the process of deploying this app to [Google Cloud Run](https://cloud.google.com/run?hl=en) as I have covered that pretty extensively in a [prior post](https://mdh266.github.io/posts/chatbot2.html).
 
 ## 5. Conclusions  <a class="anchor" id="fifth-bullet"></a>
 -------------

@@ -277,7 +277,7 @@ evaluate_pipeline(svm_pipe2)
 An improvement in the precision of Robotics, but an over slight decline in the balanced accuracy.  
 
 
-Let's visualize the TF-IDF matrix and the most token/words as we did in the first [post](http://michael-harmon.com/blog/NLP1.html):
+Let's visualize the TF-IDF matrix and the most token/words as we did in the first [post](https://mdh266.github.io/posts/nlp1):
 
 
 ```python
@@ -294,13 +294,13 @@ plot_tfidf(pipe    = svm_pipe2,
 
 <img src="https://github.com/mdh266/TextClassificationApp/blob/master/notebooks/images/tfidf.png?raw=1">
 
-Comparing the above results to the previous [post](http://michael-harmon.com/blog/NLP1.html) we see the most important words are no longer "of" and "the", but much more sensible words like "search",  "image", "learning", and "robot".  
+Comparing the above results to the previous [post](https://mdh266.github.io/posts/nlp1) we see the most important words are no longer "of" and "the", but much more sensible words like "search",  "image", "learning", and "robot".  
 
 We can notice though that there are multiple words that really refer to the same thing, for example in the Robotics articles, "robot", "robotics", and "robots" are really refering to the same thing. If we can reduce these words to the common root word "robot" we can reduce the dimensionality and hopefully the sparisity in dataset. Doing this should help our model performance as [high dimensional problems and sparsity in your dataset can cause issues](https://stats.stackexchange.com/questions/274720/why-is-it-a-big-problem-to-have-sparsity-issues-in-natural-language-processing). In the next section we'll discuss strategies to reduce the dimensions in our dataset.
 
 ### Stemming & Lemmatization
 
-Now let's try using [Stemming and Lemmaitization](https://nlp.stanford.edu/IR-book/html/htmledition/stemming-and-lemmatization-1.html) to improve the model performance. Stemming and Lemmatization are two processes that reduce words down to a simplier form, i.e. their "root".  This reduces the variations in words and hence the dimensionality in our model. You can see some of my work with Stemming [here](http://michael-harmon.com/blog/SentimentAnalysisP2.html). Stemming is rather rudimentary and only looks at and acts on individual words, reducing them to the simplier form.  Lemmatization on the otherhand depends on correctly identifying the intended part of speech and meaning of a word in a sentence, as well as within the larger context surrounding that sentence, such as neighboring sentences or even an entire document. I should note that stemming is known to [improve recall and degrade precision](https://en.wikipedia.org/wiki/Lemmatisation).
+Now let's try using [Stemming and Lemmaitization](https://nlp.stanford.edu/IR-book/html/htmledition/stemming-and-lemmatization-1.html) to improve the model performance. Stemming and Lemmatization are two processes that reduce words down to a simplier form, i.e. their "root".  This reduces the variations in words and hence the dimensionality in our model. You can see some of my work with Stemming [here](https://mdh266.github.io/posts/sentimentanalysis2). Stemming is rather rudimentary and only looks at and acts on individual words, reducing them to the simplier form.  Lemmatization on the otherhand depends on correctly identifying the intended part of speech and meaning of a word in a sentence, as well as within the larger context surrounding that sentence, such as neighboring sentences or even an entire document. I should note that stemming is known to [improve recall and degrade precision](https://en.wikipedia.org/wiki/Lemmatisation).
 
 We use the [Snowball Stemmer](https://www.nltk.org/_modules/nltk/stem/snowball.html) and [WordNetLemmatizer](https://www.nltk.org/_modules/nltk/stem/wordnet.html) from the NLTK and show what it does to the previous example document:
 
@@ -583,7 +583,7 @@ model  = joblib.load('../models/weighted_svm.joblib')
 
 We should note that the best esimator from the grid search has a lower test score than that of `svm_pipe3`, however, since it the hyperparameters of `svm_pipe3` are included in the gridsearch we can assume the best esimator has lower variance than `svm_pipe3`.
 
-We can then look at the effect grid search has on the feature importance on the Robotics class using the plots introduced in the [prior post](http://michael-harmon.com/blog/NLP1.html):
+We can then look at the effect grid search has on the feature importance on the Robotics class using the plots introduced in the [prior post](https://mdh266.github.io/posts/nlp1):
 
 
 ```python
@@ -661,6 +661,6 @@ Improving model performance will have to wait for another post though!
 
 ## Conclusion <a class="anchor" id="fourth-bullet"></a>
 
-In this blogpost we picked up from the [last one](http://michael-harmon.com/blog/NLP1.html) and went over using the Natural Language Toolkit to improve the performance of our text classification models. Specifically, we went over how to remove stopwords, stemming and lemmitization. We applied each of these to the weighted Support Vector Machine model and performed a grid search to find the optimal parameters to use for our models. One thing I would improve in the future is the preprocessing speed, it took quite a while to remove stop words and stem the text and definitely left room for improvement.
+In this blogpost we picked up from the [last one](https://mdh266.github.io/posts/nlp1) and went over using the Natural Language Toolkit to improve the performance of our text classification models. Specifically, we went over how to remove stopwords, stemming and lemmitization. We applied each of these to the weighted Support Vector Machine model and performed a grid search to find the optimal parameters to use for our models. One thing I would improve in the future is the preprocessing speed, it took quite a while to remove stop words and stem the text and definitely left room for improvement.
 
 In the next post we'll work on creating a REST API from this model and using the REST API from a web app for predictions. In subsequent posts well look at ways to reduce the dimensionality of the problem so that we can use a model that is faster to train than the SVM.

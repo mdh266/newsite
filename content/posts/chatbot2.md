@@ -29,7 +29,7 @@ __[5. Conclusions](#fifth-bullet)__
 
 ### Introduction <a class="anchor" id="first-bullet"></a>
 ----------------
-In my [last post](http://michael-harmon.com/blog/chatbot1.html) I went over how to create a create speech based chatbot app with a [Large Language Model (LLM)](https://en.wikipedia.org/wiki/Large_language_model) using [LangChain](https://www.langchain.com/), [Llama 3](https://ai.meta.com/blog/meta-llama-3/), [Google Cloud API]() and [Streamlit](https://streamlit.io/).
+In my [last post](https://mdh266.github.io/posts/chatbot1/) I went over how to create a create speech based chatbot app with a [Large Language Model (LLM)](https://en.wikipedia.org/wiki/Large_language_model) using [LangChain](https://www.langchain.com/), [Llama 3](https://ai.meta.com/blog/meta-llama-3/), [Google Cloud API]() and [Streamlit](https://streamlit.io/).
 
  In this post I'll cover how to deploy this app using [Docker](https://www.docker.com/) for containerization. Containerizing the app will allow us to run it both locally and on the cloud. Then I'll cover [GitHub Actions](https://github.com/features/actions) for automatically building the image and pushing it to [Docker Hub](https://hub.docker.com/) where it can be pulled and run on [Google Cloud Run](https://cloud.google.com/run) to create a serverless application.
 

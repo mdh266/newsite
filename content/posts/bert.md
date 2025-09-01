@@ -33,7 +33,7 @@ __[6. Next Steps](#sixth-bullet)__
 ## 1. Introduction <a class="anchor" id="first-bullet"></a>
 -----------------------------------------------------------
 
-In this notebook, I will walk through the complete process of fine-tuning a [BERT (Bidirectional Encoder Representations from Transformers)](https://en.wikipedia.org/wiki/BERT_(language_model)) model using the [HuggingFace ecosystem](https://huggingface.co/). BERT has become a cornerstone of modern NLP due to its ability to capture bidirectional context and deliver strong performance across a wide range of language understanding tasks such as classification, named entity resolution and question answering. In this post I will build off of [prior posts on text classification](https://michael-harmon.com/blog/NLP4.html) by fine tuning a BERT model to classify the topic of papers in [arxiv](arxiv.org) by their abstract text. By the end of this post, I will have a working, fine-tuned BERT model ready for inference on the [Hugging Face Model Hub](https://huggingface.co/models).
+In this notebook, I will walk through the complete process of fine-tuning a [BERT (Bidirectional Encoder Representations from Transformers)](https://en.wikipedia.org/wiki/BERT_(language_model)) model using the [HuggingFace ecosystem](https://huggingface.co/). BERT has become a cornerstone of modern NLP due to its ability to capture bidirectional context and deliver strong performance across a wide range of language understanding tasks such as classification, named entity resolution and question answering. In this post I will build off of [prior posts on text classification](https://mdh266.github.io/posts/nlp4/) by fine tuning a BERT model to classify the topic of papers in [arxiv](arxiv.org) by their abstract text. By the end of this post, I will have a working, fine-tuned BERT model ready for inference on the [Hugging Face Model Hub](https://huggingface.co/models).
 
 The first thing is I'll be using [Google Colab](https://colab.research.google.com/) to get access to a free [CUDA](https://developer.nvidia.com/cuda-toolkit) enabled GPU. On that platform I needed install the [arxiv](https://pypi.org/project/arxiv/) and [evaluate](https://huggingface.co/docs/evaluate/en/index) libraries since they are not pre-installed:
 
@@ -58,7 +58,7 @@ Last note that I'll make is that all the output cells have been copied to markdo
 ## 2. Collecting The Data <a class="anchor" id="second-bullet"></a>
 --------------------------------------------------------------------
 
-In [prior posts](https://michael-harmon.com/blog/NLP1.html) I obtained documents for classification by collecting paper abstracts from [arxiv](https://arxiv.org/). I was going to reuse those same documents for subsequent posts, but over the years I lost them. :( So, instead I'll use the [arixv package](https://lukasschwab.me/arxiv.py/arxiv.html) to create a new dataset for classification. I will use 3 classes or topics for the papers which I chose to be 'Artificial Intelligence', 'Information Retrieval' and 'Robotics'.
+In [prior posts](https://mdh266.github.io/posts/nlp1/) I obtained documents for classification by collecting paper abstracts from [arxiv](https://arxiv.org/). I was going to reuse those same documents for subsequent posts, but over the years I lost them. :( So, instead I'll use the [arixv package](https://lukasschwab.me/arxiv.py/arxiv.html) to create a new dataset for classification. I will use 3 classes or topics for the papers which I chose to be 'Artificial Intelligence', 'Information Retrieval' and 'Robotics'.
 
 First I collect 1,000 papers on 'Ariticial Intelligence', 1,000 papers on 'Information Retrieval' and 100 on 'Robotics' using a function I wrote called [get_data](utils.py).
 
@@ -254,7 +254,7 @@ model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_label
 model = model.to(device)
 ```
 
-One thing I will call out is that the tokenizer here is not a word level tokenization like I have used in [prior blog posts](https://michael-harmon.com/blog/NLP1.html) that used the [bag of words](https://en.wikipedia.org/wiki/Bag-of-words_model) model. Instead BERT uses a [sub-word tokenization method](https://huggingface.co/learn/llm-course/chapter6/6?fw=pt). The [100 Page Large Language Models Book](https://www.thelmbook.com/) had a good explanation on this topic, albiet it focused on [Byte-Pair Encoding tokenization](https://huggingface.co/learn/llm-course/en/chapter6/5?fw=pt) while BERT uses a [WordPiece tokenization](https://huggingface.co/learn/llm-course/en/chapter6/6).
+One thing I will call out is that the tokenizer here is not a word level tokenization like I have used in [prior blog posts](https://mdh266.github.io/posts/nlp1/) that used the [bag of words](https://en.wikipedia.org/wiki/Bag-of-words_model) model. Instead BERT uses a [sub-word tokenization method](https://huggingface.co/learn/llm-course/chapter6/6?fw=pt). The [100 Page Large Language Models Book](https://www.thelmbook.com/) had a good explanation on this topic, albiet it focused on [Byte-Pair Encoding tokenization](https://huggingface.co/learn/llm-course/en/chapter6/5?fw=pt) while BERT uses a [WordPiece tokenization](https://huggingface.co/learn/llm-course/en/chapter6/6).
 
 I can see that the model I have downloaded is a BERT model by looking at its type:
 
