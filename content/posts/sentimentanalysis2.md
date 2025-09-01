@@ -7,7 +7,8 @@ tags = [
     "Hadoop",
     "Google Cloud",
     "Sentiment Analysis",
-    "MongoDB"
+    "MongoDB",
+    "NLP"
 ]
 series = ["Spark"]
 aliases = ["migrate-from-jekyl"]
