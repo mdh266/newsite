@@ -1,10 +1,10 @@
 +++
 authors = ["Mike Harmon"]
-title = "Polars & DuckDB: DataFrames and SQL For Python Without Pandas"
+title = "Polars & DuckDB: DataFrames and SQL Without Pandas On AWS"
 date = "2023-07-19"
 tags = [
     "Polars",
-    "DuckDb",
+    "DuckDB",
     "SQL",
     "AWS",
     "Docker"
