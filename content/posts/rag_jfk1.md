@@ -5,7 +5,8 @@ date = "2025-03-13"
 tags = [
     "Asyncio",
     "LangChain",
-    "Pinecone"
+    "Pinecone",
+    "LLMs"
 ]
 series = ["LLMs"]
 aliases = ["migrate-from-jekyl"]
